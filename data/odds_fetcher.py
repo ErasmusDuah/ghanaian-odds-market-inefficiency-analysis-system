@@ -12,73 +12,86 @@ API_KEY = os.getenv('ODDS_API_KEY')
 
 # ============================================================
 # LEAGUE CONFIGURATION
-# Priority order - system scans top to bottom
-# Covers 365 days/year across all timezones
 # ============================================================
 SPORTS = [
-    # ⭐ EUROPE (August - May)
-    'soccer_epl',                               # English Premier League
-    'soccer_efl_champ',                         # Championship
-    'soccer_uefa_champs_league',                # Champions League
-    'soccer_uefa_europa_league',                # Europa League
-    'soccer_uefa_europa_conference_league',     # Conference League
-    'soccer_spain_la_liga',                     # La Liga
-    'soccer_spain_segunda_division',            # La Liga 2
-    'soccer_italy_serie_a',                     # Serie A
-    'soccer_italy_serie_b',                     # Serie B
-    'soccer_germany_bundesliga',                # Bundesliga
-    'soccer_germany_bundesliga2',               # Bundesliga 2
-    'soccer_germany_liga3',                     # 3. Liga
-    'soccer_france_ligue_one',                  # Ligue 1
-    'soccer_france_ligue_two',                  # Ligue 2
-    'soccer_netherlands_eredivisie',            # Eredivisie
-    'soccer_portugal_primeira_liga',            # Primeira Liga
-    'soccer_belgium_first_div',                 # Belgium First Div
-    'soccer_turkey_super_league',               # Turkey Super League
-    'soccer_greece_super_league',               # Greek Super League
-    'soccer_spl',                               # Scottish Premiership
-    'soccer_austria_bundesliga',                # Austrian Bundesliga
-    'soccer_switzerland_superleague',           # Swiss Superleague
-    'soccer_denmark_superliga',                 # Denmark Superliga
-    'soccer_norway_eliteserien',                # Norway Eliteserien
-    'soccer_sweden_allsvenskan',                # Sweden Allsvenskan
-    'soccer_poland_ekstraklasa',                # Poland Ekstraklasa
-    'soccer_russia_premier_league',             # Russia Premier League
-    'soccer_fa_cup',                            # FA Cup
-    'soccer_england_efl_cup',                   # EFL Cup
-    'soccer_germany_dfb_pokal',                 # DFB Pokal
-    'soccer_spain_copa_del_rey',                # Copa del Rey
-    'soccer_france_coupe_de_france',            # Coupe de France
+    # ⭐ UEFA COMPETITIONS
+    'soccer_uefa_champs_league',
+    'soccer_uefa_europa_league',
+    'soccer_uefa_europa_conference_league',
+    'soccer_fifa_world_cup',
+    'soccer_fifa_world_cup_qualifiers_europe',
 
-    # ⭐ AMERICAS (fills European gaps)
-    'soccer_brazil_campeonato',                 # Brazilian Serie A
-    'soccer_brazil_serie_b',                    # Brazilian Serie B
-    'soccer_argentina_primera_division',        # Argentine Primera
-    'soccer_usa_mls',                           # MLS
-    'soccer_mexico_ligamx',                     # Liga MX
-    'soccer_chile_campeonato',                  # Chilean Primera
-    'soccer_conmebol_copa_libertadores',        # Copa Libertadores
+    # ⭐ ENGLAND
+    'soccer_epl',
+    'soccer_efl_champ',
+    'soccer_england_league1',
+    'soccer_england_league2',
+    'soccer_fa_cup',
+    'soccer_england_efl_cup',
+
+    # ⭐ SPAIN
+    'soccer_spain_la_liga',
+    'soccer_spain_segunda_division',
+    'soccer_spain_copa_del_rey',
+
+    # ⭐ GERMANY
+    'soccer_germany_bundesliga',
+    'soccer_germany_bundesliga2',
+    'soccer_germany_liga3',
+    'soccer_germany_bundesliga_women',
+    'soccer_germany_dfb_pokal',
+
+    # ⭐ ITALY
+    'soccer_italy_serie_a',
+    'soccer_italy_serie_b',
+
+    # ⭐ FRANCE
+    'soccer_france_ligue_one',
+    'soccer_france_ligue_two',
+    'soccer_france_coupe_de_france',
+
+    # ⭐ OTHER EUROPE
+    'soccer_netherlands_eredivisie',
+    'soccer_portugal_primeira_liga',
+    'soccer_belgium_first_div',
+    'soccer_turkey_super_league',
+    'soccer_greece_super_league',
+    'soccer_spl',
+    'soccer_austria_bundesliga',
+    'soccer_switzerland_superleague',
+    'soccer_denmark_superliga',
+    'soccer_norway_eliteserien',
+    'soccer_sweden_allsvenskan',
+    'soccer_poland_ekstraklasa',
+    'soccer_russia_premier_league',
+    'soccer_league_of_ireland',
+
+    # ⭐ SOUTH AMERICA
+    'soccer_brazil_campeonato',
+    'soccer_brazil_serie_b',
+    'soccer_argentina_primera_division',
+    'soccer_chile_campeonato',
+    'soccer_conmebol_copa_libertadores',
+
+    # ⭐ NORTH AMERICA
+    'soccer_usa_mls',
+    'soccer_mexico_ligamx',
 
     # ⭐ ASIA & OCEANIA
-    'soccer_japan_j_league',                    # J-League
-    'soccer_korea_kleague1',                    # K-League 1
-    'soccer_australia_aleague',                 # A-League
-    'soccer_china_superleague',                 # Chinese Super League
-    'soccer_saudi_arabia_pro_league',           # Saudi Pro League
-
-    # ⭐ WORLD COMPETITIONS
-    'soccer_fifa_world_cup',                    # FIFA World Cup
-    'soccer_fifa_world_cup_qualifiers_europe',  # WC Qualifiers
+    'soccer_japan_j_league',
+    'soccer_korea_kleague1',
+    'soccer_australia_aleague',
+    'soccer_china_superleague',
+    'soccer_saudi_arabia_pro_league',
 ]
 
-# Regions to fetch bookmakers from
-REGIONS = 'uk,eu,af'
-
-# Markets we want to trade
-MARKETS = 'h2h,totals,btts'
-
-# Decimal odds format
+# API Settings
+REGIONS = 'eu'
+MARKETS = 'h2h'
 ODDS_FORMAT = 'decimal'
+
+# Ghana available bookmakers
+GHANA_BOOKMAKERS = ['Betway', '1xBet']
 
 
 def check_single_league(sport):
@@ -120,20 +133,7 @@ def get_available_leagues():
     =========================================
     Instead of checking leagues one by one
     we check ALL of them at the same time
-
-    Like having 50 people each checking
-    one league simultaneously vs
-    one person checking all 50 one by one
-
-    This is critical in trading systems
-    Speed = catching opportunities
-    before they disappear!
-
-    In quant finance this concept is used for:
-    → Scanning multiple exchanges simultaneously
-    → Fetching multiple stock prices at once
-    → Running parallel backtests
-    → Real time market monitoring
+    Speed = catching opportunities before they disappear!
     """
 
     print("🔍 Scanning all leagues simultaneously...")
@@ -145,16 +145,12 @@ def get_available_leagues():
     available = []
     total_matches = 0
 
-    # Run all league checks at the same time
     with ThreadPoolExecutor(max_workers=20) as executor:
-
-        # Submit all leagues simultaneously
         future_to_sport = {
             executor.submit(check_single_league, sport): sport
             for sport in SPORTS
         }
 
-        # Collect results as they come in
         for future in as_completed(future_to_sport):
             result = future.result()
 
@@ -164,7 +160,6 @@ def get_available_leagues():
                 print(f"  ✅ {result['sport']}: "
                       f"{result['match_count']} matches")
 
-    # Calculate how fast we scanned
     elapsed = (datetime.now() - start_time).total_seconds()
 
     print("-" * 60)
@@ -181,8 +176,7 @@ def fetch_odds(sport):
 
     QUANT CONCEPT - DATA PIPELINE:
     ================================
-    In quant finance data pipelines are critical
-    They must be:
+    Data pipelines must be:
     → Reliable (handle errors gracefully)
     → Fast (get data before odds change)
     → Accurate (validate data received)
@@ -229,20 +223,7 @@ def fetch_odds(sport):
 def calculate_implied_probability(odds):
     """
     Converts decimal odds to implied probability
-
-    QUANT CONCEPT - IMPLIED PROBABILITY:
-    =====================================
     Formula: probability = 1 / odds
-
-    Example:
-    Betway → Man Utd win @ 2.10
-    implied_prob = 1/2.10 = 47.6%
-
-    Sportybet → Man Utd win @ 2.40
-    implied_prob = 1/2.40 = 41.7%
-
-    Same team same match
-    Different probabilities = arb opportunity! 🎯
     """
     return (1 / odds) * 100
 
@@ -250,15 +231,7 @@ def calculate_implied_probability(odds):
 def calculate_market_overround(outcomes):
     """
     Calculates bookmaker overround (profit margin)
-
-    QUANT CONCEPT - OVERROUND/VIG:
-    ================================
-    Fair market: all probabilities sum to 100%
-    Bookmaker market: probabilities sum to 105-115%
-    Extra % = bookmaker profit margin
-
     Lower overround = better odds for us
-    We always target lowest overround bookmakers!
     """
     total_implied = sum(1 / o['price'] for o in outcomes)
     overround = (total_implied - 1) * 100
@@ -268,7 +241,7 @@ def calculate_market_overround(outcomes):
 def display_odds(data, sport):
     """
     Displays odds in clean readable format
-    Shows implied probabilities and overround
+    Only shows Ghana available bookmakers
     """
 
     if not data:
@@ -285,12 +258,26 @@ def display_odds(data, sport):
         away_team = match['away_team']
         commence_time = match['commence_time']
 
+        # Check if match has Ghana bookmakers
+        has_ghana_bookie = False
+        for bookmaker in match.get('bookmakers', []):
+            if bookmaker['title'] in GHANA_BOOKMAKERS:
+                has_ghana_bookie = True
+                break
+
+        if not has_ghana_bookie:
+            continue
+
         print(f"\n⚽ {home_team} vs {away_team}")
         print(f"🕐 Kickoff: {commence_time}")
         print("-" * 50)
 
         for bookmaker in match.get('bookmakers', []):
             bookie_name = bookmaker['title']
+
+            # Only show Ghana bookmakers
+            if bookie_name not in GHANA_BOOKMAKERS:
+                continue
 
             for market in bookmaker.get('markets', []):
                 market_key = market['key']
@@ -320,34 +307,11 @@ def display_odds(data, sport):
                         print(f"     {name} {point}: {odds} "
                               f"(Implied: {implied_prob:.1f}%)")
 
-                elif market_key == 'btts':
-                    print(f"\n  📌 {bookie_name} - BTTS "
-                          f"(Overround: {overround}%)")
-
-                    for outcome in outcomes:
-                        name = outcome['name']
-                        odds = outcome['price']
-                        implied_prob = calculate_implied_probability(odds)
-                        print(f"     {name}: {odds} "
-                              f"(Implied: {implied_prob:.1f}%)")
-
 
 def save_odds(data, sport):
     """
     Saves raw odds data to JSON file
-
-    QUANT CONCEPT - DATA STORAGE:
-    ==============================
-    Every odds snapshot we save builds our
-    historical database for:
-    → Backtesting strategies
-    → Training Poisson models
-    → Monte Carlo simulations
-    → Pattern detection over time
-
-    Professional quant firms store
-    YEARS of historical data
-    We start building ours from day 1!
+    Builds our historical database for backtesting
     """
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -362,12 +326,12 @@ def save_odds(data, sport):
 def run():
     """
     Main function - runs the complete odds fetcher
-    Scans all leagues and fetches available odds
     """
 
     print("\n" + "🚀 " * 20)
     print("   QUANT BET ALPHA - ODDS FETCHER v2.0")
     print("   365 Days Coverage | 30+ Leagues")
+    print("   Ghana Bookmakers: Betway + 1xBet")
     print("🚀 " * 20 + "\n")
 
     # Step 1: Find active leagues
