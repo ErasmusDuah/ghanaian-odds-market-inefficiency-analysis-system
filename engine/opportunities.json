@@ -1,153 +1,129 @@
 [
   {
-    "match": "Manchester United vs Arsenal",
+    "match": "Osasuna vs Girona",
+    "kickoff": "2026-03-21 17:30",
+    "tournament": "LaLiga",
     "market": "1X2",
-    "arb_sum": 0.9929,
-    "profit_percentage": 0.71,
-    "total_stake": 500,
-    "outcomes": [
+    "arb_sum": 0.9405,
+    "profit_pct": 6.32,
+    "profit_ghs": 31.6,
+    "bets": [
       {
-        "name": "Manchester United",
-        "odds": 2.6,
-        "bookmaker": "1xBet",
-        "stake": 193.68,
-        "profit_if_wins": 3.57
+        "outcome": "Home Win",
+        "platform": "Betway",
+        "odds": 2.33,
+        "stake": 228.16,
+        "profit_if_wins": 31.61
       },
       {
-        "name": "Arsenal",
-        "odds": 3.1,
-        "bookmaker": "Sportybet",
-        "stake": 162.44,
-        "profit_if_wins": 3.56
+        "outcome": "Draw",
+        "platform": "Betway",
+        "odds": 4.4,
+        "stake": 120.82,
+        "profit_if_wins": 31.61
       },
       {
-        "name": "Draw",
+        "outcome": "Away Win",
+        "platform": "Sportybet",
+        "odds": 3.52,
+        "stake": 151.02,
+        "profit_if_wins": 31.59
+      }
+    ]
+  },
+  {
+    "match": "Sevilla vs Valencia",
+    "kickoff": "2026-03-21 20:00",
+    "tournament": "LaLiga",
+    "market": "1X2",
+    "arb_sum": 0.9551,
+    "profit_pct": 4.7,
+    "profit_ghs": 23.48,
+    "bets": [
+      {
+        "outcome": "Home Win",
+        "platform": "Sportybet",
+        "odds": 2.35,
+        "stake": 222.76,
+        "profit_if_wins": 23.48
+      },
+      {
+        "outcome": "Draw",
+        "platform": "Betway",
+        "odds": 4.1,
+        "stake": 127.68,
+        "profit_if_wins": 23.48
+      },
+      {
+        "outcome": "Away Win",
+        "platform": "Sportybet",
         "odds": 3.5,
-        "bookmaker": "1xBet",
-        "stake": 143.88,
-        "profit_if_wins": 3.58
+        "stake": 149.57,
+        "profit_if_wins": 23.49
       }
     ]
   },
   {
-    "match": "Manchester United vs Arsenal",
-    "market": "Over/Under 2.5",
-    "arb_sum": 0.9307,
-    "profit_percentage": 7.44,
-    "total_stake": 500,
-    "outcomes": [
-      {
-        "name": "Over 2.5",
-        "odds": 2.2,
-        "bookmaker": "1xBet",
-        "stake": 244.19,
-        "profit_if_wins": 37.22
-      },
-      {
-        "name": "Under 2.5",
-        "odds": 2.1,
-        "bookmaker": "Sportybet",
-        "stake": 255.81,
-        "profit_if_wins": 37.2
-      }
-    ]
-  },
-  {
-    "match": "Manchester United vs Arsenal",
-    "market": "BTTS",
-    "arb_sum": 0.964,
-    "profit_percentage": 3.73,
-    "total_stake": 500,
-    "outcomes": [
-      {
-        "name": "BTTS Yes",
-        "odds": 2.1,
-        "bookmaker": "1xBet",
-        "stake": 246.99,
-        "profit_if_wins": 18.68
-      },
-      {
-        "name": "BTTS No",
-        "odds": 2.05,
-        "bookmaker": "Betway",
-        "stake": 253.01,
-        "profit_if_wins": 18.67
-      }
-    ]
-  },
-  {
-    "match": "Chelsea vs Liverpool",
+    "match": "Cologne vs Borussia M\u00b4gladbach",
+    "kickoff": "2026-03-21 14:30",
+    "tournament": "Bundesliga",
     "market": "1X2",
-    "arb_sum": 0.9903,
-    "profit_percentage": 0.98,
-    "total_stake": 500,
-    "outcomes": [
+    "arb_sum": 0.9029,
+    "profit_pct": 10.76,
+    "profit_ghs": 53.78,
+    "bets": [
       {
-        "name": "Chelsea",
+        "outcome": "Home Win",
+        "platform": "Betway",
+        "odds": 2.8,
+        "stake": 197.78,
+        "profit_if_wins": 53.78
+      },
+      {
+        "outcome": "Draw",
+        "platform": "Betway",
+        "odds": 4.4,
+        "stake": 125.86,
+        "profit_if_wins": 53.78
+      },
+      {
+        "outcome": "Away Win",
+        "platform": "Sportybet",
+        "odds": 3.14,
+        "stake": 176.36,
+        "profit_if_wins": 53.77
+      }
+    ]
+  },
+  {
+    "match": "Wolfsburg vs Werder Bremen",
+    "kickoff": "2026-03-21 14:30",
+    "tournament": "Bundesliga",
+    "market": "1X2",
+    "arb_sum": 0.8954,
+    "profit_pct": 11.68,
+    "profit_ghs": 58.4,
+    "bets": [
+      {
+        "outcome": "Home Win",
+        "platform": "Betway",
         "odds": 3.2,
-        "bookmaker": "1xBet",
-        "stake": 157.78,
-        "profit_if_wins": 4.91
+        "stake": 174.5,
+        "profit_if_wins": 58.4
       },
       {
-        "name": "Liverpool",
-        "odds": 2.5,
-        "bookmaker": "Sportybet",
-        "stake": 201.96,
-        "profit_if_wins": 4.91
+        "outcome": "Draw",
+        "platform": "Betway",
+        "odds": 4.2,
+        "stake": 132.95,
+        "profit_if_wins": 58.39
       },
       {
-        "name": "Draw",
-        "odds": 3.6,
-        "bookmaker": "Sportybet",
-        "stake": 140.25,
-        "profit_if_wins": 4.91
-      }
-    ]
-  },
-  {
-    "match": "Chelsea vs Liverpool",
-    "market": "Over/Under 2.5",
-    "arb_sum": 0.964,
-    "profit_percentage": 3.73,
-    "total_stake": 500,
-    "outcomes": [
-      {
-        "name": "Over 2.5",
-        "odds": 2.05,
-        "bookmaker": "Sportybet",
-        "stake": 253.01,
-        "profit_if_wins": 18.67
-      },
-      {
-        "name": "Under 2.5",
-        "odds": 2.1,
-        "bookmaker": "Betway",
-        "stake": 246.99,
-        "profit_if_wins": 18.68
-      }
-    ]
-  },
-  {
-    "match": "Chelsea vs Liverpool",
-    "market": "BTTS",
-    "arb_sum": 0.9197,
-    "profit_percentage": 8.74,
-    "total_stake": 500,
-    "outcomes": [
-      {
-        "name": "BTTS Yes",
-        "odds": 2.15,
-        "bookmaker": "Sportybet",
-        "stake": 252.87,
-        "profit_if_wins": 43.67
-      },
-      {
-        "name": "BTTS No",
-        "odds": 2.2,
-        "bookmaker": "Betway",
-        "stake": 247.13,
-        "profit_if_wins": 43.69
+        "outcome": "Away Win",
+        "platform": "Sportybet",
+        "odds": 2.9,
+        "stake": 192.55,
+        "profit_if_wins": 58.39
       }
     ]
   }

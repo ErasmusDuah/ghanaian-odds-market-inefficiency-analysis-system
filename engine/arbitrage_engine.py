@@ -1,669 +1,551 @@
 import json
-import os
 from datetime import datetime
-from itertools import combinations
+from difflib import SequenceMatcher
 
 
 # ============================================================
-# ARBITRAGE DETECTION ENGINE
+# QUANT BET ALPHA - ARBITRAGE ENGINE
 # ============================================================
-# QUANT CONCEPT - STATISTICAL ARBITRAGE:
-# =======================================
-# Arbitrage in finance means exploiting price
-# differences for the same asset across markets
-#
-# In sports betting:
-# Asset = match outcome (Man Utd win)
-# Markets = different bookmakers
-# Price = odds
-#
-# When bookmakers disagree on odds enough
-# we can bet all outcomes and guarantee profit
-#
-# This is RISK FREE profit - same concept used
-# by hedge funds across stock exchanges!
+# Compares odds from Sportybet, Betway and Football.com Ghana
+# Finds guaranteed profit opportunities
+# Applies optimal stake sizing
 # ============================================================
 
-
-# Minimum profit threshold to consider an arb
-# 0.5% minimum - below this fees eat profit
 MIN_ARB_PROFIT = 0.5
-
-# Maximum profit threshold
-# Above 10% is suspicious - might be error
-MAX_ARB_PROFIT = 10.0
+MAX_ARB_PROFIT = 15.0
+TOTAL_CAPITAL = 500
 
 
-def calculate_arb_percentage(odds_list):
+def similar(a, b):
     """
-    Calculates arbitrage percentage for a set of odds
+    Checks how similar two team names are
 
-    QUANT CONCEPT - ARB FORMULA:
-    ==============================
-    For N outcomes with odds o1, o2, ... oN:
+    QUANT CONCEPT - FUZZY MATCHING:
+    =================================
+    Sportybet: "Man City"
+    Betway: "Manchester City"
+    Football.com: "Manchester City FC"
 
-    Arb Sum = 1/o1 + 1/o2 + ... + 1/oN
+    All same team — we need to match them!
+    SequenceMatcher gives similarity 0.0-1.0
+    We use 0.6 threshold = 60% similar
+    """
+    a = a.lower().strip()
+    b = b.lower().strip()
 
-    If Arb Sum < 1:
-    → Arbitrage EXISTS!
-    → Profit % = (1 - Arb Sum) / Arb Sum × 100
+    if a == b:
+        return True
+    if a in b or b in a:
+        return True
 
-    If Arb Sum >= 1:
-    → No arbitrage
-    → Bookmakers have edge
+    ratio = SequenceMatcher(None, a, b).ratio()
+    return ratio >= 0.6
+
+
+def match_all_platforms(all_matches):
+    """
+    Groups same match from different platforms together
+
+    QUANT CONCEPT - DATA JOINING:
+    ================================
+    Like SQL JOIN across 3 tables
+    Match on: home team + away team + date
+
+    Groups all platform versions of same
+    match together for comparison
+    """
+
+    groups = []
+    used = set()
+
+    for i, match_a in enumerate(all_matches):
+        if i in used:
+            continue
+
+        group = {
+            'matches': [match_a],
+            'sources': [match_a['source']]
+        }
+        used.add(i)
+
+        for j, match_b in enumerate(all_matches):
+            if j in used or i == j:
+                continue
+
+            if match_a['source'] == match_b['source']:
+                continue
+
+            home_a = match_a.get('home_team', '')
+            away_a = match_a.get('away_team', '')
+            home_b = match_b.get('home_team', '')
+            away_b = match_b.get('away_team', '')
+            date_a = match_a.get('kickoff', '')[:10]
+            date_b = match_b.get('kickoff', '')[:10]
+
+            if date_a == date_b and \
+                    similar(home_a, home_b) and \
+                    similar(away_a, away_b):
+                group['matches'].append(match_b)
+                group['sources'].append(match_b['source'])
+                used.add(j)
+
+        if len(group['matches']) > 1:
+            groups.append(group)
+
+    return groups
+
+
+def calculate_arb(odds_list):
+    """
+    Calculates arbitrage percentage
+
+    QUANT CONCEPT - ARBITRAGE FORMULA:
+    ====================================
+    Arb Sum = 1/odds1 + 1/odds2 + ... + 1/oddsN
+
+    If Arb Sum < 1 → ARBITRAGE EXISTS!
+    Profit % = (1 - Arb Sum) / Arb Sum × 100
 
     Example:
     odds = [2.50, 4.50, 3.20]
-    arb_sum = 1/2.50 + 1/4.50 + 1/3.20
-            = 0.400 + 0.222 + 0.313
-            = 0.935
-
-    0.935 < 1 → ARB EXISTS!
-    profit = (1 - 0.935) / 0.935 × 100
-           = 6.95%
+    sum = 0.400 + 0.222 + 0.313 = 0.935
+    Profit = (1-0.935)/0.935 × 100 = 6.95%!
     """
-    arb_sum = sum(1 / odds for odds in odds_list)
-    
+    if not all(o > 0 for o in odds_list):
+        return 0, 0
+
+    arb_sum = sum(1 / o for o in odds_list)
     if arb_sum < 1:
-        profit_percentage = ((1 - arb_sum) / arb_sum) * 100
-        return arb_sum, profit_percentage
-    
+        profit = ((1 - arb_sum) / arb_sum) * 100
+        return arb_sum, profit
+
     return arb_sum, 0
 
 
 def calculate_stakes(odds_list, total_stake):
     """
-    Calculates exact stake for each outcome
+    Calculates optimal stake for each outcome
 
     QUANT CONCEPT - OPTIMAL STAKE SIZING:
-    =======================================
-    For guaranteed equal profit on all outcomes:
-
+    ========================================
     Stake_i = (1/odds_i) / arb_sum × total_stake
 
-    This ensures EQUAL profit regardless
-    of which outcome occurs!
-
-    Example:
-    Total stake: GHS 1000
-    odds = [2.50, 4.50, 3.20]
-    arb_sum = 0.935
-
-    Stake 1 = (1/2.50) / 0.935 × 1000
-            = 0.400 / 0.935 × 1000
-            = GHS 427.81
-
-    Stake 2 = (1/4.50) / 0.935 × 1000
-            = 0.222 / 0.935 × 1000
-            = GHS 237.54
-
-    Stake 3 = (1/3.20) / 0.935 × 1000
-            = 0.313 / 0.935 × 1000
-            = GHS 334.65
-
-    Verify:
-    GHS 427.81 × 2.50 = GHS 1069.53 ✅
-    GHS 237.54 × 4.50 = GHS 1068.93 ✅
-    GHS 334.65 × 3.20 = GHS 1070.88 ✅
-
-    All outcomes = ~GHS 1070 profit! 🎉
+    Ensures EQUAL profit regardless of outcome!
     """
-    arb_sum = sum(1 / odds for odds in odds_list)
+    arb_sum = sum(1 / o for o in odds_list)
     stakes = []
-
     for odds in odds_list:
         stake = (1 / odds) / arb_sum * total_stake
         stakes.append(round(stake, 2))
-
     return stakes
 
 
 def calculate_profits(odds_list, stakes):
-    """
-    Calculates profit for each possible outcome
-
-    Shows exactly how much we win
-    regardless of match result
-    """
+    """Calculates profit for each possible outcome"""
+    total_staked = sum(stakes)
     profits = []
-
-    for i, (odds, stake) in enumerate(zip(odds_list, stakes)):
-        # Payout if this outcome wins
+    for odds, stake in zip(odds_list, stakes):
         payout = odds * stake
-        # Net profit (payout minus total staked)
-        total_staked = sum(stakes)
-        net_profit = payout - total_staked
-        profits.append(round(net_profit, 2))
-
+        profit = payout - total_staked
+        profits.append(round(profit, 2))
     return profits
 
 
-def find_arb_in_match(match, total_stake=1000):
+def get_best_odds(outcome_key, *platform_odds_pairs):
     """
-    Scans a single match for arbitrage opportunities
+    Gets best odds across all platforms for one outcome
 
-    QUANT CONCEPT - BEST ODDS SELECTION:
-    ======================================
-    For each outcome we want the HIGHEST odds
-    available across ALL bookmakers
+    Example:
+    get_best_odds('home',
+        (sb_odds, 'Sportybet'),
+        (bw_odds, 'Betway'),
+        (fc_odds, 'Football.com')
+    )
+    """
+    candidates = []
+    for odds_dict, platform_name in platform_odds_pairs:
+        if odds_dict and odds_dict.get(outcome_key, 0) > 0:
+            candidates.append(
+                (odds_dict.get(outcome_key, 0), platform_name)
+            )
 
-    This maximizes our potential profit
-    Same concept as best execution in
-    stock trading - always get best price!
+    if not candidates:
+        return 0, 'N/A'
 
-    Process:
-    1. For each outcome (home/draw/away)
-       find bookmaker offering highest odds
-    2. Combine best odds from different bookmakers
-    3. Check if combination creates arbitrage
-    4. Calculate stakes and profits
+    return max(candidates, key=lambda x: x[0])
+
+
+def scan_1x2_arb(pair, total_stake):
+    """
+    Scans 1X2 market for arbitrage across all 3 platforms
+
+    QUANT CONCEPT - BEST EXECUTION:
+    ==================================
+    For each outcome take the HIGHEST odds
+    available across ALL platforms
+
+    Home win → best of Sportybet/Betway/Football.com
+    Draw → best of Sportybet/Betway/Football.com
+    Away win → best of Sportybet/Betway/Football.com
+
+    This maximizes potential profit!
+    Same as best execution in stock trading
     """
 
-    home_team = match['home_team']
-    away_team = match['away_team']
+    sb_odds = pair['sportybet'].get('odds_1x2', {})
+    bw_odds = pair['betway'].get('odds_1x2', {})
+    fc_odds = pair['footballcom'].get('odds_1x2', {})
+
+    best_home = get_best_odds('home',
+        (sb_odds, 'Sportybet'),
+        (bw_odds, 'Betway'),
+        (fc_odds, 'Football.com')
+    )
+    best_draw = get_best_odds('draw',
+        (sb_odds, 'Sportybet'),
+        (bw_odds, 'Betway'),
+        (fc_odds, 'Football.com')
+    )
+    best_away = get_best_odds('away',
+        (sb_odds, 'Sportybet'),
+        (bw_odds, 'Betway'),
+        (fc_odds, 'Football.com')
+    )
+
+    if not all([best_home[0], best_draw[0], best_away[0]]):
+        return None
+
+    odds_list = [best_home[0], best_draw[0], best_away[0]]
+    arb_sum, profit_pct = calculate_arb(odds_list)
+
+    if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
+        stakes = calculate_stakes(odds_list, total_stake)
+        profits = calculate_profits(odds_list, stakes)
+
+        return {
+            'market': '1X2',
+            'arb_sum': round(arb_sum, 4),
+            'profit_pct': round(profit_pct, 2),
+            'profit_ghs': round(
+                total_stake * profit_pct / 100, 2),
+            'bets': [
+                {
+                    'outcome': 'Home Win',
+                    'platform': best_home[1],
+                    'odds': best_home[0],
+                    'stake': stakes[0],
+                    'profit_if_wins': profits[0]
+                },
+                {
+                    'outcome': 'Draw',
+                    'platform': best_draw[1],
+                    'odds': best_draw[0],
+                    'stake': stakes[1],
+                    'profit_if_wins': profits[1]
+                },
+                {
+                    'outcome': 'Away Win',
+                    'platform': best_away[1],
+                    'odds': best_away[0],
+                    'stake': stakes[2],
+                    'profit_if_wins': profits[2]
+                }
+            ]
+        }
+
+    return None
+
+
+def scan_ou_arb(pair, total_stake):
+    """Scans Over/Under 2.5 market for arbitrage"""
+
+    sb_ou = pair['sportybet'].get('odds_ou', {})
+    bw_ou = pair['betway'].get('odds_ou', {})
+    fc_ou = pair['footballcom'].get('odds_ou', {})
+
+    best_over = get_best_odds('over',
+        (sb_ou, 'Sportybet'),
+        (bw_ou, 'Betway'),
+        (fc_ou, 'Football.com')
+    )
+    best_under = get_best_odds('under',
+        (sb_ou, 'Sportybet'),
+        (bw_ou, 'Betway'),
+        (fc_ou, 'Football.com')
+    )
+
+    if not all([best_over[0], best_under[0]]):
+        return None
+
+    odds_list = [best_over[0], best_under[0]]
+    arb_sum, profit_pct = calculate_arb(odds_list)
+
+    if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
+        stakes = calculate_stakes(odds_list, total_stake)
+        profits = calculate_profits(odds_list, stakes)
+
+        return {
+            'market': 'Over/Under 2.5',
+            'arb_sum': round(arb_sum, 4),
+            'profit_pct': round(profit_pct, 2),
+            'profit_ghs': round(
+                total_stake * profit_pct / 100, 2),
+            'bets': [
+                {
+                    'outcome': 'Over 2.5',
+                    'platform': best_over[1],
+                    'odds': best_over[0],
+                    'stake': stakes[0],
+                    'profit_if_wins': profits[0]
+                },
+                {
+                    'outcome': 'Under 2.5',
+                    'platform': best_under[1],
+                    'odds': best_under[0],
+                    'stake': stakes[1],
+                    'profit_if_wins': profits[1]
+                }
+            ]
+        }
+
+    return None
+
+
+def scan_gg_arb(pair, total_stake):
+    """Scans GG/NG market for arbitrage"""
+
+    sb_gg = pair['sportybet'].get('odds_gg', {})
+    bw_gg = pair['betway'].get('odds_gg', {})
+    fc_gg = pair['footballcom'].get('odds_gg', {})
+
+    best_yes = get_best_odds('yes',
+        (sb_gg, 'Sportybet'),
+        (bw_gg, 'Betway'),
+        (fc_gg, 'Football.com')
+    )
+    best_no = get_best_odds('no',
+        (sb_gg, 'Sportybet'),
+        (bw_gg, 'Betway'),
+        (fc_gg, 'Football.com')
+    )
+
+    if not all([best_yes[0], best_no[0]]):
+        return None
+
+    odds_list = [best_yes[0], best_no[0]]
+    arb_sum, profit_pct = calculate_arb(odds_list)
+
+    if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
+        stakes = calculate_stakes(odds_list, total_stake)
+        profits = calculate_profits(odds_list, stakes)
+
+        return {
+            'market': 'GG/NG',
+            'arb_sum': round(arb_sum, 4),
+            'profit_pct': round(profit_pct, 2),
+            'profit_ghs': round(
+                total_stake * profit_pct / 100, 2),
+            'bets': [
+                {
+                    'outcome': 'GG Yes',
+                    'platform': best_yes[1],
+                    'odds': best_yes[0],
+                    'stake': stakes[0],
+                    'profit_if_wins': profits[0]
+                },
+                {
+                    'outcome': 'GG No',
+                    'platform': best_no[1],
+                    'odds': best_no[0],
+                    'stake': stakes[1],
+                    'profit_if_wins': profits[1]
+                }
+            ]
+        }
+
+    return None
+
+
+def display_opportunity(opp):
+    """Displays a single arbitrage opportunity"""
+
+    print(f"\n  {'='*55}")
+    print(f"  🏆 {opp['match']}")
+    print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
+    print(f"  {'='*55}")
+    print(f"  📊 Market: {opp['market']}")
+    print(f"  💰 Profit: {opp['profit_pct']:.2f}% "
+          f"= GHS {opp['profit_ghs']:.2f}")
+    print(f"  💵 Total Stake: GHS {TOTAL_CAPITAL}")
+    print(f"\n  📋 BETS TO PLACE:")
+
+    for bet in opp['bets']:
+        print(f"\n     🎯 {bet['platform']}")
+        print(f"        Bet: {bet['outcome']}")
+        print(f"        Odds: {bet['odds']}")
+        print(f"        Stake: GHS {bet['stake']:.2f}")
+        print(f"        Win: GHS {bet['profit_if_wins']:.2f}")
+
+
+def scan_all(sportybet_matches, betway_matches,
+             footballcom_matches=None,
+             total_stake=TOTAL_CAPITAL):
+    """
+    Main arbitrage scanner across all 3 platforms
+    """
+
+    if footballcom_matches is None:
+        footballcom_matches = []
+
+    print("\n" + "🔍 " * 20)
+    print("   ARBITRAGE SCANNER")
+    print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
+    print("🔍 " * 20 + "\n")
+
+    print(f"📊 Sportybet: {len(sportybet_matches)} matches")
+    print(f"📊 Betway: {len(betway_matches)} matches")
+    print(f"📊 Football.com: {len(footballcom_matches)} matches")
+
+    # Combine all matches
+    all_matches = (sportybet_matches +
+                   betway_matches +
+                   footballcom_matches)
+
+    # Find same matches across platforms
+    groups = match_all_platforms(all_matches)
+    print(f"\n✅ Matched across platforms: {len(groups)} events")
+
+    if not groups:
+        print("\n⚠️ No matching events found!")
+        print("💡 Try running all 3 scrapers first")
+        return []
+
+    # Scan each group for arb
     opportunities = []
+    print(f"\n🔍 Scanning {len(groups)} matched events...\n")
 
-    # --------------------------------------------------------
-    # SCAN 1X2 MARKET (Home/Draw/Away)
-    # --------------------------------------------------------
-    best_odds = {}  # outcome → {odds, bookmaker}
+    for group in groups:
+        matches = group['matches']
+        first = matches[0]
 
-    for bookmaker in match.get('bookmakers', []):
-        bookie_name = bookmaker['title']
+        match_name = (f"{first['home_team']} vs "
+                      f"{first['away_team']}")
+        kickoff = first['kickoff']
+        tournament = first['tournament']
 
-        for market in bookmaker.get('markets', []):
-            if market['key'] == 'h2h':
+        # Build pair with all platform data
+        empty = {
+            'odds_1x2': {},
+            'odds_ou': {},
+            'odds_gg': {}
+        }
 
-                for outcome in market['outcomes']:
-                    name = outcome['name']
-                    odds = outcome['price']
+        pair = {
+            'sportybet': next(
+                (m for m in matches
+                 if m['source'] == 'sportybet_gh'), empty),
+            'betway': next(
+                (m for m in matches
+                 if m['source'] == 'betway_gh'), empty),
+            'footballcom': next(
+                (m for m in matches
+                 if m['source'] == 'footballcom_gh'), empty),
+            'match': match_name,
+            'kickoff': kickoff,
+            'tournament': tournament
+        }
 
-                    # Keep highest odds for each outcome
-                    if name not in best_odds or \
-                            odds > best_odds[name]['odds']:
-                        best_odds[name] = {
-                            'odds': odds,
-                            'bookmaker': bookie_name
-                        }
+        # Scan all markets
+        for arb_fn in [scan_1x2_arb, scan_ou_arb, scan_gg_arb]:
+            arb = arb_fn(pair, total_stake)
+            if arb:
+                opp = {
+                    'match': match_name,
+                    'kickoff': kickoff,
+                    'tournament': tournament,
+                    **arb
+                }
+                opportunities.append(opp)
+                display_opportunity(opp)
 
-    # Check if we have all 3 outcomes
-    if len(best_odds) == 3:
-        outcomes = list(best_odds.keys())
-        odds_list = [best_odds[o]['odds'] for o in outcomes]
-        bookmakers = [best_odds[o]['bookmaker'] for o in outcomes]
+    # Summary
+    print(f"\n{'='*60}")
+    print(f"✅ SCAN COMPLETE!")
+    print(f"⚽ Events scanned: {len(groups)}")
+    print(f"🎯 Arb opportunities: {len(opportunities)}")
 
-        arb_sum, profit_pct = calculate_arb_percentage(odds_list)
+    if opportunities:
+        total_profit = sum(o['profit_ghs'] for o in opportunities)
+        best = max(opportunities,
+                   key=lambda x: x['profit_pct'])
+        print(f"💰 Total potential profit: GHS {total_profit:.2f}")
+        print(f"📈 Best: {best['profit_pct']:.2f}% "
+              f"on {best['match']}")
+    else:
+        print("💡 No arb opportunities right now")
+        print("   Try again closer to kickoff times")
+        print("   Best opportunities 2-3 hours before kickoff")
 
-        if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
-            stakes = calculate_stakes(odds_list, total_stake)
-            profits = calculate_profits(odds_list, stakes)
-
-            opportunities.append({
-                'match': f"{home_team} vs {away_team}",
-                'market': '1X2',
-                'arb_sum': round(arb_sum, 4),
-                'profit_percentage': round(profit_pct, 2),
-                'total_stake': total_stake,
-                'outcomes': [
-                    {
-                        'name': outcomes[i],
-                        'odds': odds_list[i],
-                        'bookmaker': bookmakers[i],
-                        'stake': stakes[i],
-                        'profit_if_wins': profits[i]
-                    }
-                    for i in range(len(outcomes))
-                ]
-            })
-
-    # --------------------------------------------------------
-    # SCAN OVER/UNDER MARKET
-    # --------------------------------------------------------
-    ou_markets = {}  # point → {over: {}, under: {}}
-
-    for bookmaker in match.get('bookmakers', []):
-        bookie_name = bookmaker['title']
-
-        for market in bookmaker.get('markets', []):
-            if market['key'] == 'totals':
-
-                for outcome in market['outcomes']:
-                    name = outcome['name']
-                    odds = outcome['price']
-                    point = str(outcome.get('point', '2.5'))
-
-                    if point not in ou_markets:
-                        ou_markets[point] = {}
-
-                    if name not in ou_markets[point] or \
-                            odds > ou_markets[point][name]['odds']:
-                        ou_markets[point][name] = {
-                            'odds': odds,
-                            'bookmaker': bookie_name
-                        }
-
-    # Check each Over/Under line
-    for point, sides in ou_markets.items():
-        if 'Over' in sides and 'Under' in sides:
-            odds_list = [sides['Over']['odds'], sides['Under']['odds']]
-            bookmakers = [sides['Over']['bookmaker'],
-                         sides['Under']['bookmaker']]
-
-            arb_sum, profit_pct = calculate_arb_percentage(odds_list)
-
-            if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
-                stakes = calculate_stakes(odds_list, total_stake)
-                profits = calculate_profits(odds_list, stakes)
-
-                opportunities.append({
-                    'match': f"{home_team} vs {away_team}",
-                    'market': f'Over/Under {point}',
-                    'arb_sum': round(arb_sum, 4),
-                    'profit_percentage': round(profit_pct, 2),
-                    'total_stake': total_stake,
-                    'outcomes': [
-                        {
-                            'name': f"Over {point}",
-                            'odds': odds_list[0],
-                            'bookmaker': bookmakers[0],
-                            'stake': stakes[0],
-                            'profit_if_wins': profits[0]
-                        },
-                        {
-                            'name': f"Under {point}",
-                            'odds': odds_list[1],
-                            'bookmaker': bookmakers[1],
-                            'stake': stakes[1],
-                            'profit_if_wins': profits[1]
-                        }
-                    ]
-                })
-
-    # --------------------------------------------------------
-    # SCAN BTTS MARKET (Both Teams To Score)
-    # --------------------------------------------------------
-    btts_best = {}
-
-    for bookmaker in match.get('bookmakers', []):
-        bookie_name = bookmaker['title']
-
-        for market in bookmaker.get('markets', []):
-            if market['key'] == 'btts':
-
-                for outcome in market['outcomes']:
-                    name = outcome['name']
-                    odds = outcome['price']
-
-                    if name not in btts_best or \
-                            odds > btts_best[name]['odds']:
-                        btts_best[name] = {
-                            'odds': odds,
-                            'bookmaker': bookie_name
-                        }
-
-    if 'Yes' in btts_best and 'No' in btts_best:
-        odds_list = [btts_best['Yes']['odds'],
-                    btts_best['No']['odds']]
-        bookmakers = [btts_best['Yes']['bookmaker'],
-                     btts_best['No']['bookmaker']]
-
-        arb_sum, profit_pct = calculate_arb_percentage(odds_list)
-
-        if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
-            stakes = calculate_stakes(odds_list, total_stake)
-            profits = calculate_profits(odds_list, stakes)
-
-            opportunities.append({
-                'match': f"{home_team} vs {away_team}",
-                'market': 'BTTS',
-                'arb_sum': round(arb_sum, 4),
-                'profit_percentage': round(profit_pct, 2),
-                'total_stake': total_stake,
-                'outcomes': [
-                    {
-                        'name': 'BTTS Yes',
-                        'odds': odds_list[0],
-                        'bookmaker': bookmakers[0],
-                        'stake': stakes[0],
-                        'profit_if_wins': profits[0]
-                    },
-                    {
-                        'name': 'BTTS No',
-                        'odds': odds_list[1],
-                        'bookmaker': bookmakers[1],
-                        'stake': stakes[1],
-                        'profit_if_wins': profits[1]
-                    }
-                ]
-            })
+    print(f"{'='*60}")
 
     return opportunities
 
 
-def display_opportunities(opportunities, currency='GHS'):
-    """
-    Displays arbitrage opportunities in clean format
-    """
-
-    if not opportunities:
-        print("  ❌ No arbitrage opportunities found")
-        return
-
-    print(f"\n  🎯 Found {len(opportunities)} opportunity/ies!")
-
-    for i, opp in enumerate(opportunities, 1):
-        print(f"\n  {'='*55}")
-        print(f"  🏆 OPPORTUNITY #{i}")
-        print(f"  {'='*55}")
-        print(f"  ⚽ Match: {opp['match']}")
-        print(f"  📊 Market: {opp['market']}")
-        print(f"  💰 Profit: {opp['profit_percentage']:.2f}%")
-        print(f"  💵 Total Stake: {currency} {opp['total_stake']:,.2f}")
-
-        profit_amount = opp['total_stake'] * \
-            opp['profit_percentage'] / 100
-        print(f"  ✅ Guaranteed Profit: "
-              f"{currency} {profit_amount:,.2f}")
-
-        print(f"\n  📋 BETS TO PLACE:")
-        for outcome in opp['outcomes']:
-            print(f"\n     📌 {outcome['bookmaker']}")
-            print(f"        Bet: {outcome['name']}")
-            print(f"        Odds: {outcome['odds']}")
-            print(f"        Stake: {currency} {outcome['stake']:,.2f}")
-            print(f"        Profit if wins: "
-                  f"{currency} {outcome['profit_if_wins']:,.2f}")
-
-
-def scan_all_matches(all_odds, total_stake=1000, currency='GHS'):
-    """
-    Scans ALL matches across ALL leagues
-    for arbitrage opportunities
-
-    This is our main scanning engine!
-    """
-
-    print("\n" + "🔍 " * 20)
-    print("   ARBITRAGE SCANNER RUNNING...")
-    print("🔍 " * 20)
-    print(f"\n🕐 Scan time: {datetime.now().strftime('%H:%M:%S')}")
-    print(f"💵 Total stake per trade: {currency} {total_stake:,}")
-    print(f"📊 Minimum profit threshold: {MIN_ARB_PROFIT}%")
-
-    all_opportunities = []
-    total_matches_scanned = 0
-
-    for sport, matches in all_odds.items():
-        print(f"\n⚽ Scanning {sport}...")
-        print(f"   {len(matches)} matches to check")
-
-        for match in matches:
-            total_matches_scanned += 1
-            opps = find_arb_in_match(match, total_stake)
-
-            if opps:
-                all_opportunities.extend(opps)
-                display_opportunities(opps, currency)
-
-    # Final summary
-    print("\n" + "=" * 60)
-    print("📊 ARBITRAGE SCAN COMPLETE!")
-    print(f"⚽ Matches scanned: {total_matches_scanned}")
-    print(f"🎯 Opportunities found: {len(all_opportunities)}")
-
-    if all_opportunities:
-        total_profit = sum(
-            o['total_stake'] * o['profit_percentage'] / 100
-            for o in all_opportunities
-        )
-        print(f"💰 Total potential profit: "
-              f"{currency} {total_profit:,.2f}")
-        print(f"📈 Best opportunity: "
-              f"{max(all_opportunities, key=lambda x: x['profit_percentage'])['profit_percentage']:.2f}%")
-
-    print("=" * 60)
-
-    return all_opportunities
-
-
-# ============================================================
-# TEST WITH MOCK DATA
-# ============================================================
-# Since no matches are live right now
-# we test with realistic mock odds
-# This proves our engine works correctly!
-# ============================================================
-
-def create_mock_data():
-    """
-    Creates realistic mock odds data for testing
-
-    These odds are based on real bookmaker
-    patterns we'd see on a match day
-    Some contain deliberate arb opportunities
-    so we can verify our engine works!
-    """
-
-    return {
-        'soccer_epl': [
-            {
-                'home_team': 'Manchester United',
-                'away_team': 'Arsenal',
-                'commence_time': '2026-03-14T15:00:00Z',
-                'bookmakers': [
-                    {
-                        'title': 'Betway',
-                        'markets': [
-                            {
-                                'key': 'h2h',
-                                'outcomes': [
-                                    {'name': 'Manchester United',
-                                     'price': 2.50},
-                                    {'name': 'Arsenal', 'price': 2.80},
-                                    {'name': 'Draw', 'price': 3.20}
-                                ]
-                            },
-                            {
-                                'key': 'totals',
-                                'outcomes': [
-                                    {'name': 'Over', 'point': 2.5,
-                                     'price': 2.10},
-                                    {'name': 'Under', 'point': 2.5,
-                                     'price': 1.85}
-                                ]
-                            },
-                            {
-                                'key': 'btts',
-                                'outcomes': [
-                                    {'name': 'Yes', 'price': 1.90},
-                                    {'name': 'No', 'price': 2.05}
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'title': 'Sportybet',
-                        'markets': [
-                            {
-                                'key': 'h2h',
-                                'outcomes': [
-                                    {'name': 'Manchester United',
-                                     'price': 2.40},
-                                    {'name': 'Arsenal', 'price': 3.10},
-                                    {'name': 'Draw', 'price': 3.40}
-                                ]
-                            },
-                            {
-                                'key': 'totals',
-                                'outcomes': [
-                                    {'name': 'Over', 'point': 2.5,
-                                     'price': 1.95},
-                                    {'name': 'Under', 'point': 2.5,
-                                     'price': 2.10}
-                                ]
-                            },
-                            {
-                                'key': 'btts',
-                                'outcomes': [
-                                    {'name': 'Yes', 'price': 2.05},
-                                    {'name': 'No', 'price': 1.90}
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'title': '1xBet',
-                        'markets': [
-                            {
-                                'key': 'h2h',
-                                'outcomes': [
-                                    {'name': 'Manchester United',
-                                     'price': 2.60},
-                                    {'name': 'Arsenal', 'price': 2.90},
-                                    {'name': 'Draw', 'price': 3.50}
-                                ]
-                            },
-                            {
-                                'key': 'totals',
-                                'outcomes': [
-                                    {'name': 'Over', 'point': 2.5,
-                                     'price': 2.20},
-                                    {'name': 'Under', 'point': 2.5,
-                                     'price': 1.80}
-                                ]
-                            },
-                            {
-                                'key': 'btts',
-                                'outcomes': [
-                                    {'name': 'Yes', 'price': 2.10},
-                                    {'name': 'No', 'price': 1.95}
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                'home_team': 'Chelsea',
-                'away_team': 'Liverpool',
-                'commence_time': '2026-03-14T17:30:00Z',
-                'bookmakers': [
-                    {
-                        'title': 'Betway',
-                        'markets': [
-                            {
-                                'key': 'h2h',
-                                'outcomes': [
-                                    {'name': 'Chelsea', 'price': 3.10},
-                                    {'name': 'Liverpool', 'price': 2.30},
-                                    {'name': 'Draw', 'price': 3.40}
-                                ]
-                            },
-                            {
-                                'key': 'totals',
-                                'outcomes': [
-                                    {'name': 'Over', 'point': 2.5,
-                                     'price': 1.85},
-                                    {'name': 'Under', 'point': 2.5,
-                                     'price': 2.10}
-                                ]
-                            },
-                            {
-                                'key': 'btts',
-                                'outcomes': [
-                                    {'name': 'Yes', 'price': 1.80},
-                                    {'name': 'No', 'price': 2.20}
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'title': 'Sportybet',
-                        'markets': [
-                            {
-                                'key': 'h2h',
-                                'outcomes': [
-                                    {'name': 'Chelsea', 'price': 2.90},
-                                    {'name': 'Liverpool', 'price': 2.50},
-                                    {'name': 'Draw', 'price': 3.60}
-                                ]
-                            },
-                            {
-                                'key': 'totals',
-                                'outcomes': [
-                                    {'name': 'Over', 'point': 2.5,
-                                     'price': 2.05},
-                                    {'name': 'Under', 'point': 2.5,
-                                     'price': 1.90}
-                                ]
-                            },
-                            {
-                                'key': 'btts',
-                                'outcomes': [
-                                    {'name': 'Yes', 'price': 2.15},
-                                    {'name': 'No', 'price': 1.85}
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'title': '1xBet',
-                        'markets': [
-                            {
-                                'key': 'h2h',
-                                'outcomes': [
-                                    {'name': 'Chelsea', 'price': 3.20},
-                                    {'name': 'Liverpool', 'price': 2.40},
-                                    {'name': 'Draw', 'price': 3.30}
-                                ]
-                            },
-                            {
-                                'key': 'totals',
-                                'outcomes': [
-                                    {'name': 'Over', 'point': 2.5,
-                                     'price': 1.95},
-                                    {'name': 'Under', 'point': 2.5,
-                                     'price': 2.00}
-                                ]
-                            },
-                            {
-                                'key': 'btts',
-                                'outcomes': [
-                                    {'name': 'Yes', 'price': 1.95},
-                                    {'name': 'No', 'price': 2.10}
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
-
-
-if __name__ == "__main__":
+def run():
+    """Loads saved odds and runs arbitrage scan"""
 
     print("\n" + "🚀 " * 20)
     print("   QUANT BET ALPHA - ARBITRAGE ENGINE")
-    print("   Testing with mock data...")
-    print("🚀 " * 20)
+    print("🚀 " * 20 + "\n")
 
-    # Create mock data
-    mock_data = create_mock_data()
+    sportybet_matches = []
+    betway_matches = []
+    footballcom_matches = []
 
-    # Run arbitrage scanner
-    # Total stake = GHS 500 (your starting capital)
-    opportunities = scan_all_matches(
-        mock_data,
-        total_stake=500,
-        currency='GHS'
+    try:
+        with open('data/sportybet_odds.json') as f:
+            sportybet_matches = json.load(f)
+        print(f"✅ Sportybet: {len(sportybet_matches)} matches")
+    except FileNotFoundError:
+        print("❌ sportybet_odds.json not found!")
+        print("   Run: python data/sportybet.py first")
+
+    try:
+        with open('data/betway_odds.json') as f:
+            betway_matches = json.load(f)
+        print(f"✅ Betway: {len(betway_matches)} matches")
+    except FileNotFoundError:
+        print("❌ betway_odds.json not found!")
+        print("   Run: python data/betway.py first")
+
+    try:
+        with open('data/footballcom_odds.json') as f:
+            footballcom_matches = json.load(f)
+        print(f"✅ Football.com: {len(footballcom_matches)} matches")
+    except FileNotFoundError:
+        print("❌ footballcom_odds.json not found!")
+        print("   Run: python data/footballcom.py first")
+
+    if not any([sportybet_matches,
+                betway_matches,
+                footballcom_matches]):
+        print("\n❌ No odds data found!")
+        return []
+
+    opportunities = scan_all(
+        sportybet_matches,
+        betway_matches,
+        footballcom_matches,
+        total_stake=TOTAL_CAPITAL
     )
 
-    # Save opportunities to file
     if opportunities:
         with open('engine/opportunities.json', 'w') as f:
             json.dump(opportunities, f, indent=2)
-        print("\n💾 Opportunities saved to engine/opportunities.json")
+        print(f"\n💾 Saved to engine/opportunities.json")
 
-    print("\n✅ Engine test complete!")
-    print("💡 Wednesday: plug in real odds and find real arb!")
+    return opportunities
+
+
+if __name__ == "__main__":
+    run()
