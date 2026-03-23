@@ -68,30 +68,30 @@
     "kickoff": "2026-03-21 14:30",
     "tournament": "Bundesliga",
     "market": "1X2",
-    "arb_sum": 0.9029,
-    "profit_pct": 10.76,
-    "profit_ghs": 53.78,
+    "arb_sum": 0.9049,
+    "profit_pct": 10.51,
+    "profit_ghs": 52.53,
     "bets": [
       {
         "outcome": "Home Win",
         "platform": "Betway",
         "odds": 2.8,
-        "stake": 197.78,
-        "profit_if_wins": 53.78
+        "stake": 197.33,
+        "profit_if_wins": 52.53
       },
       {
         "outcome": "Draw",
         "platform": "Betway",
         "odds": 4.4,
-        "stake": 125.86,
-        "profit_if_wins": 53.78
+        "stake": 125.57,
+        "profit_if_wins": 52.52
       },
       {
         "outcome": "Away Win",
         "platform": "Sportybet",
-        "odds": 3.14,
-        "stake": 176.36,
-        "profit_if_wins": 53.77
+        "odds": 3.12,
+        "stake": 177.09,
+        "profit_if_wins": 52.53
       }
     ]
   },

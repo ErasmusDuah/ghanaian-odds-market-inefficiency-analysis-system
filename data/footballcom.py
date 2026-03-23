@@ -158,7 +158,7 @@ def display_matches(matches):
     print(f"📊 With 1X2 odds: {len(with_odds)}")
     print("=" * 50)
 
-    for match in with_odds[:10]:
+    for match in with_odds:
         print(f"\n⚽ {match['home_team']} vs {match['away_team']}")
         print(f"🏆 {match['tournament']}")
         print(f"🕐 {match['kickoff']}")
@@ -172,8 +172,6 @@ def display_matches(matches):
             gg = match['odds_gg']
             print(f"GG/NG: Yes {gg['yes']} | No {gg['no']}")
 
-    if len(with_odds) > 10:
-        print(f"\n... and {len(with_odds) - 10} more matches")
 
 
 def run():

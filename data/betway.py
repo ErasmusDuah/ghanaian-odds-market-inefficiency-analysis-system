@@ -36,8 +36,6 @@ async def scrape_betway():
                     print(f"     Events: {len(raw_data['events'])}")
                     print(f"     Markets: {len(raw_data['markets'])}")
                     print(f"     Prices: {len(raw_data['prices'])}")
-
-                    
                 except Exception as e:
                     print(f"  ❌ Error: {e}")
 
@@ -53,7 +51,7 @@ async def scrape_betway():
         except Exception as e:
             print(f"⚠️ {str(e)[:60]}")
 
-        await page.wait_for_timeout(8000)
+        await page.wait_for_timeout(15000)
         await browser.close()
 
     if not raw_data:
@@ -64,16 +62,12 @@ async def scrape_betway():
 
 
 def parse_betway_data(raw_data):
-    """
-    Parses Betway relational data into standard format
-    """
 
     events = raw_data.get('events', [])
     markets = raw_data.get('markets', [])
     outcomes = raw_data.get('outcomes', [])
     prices = raw_data.get('prices', [])
 
-    # Build lookup maps
     price_map = {
         p.get('outcomeId'): p.get('priceDecimal', 0)
         for p in prices
@@ -112,7 +106,6 @@ def parse_betway_data(raw_data):
         kickoff_dt = datetime.fromtimestamp(kickoff_epoch)
         hours_away = (kickoff_dt - now).total_seconds() / 3600
 
-        # Include live and upcoming 48hrs
         if hours_away < -2 or hours_away > 48:
             continue
 
@@ -137,48 +130,51 @@ def parse_betway_data(raw_data):
             market_id = market.get('marketId', '')
             is_suspended = market.get('isSuspended', True)
 
-            if is_suspended:
-                continue
+            # Allow suspended markets close to kickoff
+            # as odds still valid
+            pass
 
             market_outcomes = outcomes_by_market.get(market_id, [])
 
-            # 1X2
-            if 'win/draw/win' in market_name or \
-                    '1x2' in market_name or \
-                    'match betting' in market_name or \
-                    'match result' in market_name:
-                # Sort outcomes by index to get home/draw/away order
-                sorted_outcomes = sorted(
-                    market_outcomes,
-                    key=lambda x: x.get('index', 0)
-                )
-                if len(sorted_outcomes) >= 3:
-                    home_out = sorted_outcomes[0]
-                    draw_out = sorted_outcomes[1]
-                    away_out = sorted_outcomes[2]
-                else:
-                    home_out = draw_out = away_out = None
+            if not market_outcomes:
+                continue
 
-                if home_out and draw_out and away_out:
-                    match['odds_1x2'] = {
-                        'home': price_map.get(
-                            home_out.get('outcomeId'), 0),
-                        'draw': price_map.get(
-                            draw_out.get('outcomeId'), 0),
-                        'away': price_map.get(
-                            away_out.get('outcomeId'), 0)
-                    }
+            # 1X2
+            if '[win/draw/win]' in market_name or \
+                    market_name == '1x2':
+
+                sorted_out = sorted(
+                    market_outcomes,
+                    key=lambda x: x.get('index', 999)
+                )
+
+                if len(sorted_out) >= 3:
+                    home_price = price_map.get(
+                        sorted_out[0].get('outcomeId'), 0)
+                    draw_price = price_map.get(
+                        sorted_out[1].get('outcomeId'), 0)
+                    away_price = price_map.get(
+                        sorted_out[2].get('outcomeId'), 0)
+
+                    if home_price > 1 and \
+                            draw_price > 1 and \
+                            away_price > 1:
+                        match['odds_1x2'] = {
+                            'home': home_price,
+                            'draw': draw_price,
+                            'away': away_price
+                        }
 
             # Over/Under 2.5
-            if 'total goals' in market_name:
-                over_out = next((o for o in market_outcomes
-                                if 'over' in o.get(
-                                    'name', '').lower() and
-                                '2.5' in o.get('name', '')), None)
-                under_out = next((o for o in market_outcomes
-                                 if 'under' in o.get(
-                                     'name', '').lower() and
-                                 '2.5' in o.get('name', '')), None)
+            if '[total goals]' in market_name:
+                over_out = next(
+                    (o for o in market_outcomes
+                     if 'over' in o.get('name', '').lower() and
+                     '2.5' in o.get('name', '')), None)
+                under_out = next(
+                    (o for o in market_outcomes
+                     if 'under' in o.get('name', '').lower() and
+                     '2.5' in o.get('name', '')), None)
 
                 if over_out and under_out:
                     match['odds_ou'] = {
@@ -190,13 +186,13 @@ def parse_betway_data(raw_data):
                     }
 
             # BTTS
-            if 'both teams to score' in market_name:
-                yes_out = next((o for o in market_outcomes
-                               if 'yes' in o.get(
-                                   'name', '').lower()), None)
-                no_out = next((o for o in market_outcomes
-                              if 'no' in o.get(
-                                  'name', '').lower()), None)
+            if '[both teams to score]' in market_name:
+                yes_out = next(
+                    (o for o in market_outcomes
+                     if 'yes' in o.get('name', '').lower()), None)
+                no_out = next(
+                    (o for o in market_outcomes
+                     if 'no' in o.get('name', '').lower()), None)
 
                 if yes_out and no_out:
                     match['odds_gg'] = {
@@ -206,7 +202,11 @@ def parse_betway_data(raw_data):
                             no_out.get('outcomeId'), 0)
                     }
 
-        matches.append(match)
+        o = match['odds_1x2']
+        if o.get('home', 0) > 1 and \
+                o.get('draw', 0) > 1 and \
+                o.get('away', 0) > 1:
+            matches.append(match)
 
     return matches
 
@@ -220,7 +220,7 @@ def display_matches(matches):
     print(f"⚽ Total matches: {len(matches)}")
     print("=" * 50)
 
-    for match in matches[:10]:
+    for match in matches:
         live_tag = "🔴 LIVE" if match.get('is_live') else ""
         print(f"\n⚽ {match['home_team']} vs "
               f"{match['away_team']} {live_tag}")
@@ -231,7 +231,7 @@ def display_matches(matches):
             o = match['odds_1x2']
             print(f"1X2: {o['home']} | {o['draw']} | {o['away']}")
         else:
-            print("1X2: No odds yet")
+            print("1X2: No odds")
 
         if match['odds_ou']:
             ou = match['odds_ou']
@@ -240,9 +240,6 @@ def display_matches(matches):
         if match['odds_gg']:
             gg = match['odds_gg']
             print(f"GG/NG: Yes {gg['yes']} | No {gg['no']}")
-
-    if len(matches) > 10:
-        print(f"\n... and {len(matches) - 10} more matches")
 
 
 def run():

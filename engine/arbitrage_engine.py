@@ -11,7 +11,7 @@ from difflib import SequenceMatcher
 # Applies optimal stake sizing
 # ============================================================
 
-MIN_ARB_PROFIT = 0.5
+MIN_ARB_PROFIT = 0.1
 MAX_ARB_PROFIT = 15.0
 TOTAL_CAPITAL = 500
 
