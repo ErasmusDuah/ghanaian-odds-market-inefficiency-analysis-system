@@ -103,6 +103,9 @@ async def scrape_all_matches():
             page_num += 1
             await asyncio.sleep(0.3)
 
+    # Sort by kickoff time
+    all_matches.sort(key=lambda x: x['kickoff'])
+
     print(f"\n✅ Total matches fetched: {len(all_matches)}")
     return all_matches
 
@@ -150,8 +153,9 @@ def parse_event(event, tournament_name='', now=None):
     else:
         return None
 
-    is_live = status not in ['Not start', 'not_start',
-                             'NotStart', '']
+    is_live = status in ['Living', 'living', 'live',
+                         'Live', 'LIVE', 'inprogress',
+                         'InProgress', 'in_progress']
 
     match = {
         'home_team': home_team,
@@ -204,34 +208,66 @@ def display_matches(matches):
 
     with_odds = [m for m in matches if m['odds_1x2']]
     print(f"\n📋 SPORTYBET GHANA")
-    print(f"⚽ Total matches: {len(matches)}")
+    print(f"⚽ Total matches fetched: {len(matches)}")
     print(f"📊 With 1X2 odds: {len(with_odds)}")
     print("=" * 50)
 
-    for match in with_odds:
-        live_tag = "🔴 LIVE" if match.get('is_live') else ""
-        print(f"\n⚽ {match['home_team']} vs "
-              f"{match['away_team']} {live_tag}")
-        print(f"🏆 {match['tournament']}")
-        print(f"🕐 {match['kickoff']}")
-        o = match['odds_1x2']
-        print(f"1X2: {o['home']} | {o['draw']} | {o['away']}")
-        if match['odds_ou']:
-            ou = match['odds_ou']
-            print(f"O/U 2.5: Over {ou['over']} | "
-                  f"Under {ou['under']}")
-        if match['odds_gg']:
-            gg = match['odds_gg']
-            print(f"GG/NG: Yes {gg['yes']} | No {gg['no']}")
+    # Show first 10 as sample
+    print("\n📝 Sample (first 10 matches):")
+    for match in with_odds[:10]:
+        live_tag = "🔴" if match.get('is_live') else ""
+        print(f"  {live_tag} {match['home_team']} vs "
+              f"{match['away_team']} | "
+              f"{match['kickoff']} | "
+              f"{match['tournament']}")
 
+    if len(with_odds) > 10:
+        print(f"\n  ... and {len(with_odds) - 10} more matches")
+    print("=" * 50)
 
 def run():
     matches = asyncio.run(scrape_all_matches())
     if matches:
         display_matches(matches)
+
+        # Save JSON
         with open('data/sportybet_odds.json', 'w') as f:
             json.dump(matches, f, indent=2)
-        print(f"\n💾 Saved to data/sportybet_odds.json")
+
+        # Save readable text file
+        with open('data/sportybet_matches.txt', 'w',
+                  encoding='utf-8') as f:
+            f.write(f"SPORTYBET GHANA - ALL MATCHES\n")
+            f.write(f"Generated: "
+                    f"{datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}\n")
+            f.write(f"Total: {len(matches)} matches\n")
+            f.write("=" * 60 + "\n\n")
+
+            for match in matches:
+                live_tag = "🔴 LIVE" if match.get(
+                    'is_live') else ""
+                f.write(f"⚽ {match['home_team']} vs "
+                        f"{match['away_team']} {live_tag}\n")
+                f.write(f"🏆 {match['tournament']}\n")
+                f.write(f"🕐 {match['kickoff']}\n")
+
+                if match['odds_1x2']:
+                    o = match['odds_1x2']
+                    f.write(f"1X2: {o['home']} | "
+                            f"{o['draw']} | {o['away']}\n")
+                if match['odds_ou']:
+                    ou = match['odds_ou']
+                    f.write(f"O/U 2.5: Over {ou['over']} | "
+                            f"Under {ou['under']}\n")
+                if match['odds_gg']:
+                    gg = match['odds_gg']
+                    f.write(f"GG/NG: Yes {gg['yes']} | "
+                            f"No {gg['no']}\n")
+                f.write("\n")
+
+        print(f"💾 Saved to data/sportybet_odds.json")
+        print(f"📄 Full list saved to data/sportybet_matches.txt")
+        print(f"   Open the .txt file to see all 224 matches!")
     else:
         print("\n⚠️ No matches found")
     return matches

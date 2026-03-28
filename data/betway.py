@@ -1,20 +1,25 @@
 import asyncio
 from playwright.async_api import async_playwright
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+import aiohttp
 
 
-BETWAY_URL = 'https://www.betway.com.gh/sport/soccer/'
+BETWAY_UPCOMING_URL = (
+    'https://www.betway.com.gh/sportsapi/br/v1/BetBook/Upcoming/'
+    '?countryCode=GH&sportId=soccer'
+    '&Skip={skip}&Take=100&cultureCode=en-US'
+    '&isEsport=false&boostedOnly=false'
+    '&marketTypes=%5BWin%2FDraw%2FWin%5D'
+    '&marketTypes=%5BBoth%20Teams%20To%20Score%5D'
+    '&marketTypes=%5BTotal%20Goals%5D'
+)
+
+BETWAY_HOME_URL = 'https://www.betway.com.gh/sport/soccer/'
 
 
-async def scrape_betway():
-    print("\n" + "🔵 " * 20)
-    print("   BETWAY GHANA SCRAPER")
-    print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🔵 " * 20 + "\n")
-
-    raw_data = {}
-
+async def get_cookies():
+    """Gets session cookies from Betway via browser"""
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
@@ -23,45 +28,114 @@ async def scrape_betway():
                       'Chrome/120.0.0.0 Safari/537.36'
         )
         page = await context.new_page()
-
-        async def handle_response(response):
-            if 'BetBook/Highlights' in response.url:
-                try:
-                    data = await response.json()
-                    raw_data['events'] = data.get('events', [])
-                    raw_data['markets'] = data.get('markets', [])
-                    raw_data['outcomes'] = data.get('outcomes', [])
-                    raw_data['prices'] = data.get('prices', [])
-                    print(f"  ✅ Captured Betway data!")
-                    print(f"     Events: {len(raw_data['events'])}")
-                    print(f"     Markets: {len(raw_data['markets'])}")
-                    print(f"     Prices: {len(raw_data['prices'])}")
-                except Exception as e:
-                    print(f"  ❌ Error: {e}")
-
-        page.on('response', handle_response)
-
-        print("🌐 Loading Betway Ghana...")
         try:
-            await page.goto(
-                BETWAY_URL,
-                timeout=60000,
-                wait_until='domcontentloaded'
-            )
-        except Exception as e:
-            print(f"⚠️ {str(e)[:60]}")
-
-        await page.wait_for_timeout(15000)
+            await page.goto(BETWAY_HOME_URL, timeout=30000,
+                           wait_until='domcontentloaded')
+            await page.wait_for_timeout(3000)
+        except Exception:
+            pass
+        cookies = await context.cookies()
         await browser.close()
-
-    if not raw_data:
-        print("❌ No data captured!")
-        return []
-
-    return parse_betway_data(raw_data)
+        return {c['name']: c['value'] for c in cookies}
 
 
-def parse_betway_data(raw_data):
+async def fetch_page(session, skip, headers):
+    """Fetches a page of upcoming matches"""
+    url = BETWAY_UPCOMING_URL.format(skip=skip)
+    try:
+        async with session.get(
+                url, headers=headers,
+                timeout=aiohttp.ClientTimeout(total=15)
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+    except Exception as e:
+        print(f"  ❌ Error: {e}")
+    return None
+
+
+async def scrape_betway():
+    print("\n" + "🔵 " * 20)
+    print("   BETWAY GHANA SCRAPER")
+    print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
+    print("🔵 " * 20 + "\n")
+
+    print("🌐 Getting Betway session...")
+    cookies = await get_cookies()
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                     'AppleWebKit/537.36 (KHTML, like Gecko) '
+                     'Chrome/120.0.0.0 Safari/537.36',
+        'Referer': BETWAY_HOME_URL,
+        'Accept': 'application/json',
+    }
+
+    all_events = []
+    all_markets = []
+    all_outcomes = []
+    all_prices = []
+
+    now = datetime.now()
+    today = now.date()
+    tomorrow = (now + timedelta(days=1)).date()
+
+    async with aiohttp.ClientSession(cookies=cookies) as session:
+
+        print("📅 Fetching today's matches...")
+        skip = 0
+
+        while True:
+            data = await fetch_page(session, skip, headers)
+            if not data:
+                break
+
+            events = data.get('events', [])
+            markets = data.get('markets', [])
+            outcomes = data.get('outcomes', [])
+            prices = data.get('prices', [])
+
+            if not events:
+                break
+
+            # Filter to today/tomorrow only
+            valid_events = []
+            stop = False
+            for event in events:
+                epoch = event.get('expectedStartEpoch', 0)
+                kickoff_dt = datetime.fromtimestamp(epoch)
+                if kickoff_dt.date() in [today, tomorrow]:
+                    valid_events.append(event)
+                elif kickoff_dt.date() > tomorrow:
+                    stop = True
+                    break
+
+            all_events.extend(valid_events)
+            all_markets.extend(markets)
+            all_outcomes.extend(outcomes)
+            all_prices.extend(prices)
+
+            print(f"  ✅ Skip {skip}: {len(valid_events)} matches "
+                  f"(Total: {len(all_events)})")
+
+            if stop or len(valid_events) < len(events):
+                break
+
+            skip += 100
+
+    print(f"\n✅ Total events fetched: {len(all_events)}")
+
+    raw_data = {
+        'events': all_events,
+        'markets': all_markets,
+        'outcomes': all_outcomes,
+        'prices': all_prices
+    }
+
+    return parse_betway_data(raw_data, today, tomorrow)
+
+
+def parse_betway_data(raw_data, today, tomorrow):
 
     events = raw_data.get('events', [])
     markets = raw_data.get('markets', [])
@@ -89,8 +163,8 @@ def parse_betway_data(raw_data):
                 outcomes_by_market[market_id] = []
             outcomes_by_market[market_id].append(outcome)
 
-    matches = []
-    now = datetime.now()
+    today_matches = []
+    tomorrow_matches = []
 
     for event in events:
         event_id = event.get('eventId')
@@ -103,12 +177,15 @@ def parse_betway_data(raw_data):
         if not home_team or not away_team:
             continue
 
-        kickoff_dt = datetime.fromtimestamp(kickoff_epoch)
-        hours_away = (kickoff_dt - now).total_seconds() / 3600
-
-        if hours_away < -2 or hours_away > 48:
+        # Skip esports/virtual matches
+        esports_keywords = [
+            'eadriatic', 'gt league', 'esport',
+            'virtual', 'cyber', 'esoccer', 'e-soccer'
+        ]
+        if any(k in league.lower() for k in esports_keywords):
             continue
 
+        kickoff_dt = datetime.fromtimestamp(kickoff_epoch)
         kickoff = kickoff_dt.strftime('%Y-%m-%d %H:%M')
 
         match = {
@@ -128,13 +205,9 @@ def parse_betway_data(raw_data):
         for market in event_markets:
             market_name = market.get('name', '').lower()
             market_id = market.get('marketId', '')
-            is_suspended = market.get('isSuspended', True)
 
-            # Allow suspended markets close to kickoff
-            # as odds still valid
-            pass
-
-            market_outcomes = outcomes_by_market.get(market_id, [])
+            market_outcomes = outcomes_by_market.get(
+                market_id, [])
 
             if not market_outcomes:
                 continue
@@ -166,15 +239,19 @@ def parse_betway_data(raw_data):
                         }
 
             # Over/Under 2.5
-            if '[total goals]' in market_name:
+            if '[total goals]' in market_name or \
+                    'total=' in market_id.lower() or \
+                    'total' in market_name:
                 over_out = next(
                     (o for o in market_outcomes
-                     if 'over' in o.get('name', '').lower() and
-                     '2.5' in o.get('name', '')), None)
+                     if '2.5' in o.get('outcomeId', '') and
+                     o.get('outcomeId', '').endswith('12')),
+                    None)
                 under_out = next(
                     (o for o in market_outcomes
-                     if 'under' in o.get('name', '').lower() and
-                     '2.5' in o.get('name', '')), None)
+                     if '2.5' in o.get('outcomeId', '') and
+                     not o.get('outcomeId', '').endswith('12')),
+                    None)
 
                 if over_out and under_out:
                     match['odds_ou'] = {
@@ -206,8 +283,20 @@ def parse_betway_data(raw_data):
         if o.get('home', 0) > 1 and \
                 o.get('draw', 0) > 1 and \
                 o.get('away', 0) > 1:
-            matches.append(match)
+            if kickoff_dt.date() == today:
+                today_matches.append(match)
+            else:
+                tomorrow_matches.append(match)
 
+    if today_matches:
+        matches = today_matches
+        print(f"  📅 Today's matches: {len(matches)}")
+    else:
+        matches = tomorrow_matches
+        print(f"  📅 No today matches — "
+              f"using tomorrow: {len(matches)}")
+
+    matches.sort(key=lambda x: x['kickoff'])
     return matches
 
 
@@ -216,30 +305,21 @@ def display_matches(matches):
         print("⚠️ No matches found!")
         return
 
-    print(f"\n📋 BETWAY GHANA - NEXT 48 HOURS")
+    print(f"\n📋 BETWAY GHANA")
     print(f"⚽ Total matches: {len(matches)}")
     print("=" * 50)
 
-    for match in matches:
-        live_tag = "🔴 LIVE" if match.get('is_live') else ""
-        print(f"\n⚽ {match['home_team']} vs "
-              f"{match['away_team']} {live_tag}")
-        print(f"🏆 {match['tournament']}")
-        print(f"🕐 {match['kickoff']}")
+    print("\n📝 Sample (first 10 matches):")
+    for match in matches[:10]:
+        live_tag = "🔴" if match.get('is_live') else ""
+        print(f"  {live_tag} {match['home_team']} vs "
+              f"{match['away_team']} | "
+              f"{match['kickoff']} | "
+              f"{match['tournament']}")
 
-        if match['odds_1x2']:
-            o = match['odds_1x2']
-            print(f"1X2: {o['home']} | {o['draw']} | {o['away']}")
-        else:
-            print("1X2: No odds")
-
-        if match['odds_ou']:
-            ou = match['odds_ou']
-            print(f"O/U 2.5: Over {ou['over']} | "
-                  f"Under {ou['under']}")
-        if match['odds_gg']:
-            gg = match['odds_gg']
-            print(f"GG/NG: Yes {gg['yes']} | No {gg['no']}")
+    if len(matches) > 10:
+        print(f"\n  ... and {len(matches) - 10} more matches")
+    print("=" * 50)
 
 
 def run():
@@ -247,9 +327,42 @@ def run():
 
     if matches:
         display_matches(matches)
+
         with open('data/betway_odds.json', 'w') as f:
             json.dump(matches, f, indent=2)
-        print(f"\n💾 Saved to data/betway_odds.json")
+
+        with open('data/betway_matches.txt', 'w',
+                  encoding='utf-8') as f:
+            f.write(f"BETWAY GHANA - ALL MATCHES\n")
+            f.write(f"Generated: "
+                    f"{datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}\n")
+            f.write(f"Total: {len(matches)} matches\n")
+            f.write("=" * 60 + "\n\n")
+
+            for match in matches:
+                live_tag = "🔴 LIVE" if match.get(
+                    'is_live') else ""
+                f.write(f"⚽ {match['home_team']} vs "
+                        f"{match['away_team']} {live_tag}\n")
+                f.write(f"🏆 {match['tournament']}\n")
+                f.write(f"🕐 {match['kickoff']}\n")
+
+                if match['odds_1x2']:
+                    o = match['odds_1x2']
+                    f.write(f"1X2: {o['home']} | "
+                            f"{o['draw']} | {o['away']}\n")
+                if match['odds_ou']:
+                    ou = match['odds_ou']
+                    f.write(f"O/U 2.5: Over {ou['over']} | "
+                            f"Under {ou['under']}\n")
+                if match['odds_gg']:
+                    gg = match['odds_gg']
+                    f.write(f"GG/NG: Yes {gg['yes']} | "
+                            f"No {gg['no']}\n")
+                f.write("\n")
+
+        print(f"💾 Saved to data/betway_odds.json")
+        print(f"📄 Full list saved to data/betway_matches.txt")
     else:
         print("⚠️ No matches found")
 
