@@ -1,0 +1,361 @@
+======================================================================
+  1xBET GHANA — UPCOMING FOOTBALL MATCHES
+======================================================================
+  Scrape date  : Saturday, 28 March 2026
+  Scrape time  : 14:32 UTC
+  Total matches: 50
+======================================================================
+
+   1.  [Friendlies. National Teams]
+        Senegal  vs  Peru
+        Kick-off : 28 Mar 2026  16:00 UTC
+        1X2      : W1=1.51  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.14
+        GG/NG    : GG=-  NG=-
+
+   2.  [ATP. Miami. Doubles]
+        Patten/Heliovaara  vs  Bolelli/Vavassori
+        Kick-off : 28 Mar 2026  16:30 UTC
+        1X2      : W1=1.41  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.77
+        GG/NG    : GG=-  NG=-
+
+   3.  [Friendlies. National Teams]
+        Canada  vs  Iceland
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.57  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.12
+        GG/NG    : GG=-  NG=-
+
+   4.  [Friendlies. National Teams]
+        Hungary  vs  Slovenia
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.84  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.05
+        GG/NG    : GG=-  NG=-
+
+   5.  [Friendlies. National Teams]
+        Scotland  vs  Japan
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=3.25  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+   6.  [NHL]
+        New York Islanders  vs  Florida Panthers
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.95  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.3
+        GG/NG    : GG=-  NG=-
+
+   7.  [NHL]
+        Tampa Bay Lightning  vs  Ottawa Senators
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=2.1  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+   8.  [Spain. Liga ACB]
+        Breogan  vs  La Bruixa Dor Manresa
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.99
+        GG/NG    : GG=-  NG=-
+
+   9.  [Germany. BBL]
+        Syntainics MBC  vs  SC Rasta Vechta
+        Kick-off : 28 Mar 2026  17:30 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=1.75  Under=-
+        GG/NG    : GG=-  NG=-
+
+  10.  [Friendlies. National Teams]
+        Burkina Faso  vs  Guinea-Bissau
+        Kick-off : 28 Mar 2026  18:00 UTC
+        1X2      : W1=1.45  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.17
+        GG/NG    : GG=-  NG=-
+
+  11.  [Spain. Liga ACB]
+        Universidad Catolica de Murcia  vs  Bilbao
+        Kick-off : 28 Mar 2026  18:00 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  12.  [USA. MLB]
+        St.Louis Cardinals  vs  Tampa Bay Rays
+        Kick-off : 28 Mar 2026  18:15 UTC
+        1X2      : W1=1.91  X=-  W2=-
+        O/U 2.5  : Over=1.3  Under=-
+        GG/NG    : GG=-  NG=-
+
+  13.  [USA. MLB]
+        Chicago Cubs  vs  Washington Nationals
+        Kick-off : 28 Mar 2026  18:20 UTC
+        1X2      : W1=1.48  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.58
+        GG/NG    : GG=-  NG=-
+
+  14.  [NBA]
+        Milwaukee Bucks  vs  San Antonio Spurs
+        Kick-off : 28 Mar 2026  19:00 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  15.  [WTA. Miami]
+        Aryna Sabalenka  vs  Cori Gauff
+        Kick-off : 28 Mar 2026  19:00 UTC
+        1X2      : W1=1.34  X=-  W2=-
+        O/U 2.5  : Over=-  Under=2.52
+        GG/NG    : GG=-  NG=-
+
+  16.  [Germany. BBL]
+        Niners Chemnitz  vs  EWE Oldenburg
+        Kick-off : 28 Mar 2026  19:00 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  17.  [USA. MLB]
+        Toronto Blue Jays  vs  Athletics
+        Kick-off : 28 Mar 2026  19:07 UTC
+        1X2      : W1=1.57  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.46
+        GG/NG    : GG=-  NG=-
+
+  18.  [Friendlies. National Teams]
+        USA  vs  Belgium
+        Kick-off : 28 Mar 2026  19:30 UTC
+        1X2      : W1=2.98  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  19.  [NHL]
+        Edmonton Oilers  vs  Anaheim Ducks
+        Kick-off : 28 Mar 2026  19:30 UTC
+        1X2      : W1=2.12  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  20.  [USA. MLB]
+        Baltimore Orioles  vs  Minnesota Twins
+        Kick-off : 28 Mar 2026  20:05 UTC
+        1X2      : W1=1.65  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.39
+        GG/NG    : GG=-  NG=-
+
+  21.  [USA. MLB]
+        Philadelphia Phillies  vs  Texas Rangers
+        Kick-off : 28 Mar 2026  20:05 UTC
+        1X2      : W1=1.91  X=-  W2=-
+        O/U 2.5  : Over=1.29  Under=-
+        GG/NG    : GG=-  NG=-
+
+  22.  [USA. MLB]
+        Cincinnati Reds  vs  Boston Red Sox
+        Kick-off : 28 Mar 2026  20:10 UTC
+        1X2      : W1=2.26  X=-  W2=-
+        O/U 2.5  : Over=1.44  Under=-
+        GG/NG    : GG=-  NG=-
+
+  23.  [USA. MLB]
+        Miami Marlins  vs  Colorado Rockies
+        Kick-off : 28 Mar 2026  20:10 UTC
+        1X2      : W1=1.55  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.44
+        GG/NG    : GG=-  NG=-
+
+  24.  [USA. MLB]
+        New York Mets  vs  Pittsburgh Pirates
+        Kick-off : 28 Mar 2026  20:10 UTC
+        1X2      : W1=1.6  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.41
+        GG/NG    : GG=-  NG=-
+
+  25.  [NHL]
+        Boston Bruins  vs  Minnesota Wild
+        Kick-off : 28 Mar 2026  21:00 UTC
+        1X2      : W1=2.64  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  26.  [NHL]
+        Carolina Hurricanes  vs  New Jersey Devils
+        Kick-off : 28 Mar 2026  21:00 UTC
+        1X2      : W1=1.83  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.37
+        GG/NG    : GG=-  NG=-
+
+  27.  [NHL]
+        Columbus Blue Jackets  vs  San Jose Sharks
+        Kick-off : 28 Mar 2026  21:00 UTC
+        1X2      : W1=1.86  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.35
+        GG/NG    : GG=-  NG=-
+
+  28.  [NHL]
+        Pittsburgh Penguins  vs  Dallas Stars
+        Kick-off : 28 Mar 2026  21:00 UTC
+        1X2      : W1=2.73  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  29.  [NHL]
+        Buffalo Sabres  vs  Seattle Kraken
+        Kick-off : 28 Mar 2026  21:30 UTC
+        1X2      : W1=1.9  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.33
+        GG/NG    : GG=-  NG=-
+
+  30.  [NBA]
+        Minnesota Timberwolves  vs  Detroit Pistons
+        Kick-off : 28 Mar 2026  21:30 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.93
+        GG/NG    : GG=-  NG=-
+
+  31.  [NBA]
+        Charlotte Hornets  vs  Philadelphia 76ers
+        Kick-off : 28 Mar 2026  22:00 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  32.  [NHL]
+        Colorado Avalanche  vs  Winnipeg Jets
+        Kick-off : 28 Mar 2026  23:00 UTC
+        1X2      : W1=1.67  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.46
+        GG/NG    : GG=-  NG=-
+
+  33.  [NHL]
+        Nashville Predators  vs  Montreal Canadiens
+        Kick-off : 28 Mar 2026  23:00 UTC
+        1X2      : W1=2.64  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  34.  [NHL]
+        St. Louis Blues  vs  Toronto Maple Leafs
+        Kick-off : 28 Mar 2026  23:00 UTC
+        1X2      : W1=2.17  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  35.  [USA. MLB]
+        Houston Astros  vs  Los Angeles Angels
+        Kick-off : 28 Mar 2026  23:10 UTC
+        1X2      : W1=1.75  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.37
+        GG/NG    : GG=-  NG=-
+
+  36.  [USA. MLB]
+        Milwaukee Brewers  vs  Chicago White Sox
+        Kick-off : 28 Mar 2026  23:10 UTC
+        1X2      : W1=1.55  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.48
+        GG/NG    : GG=-  NG=-
+
+  37.  [USA. MLB]
+        Atlanta Braves  vs  Kansas City Royals
+        Kick-off : 28 Mar 2026  23:15 UTC
+        1X2      : W1=1.7  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.38
+        GG/NG    : GG=-  NG=-
+
+  38.  [USA. MLB]
+        San Francisco Giants  vs  New York Yankees
+        Kick-off : 28 Mar 2026  23:15 UTC
+        1X2      : W1=2.13  X=-  W2=-
+        O/U 2.5  : Over=1.43  Under=-
+        GG/NG    : GG=-  NG=-
+
+  39.  [NBA]
+        Atlanta Hawks  vs  Sacramento Kings
+        Kick-off : 28 Mar 2026  23:30 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  40.  [Friendlies. National Teams]
+        Haiti  vs  Tunisia
+        Kick-off : 29 Mar 2026  00:00 UTC
+        1X2      : W1=4.0  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  41.  [NHL]
+        Detroit Red Wings  vs  Philadelphia Flyers
+        Kick-off : 29 Mar 2026  00:00 UTC
+        1X2      : W1=2.2  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  42.  [NBA]
+        Memphis Grizzlies  vs  Chicago Bulls
+        Kick-off : 29 Mar 2026  00:00 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=2.06  Under=-
+        GG/NG    : GG=-  NG=-
+
+  43.  [USA. MLB]
+        San Diego Padres  vs  Detroit Tigers
+        Kick-off : 29 Mar 2026  00:40 UTC
+        1X2      : W1=1.96  X=-  W2=-
+        O/U 2.5  : Over=1.36  Under=-
+        GG/NG    : GG=-  NG=-
+
+  44.  [Friendlies. National Teams]
+        Mexico  vs  Portugal
+        Kick-off : 29 Mar 2026  01:00 UTC
+        1X2      : W1=4.25  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  45.  [NHL]
+        Los Angeles Kings  vs  Utah Mammoth
+        Kick-off : 29 Mar 2026  01:00 UTC
+        1X2      : W1=2.52  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  46.  [USA. MLB]
+        Los Angeles Dodgers  vs  Arizona Diamondbacks
+        Kick-off : 29 Mar 2026  01:10 UTC
+        1X2      : W1=1.46  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.61
+        GG/NG    : GG=-  NG=-
+
+  47.  [USA. MLB]
+        Seattle Mariners  vs  Cleveland Guardians
+        Kick-off : 29 Mar 2026  01:40 UTC
+        1X2      : W1=1.57  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.41
+        GG/NG    : GG=-  NG=-
+
+  48.  [NHL]
+        Calgary Flames  vs  Vancouver Canucks
+        Kick-off : 29 Mar 2026  02:00 UTC
+        1X2      : W1=2.02  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.28
+        GG/NG    : GG=-  NG=-
+
+  49.  [NBA]
+        Phoenix Suns  vs  Utah Jazz
+        Kick-off : 29 Mar 2026  02:00 UTC
+        1X2      : W1=-  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  50.  [NHL]
+        Vegas Golden Knights  vs  Washington Capitals
+        Kick-off : 29 Mar 2026  02:30 UTC
+        1X2      : W1=2.09  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+======================================================================
+  End of list — 50 matches scraped
+======================================================================

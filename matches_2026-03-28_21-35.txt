@@ -1,0 +1,192 @@
+========================================================================
+  1xBET GHANA — TODAY'S FOOTBALL MATCHES
+========================================================================
+  Date         : Saturday, 28 March 2026
+  Scraped at   : 21:35 UTC
+  Total matches: 30
+========================================================================
+
+   1.  21:45 UTC  |  Mexico Championship U19. Women
+        Club Necaxa U19 (Women)  vs  Club America U19 (Women)
+        1X2      :  W1 16   X 8.1   W2 1.078
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+   2.  21:45 UTC  |  Mexico Championship U19. Women
+        Leon U19 (Women)  vs  C.D. Guadalajara U19 (Women)
+        1X2      :  W1 5.39   X 3.94   W2 1.51
+        O/U 2.5  :  Over 1.72   Under 1.98
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+   3.  21:45 UTC  |  Mexico Championship U19. Women
+        Queretaro U19 (Women)  vs  Juarez U19 (Women)
+        1X2      :  W1 1.73   X 3.42   W2 4.335
+        O/U 2.5  :  Over 2.01   Under 1.7
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+   4.  21:45 UTC  |  Mexico Championship U19. Women
+        Santos Laguna U19 (Women)  vs  Atlas Guadalajara U19 (Women)
+        1X2      :  W1 2.908   X 3.42   W2 2.15
+        O/U 2.5  :  Over 1.7   Under 2.01
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+   5.  21:45 UTC  |  Mexico. Liga MX. Women
+        Cruz Azul (Women)  vs  Puebla (Women)
+        1X2      :  W1 1.075   X 10.9   W2 21
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+   6.  22:00 UTC  |  Club Friendlies
+        Club America  vs  Tigres de la UANL
+        1X2      :  W1 2.28   X 3.78   W2 2.38
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.44   NG 2.51
+------------------------------------------------------------------------
+   7.  22:00 UTC  |  Friendlies U20. National Teams
+        Brazil U20  vs  Paraguay U20
+        1X2      :  W1 1.34   X 4.3   W2 8.15
+        O/U 2.5  :  Over 1.64   Under 2.1
+        GG/NG    :  GG 1.86   NG 1.809
+------------------------------------------------------------------------
+   8.  22:00 UTC  |  Friendly Club Tournament
+        Club Blooming  vs  The Strongest
+        1X2      :  W1 4.025   X 3.87   W2 1.682
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.36   NG 2.819
+------------------------------------------------------------------------
+   9.  22:00 UTC  |  Argentina. Torneo Argentino A
+        Deportivo Santamarina  vs  Sol de Mayo
+        1X2      :  W1 1.42   X 3.78   W2 7.5
+        O/U 2.5  :  Over 2   Under 1.71
+        GG/NG    :  GG 2.16   NG 1.593
+------------------------------------------------------------------------
+  10.  22:00 UTC  |  Brazil. Campeonato Paulista A3
+        Paulista Futebol Clube  vs  AA Portuguesa Santista
+        1X2      :  W1 2.44   X 2.73   W2 3.07
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.09   NG 1.634
+------------------------------------------------------------------------
+  11.  22:00 UTC  |  Brazil. Campeonato Paulista A4
+        GD Saocarlense  vs  Associacao Desportiva Sao Caetano
+        1X2      :  W1 3.18   X 2.58   W2 2.5
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.08   NG 1.643
+------------------------------------------------------------------------
+  12.  22:00 UTC  |  Brazil. Copa do Nordeste
+        Fortaleza EC  vs  SD Imperatriz
+        1X2      :  W1 1.26   X 4.6   W2 11
+        O/U 2.5  :  Over 1.83   Under 1.86
+        GG/NG    :  GG 2.39   NG 1.489
+------------------------------------------------------------------------
+  13.  22:00 UTC  |  Brazil. Sul-Sudeste Cup
+        Volta Redonda  vs  Chapecoense
+        1X2      :  W1 1.54   X 3.58   W2 5.79
+        O/U 2.5  :  Over 2.17   Under 1.6
+        GG/NG    :  GG 2.15   NG 1.602
+------------------------------------------------------------------------
+  14.  22:00 UTC  |  Chile. Segunda
+        Deportes Rengo  vs  Provincial Osorno
+        1X2      :  W1 5.08   X 3.68   W2 1.58
+        O/U 2.5  :  Over 1.69   Under 2.02
+        GG/NG    :  GG 1.7   NG 1.994
+------------------------------------------------------------------------
+  15.  22:00 UTC  |  Colombia Championship. Women
+        America de Cali (Women)  vs  Club Independiente Santa Fe (Women)
+        1X2      :  W1 2.18   X 3.2   W2 3.03
+        O/U 2.5  :  Over 2.01   Under 1.7
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+  16.  22:00 UTC  |  Mexico. Division 4
+        Fut Car  vs  Jaral del Progreso
+        1X2      :  W1 1.17   X 6   W2 12.5
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.75   NG 1.932
+------------------------------------------------------------------------
+  17.  22:00 UTC  |  Mexico. Division 4
+        Pabellon  vs  Club Necaxa II
+        1X2      :  W1 1.82   X 3.4   W2 3.875
+        O/U 2.5  :  Over 1.78   Under 1.909
+        GG/NG    :  GG 1.67   NG 2.036
+------------------------------------------------------------------------
+  18.  22:00 UTC  |  Mexico. Division 4
+        Tepatitlan II  vs  Charales de Chapala
+        1X2      :  W1 4.02   X 3.4   W2 1.79
+        O/U 2.5  :  Over 1.96   Under 1.74
+        GG/NG    :  GG 1.82   NG 1.85
+------------------------------------------------------------------------
+  19.  22:00 UTC  |  Mexico. Liga Premier. Serie A
+        Dragones Toluca  vs  Deportiva Venados
+        1X2      :  W1 4.34   X 4.74   W2 1.565
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.62   NG 2.152
+------------------------------------------------------------------------
+  20.  22:00 UTC  |  Mexico. Liga Premier. Serie A
+        Tritones Vallarta  vs  Los Cabos United
+        1X2      :  W1 1.56   X 3.8   W2 5.07
+        O/U 2.5  :  Over 1.61   Under 2.07
+        GG/NG    :  GG 1.66   NG 2.047
+------------------------------------------------------------------------
+  21.  22:30 UTC  |  Brazil. Campeonato Paulista A2
+        Sertaozinho  vs  Clube Atletico Juventus
+        1X2      :  W1 2.904   X 3   W2 2.36
+        O/U 2.5  :  Over 2.05   Under 1.67
+        GG/NG    :  GG 1.78   NG 1.892
+------------------------------------------------------------------------
+  22.  22:30 UTC  |  Brazil. Campeonato Paulista A4
+        Clube Atletico Penapolense  vs  AE Aracatuba
+        1X2      :  W1 1.013   X 10.7   W2 30
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 3.28   NG 1.274
+------------------------------------------------------------------------
+  23.  22:30 UTC  |  Brazil. Campeonato Paulista A4
+        Vocem Vila Operária Clube Esporte Mariano  vs  Jacarei
+        1X2      :  W1 2.35   X 2.8   W2 3.135
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.2   NG 1.572
+------------------------------------------------------------------------
+  24.  22:30 UTC  |  Brazil. Centro-Oeste Cup
+        SE do Gama  vs  Cuiaba
+        1X2      :  W1 1.36   X 4.1   W2 8.15
+        O/U 2.5  :  Over 2.05   Under 1.67
+        GG/NG    :  GG 2.34   NG 1.51
+------------------------------------------------------------------------
+  25.  22:30 UTC  |  USA. NWSL. Women
+        Seattle Reign (Women)  vs  Racing Louisville (Women)
+        1X2      :  W1 2.1   X 3.24   W2 3.165
+        O/U 2.5  :  Over 1.97   Under 1.727
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+  26.  22:30 UTC  |  Uruguay. Primera Division
+        Montevideo City Torque  vs  Club Nacional Montevideo
+        1X2      :  W1 3.545   X 3.195   W2 2.106
+        O/U 2.5  :  Over 2.112   Under 1.678
+        GG/NG    :  GG 1.84   NG 1.846
+------------------------------------------------------------------------
+  27.  23:00 UTC  |  Argentina. Primera B Metropolitana
+        Excursionistas  vs  Club Atletico Brown
+        1X2      :  W1 1.73   X 3.06   W2 5.15
+        O/U 2.5  :  Over 2.44   Under 1.49
+        GG/NG    :  GG 2.21   NG 1.58
+------------------------------------------------------------------------
+  28.  23:00 UTC  |  Argentina. Primera B Nacional
+        Colegiales  vs  CA San Miguel
+        1X2      :  W1 2.66   X 2.55   W2 2.93
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.6   NG 1.426
+------------------------------------------------------------------------
+  29.  23:00 UTC  |  Mexico. Division 4
+        Azucareros de Tezonapa  vs  Santiago Tulantepec
+        1X2      :  W1 1.046   X 8.6   W2 25
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.96   NG 1.726
+------------------------------------------------------------------------
+  30.  23:10 UTC  |  Colombia. Categoria Primera A
+        Deportes Tolima  vs  Jaguares de Cordoba
+        1X2      :  W1 1.343   X 4.75   W2 8.4
+        O/U 2.5  :  Over 1.77   Under 2
+        GG/NG    :  GG 2.08   NG 1.669
+------------------------------------------------------------------------
+
+========================================================================
+  End of list — 30 matches
+========================================================================

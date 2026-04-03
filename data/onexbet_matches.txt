@@ -1,0 +1,72 @@
+========================================================================
+  1xBET GHANA — TODAY'S FOOTBALL MATCHES
+========================================================================
+  Date         : Friday, 03 April 2026
+  Scraped at   : 11:54 UTC
+  Total matches: 10
+========================================================================
+
+   1.  14:00 UTC  |  England. Championship
+        Birmingham City  vs  Blackburn Rovers
+        1X2      :  W1 1.9   X 3.4   W2 4.04
+        O/U 2.5  :  Over 2.04   Under 1.75
+        GG/NG    :  GG 1.85   NG 1.856
+------------------------------------------------------------------------
+   2.  14:00 UTC  |  England. Championship
+        Charlton Athletic  vs  Bristol City
+        1X2      :  W1 2.49   X 3.125   W2 2.902
+        O/U 2.5  :  Over 2.14   Under 1.68
+        GG/NG    :  GG 1.83   NG 1.874
+------------------------------------------------------------------------
+   3.  14:00 UTC  |  England. Championship
+        Leicester City  vs  Preston North End
+        1X2      :  W1 1.96   X 3.35   W2 3.87
+        O/U 2.5  :  Over 2.01   Under 1.77
+        GG/NG    :  GG 1.81   NG 1.895
+------------------------------------------------------------------------
+   4.  14:00 UTC  |  England. Championship
+        Norwich City  vs  Portsmouth
+        1X2      :  W1 1.96   X 3.54   W2 3.635
+        O/U 2.5  :  Over 1.909   Under 1.86
+        GG/NG    :  GG 1.74   NG 1.977
+------------------------------------------------------------------------
+   5.  14:00 UTC  |  England. Championship
+        Oxford United  vs  Hull City
+        1X2      :  W1 2.45   X 3.16   W2 2.913
+        O/U 2.5  :  Over 2.14   Under 1.68
+        GG/NG    :  GG 1.83   NG 1.874
+------------------------------------------------------------------------
+   6.  14:00 UTC  |  England. Championship
+        Queens Park Rangers  vs  Watford
+        1X2      :  W1 2.62   X 3.18   W2 2.66
+        O/U 2.5  :  Over 1.95   Under 1.82
+        GG/NG    :  GG 1.71   NG 2.018
+------------------------------------------------------------------------
+   7.  14:00 UTC  |  England. Championship
+        Stoke City  vs  Sheffield Wednesday
+        1X2      :  W1 1.373   X 4.75   W2 7.75
+        O/U 2.5  :  Over 1.75   Under 2.04
+        GG/NG    :  GG 1.97   NG 1.748
+------------------------------------------------------------------------
+   8.  14:00 UTC  |  England. Championship
+        West Bromwich Albion  vs  Wrexham
+        1X2      :  W1 2.13   X 3.34   W2 3.345
+        O/U 2.5  :  Over 2   Under 1.78
+        GG/NG    :  GG 1.78   NG 1.926
+------------------------------------------------------------------------
+   9.  18:45 UTC  |  France. Ligue 1
+        Paris Saint-Germain  vs  Toulouse
+        1X2      :  W1 1.286   X 6.48   W2 11.9
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.833   NG 1.889
+------------------------------------------------------------------------
+  10.  19:00 UTC  |  Spain. La Liga
+        Rayo Vallecano  vs  Elche
+        1X2      :  W1 1.796   X 3.93   W2 4.895
+        O/U 2.5  :  Over 1.863   Under 2.09
+        GG/NG    :  GG 1.72   NG 2.025
+------------------------------------------------------------------------
+
+========================================================================
+  End of list — 10 matches
+========================================================================

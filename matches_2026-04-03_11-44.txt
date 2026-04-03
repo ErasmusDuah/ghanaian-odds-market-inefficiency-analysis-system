@@ -1,0 +1,252 @@
+========================================================================
+  1xBET GHANA — TODAY'S FOOTBALL MATCHES
+========================================================================
+  Date         : Friday, 03 April 2026
+  Scraped at   : 11:44 UTC
+  Total matches: 40
+========================================================================
+
+   1.  14:00 UTC  |  England. Championship
+        Birmingham City  vs  Blackburn Rovers
+        1X2      :  W1 1.9   X 3.4   W2 4.04
+        O/U 2.5  :  Over 2.04   Under 1.75
+        GG/NG    :  GG 1.85   NG 1.856
+------------------------------------------------------------------------
+   2.  14:00 UTC  |  England. Championship
+        Charlton Athletic  vs  Bristol City
+        1X2      :  W1 2.48   X 3.125   W2 2.912
+        O/U 2.5  :  Over 2.17   Under 1.666
+        GG/NG    :  GG 1.84   NG 1.864
+------------------------------------------------------------------------
+   3.  14:00 UTC  |  England. Championship
+        Leicester City  vs  Preston North End
+        1X2      :  W1 1.96   X 3.35   W2 3.87
+        O/U 2.5  :  Over 2.01   Under 1.77
+        GG/NG    :  GG 1.81   NG 1.895
+------------------------------------------------------------------------
+   4.  14:00 UTC  |  England. Championship
+        Norwich City  vs  Portsmouth
+        1X2      :  W1 1.96   X 3.54   W2 3.635
+        O/U 2.5  :  Over 1.909   Under 1.86
+        GG/NG    :  GG 1.74   NG 1.977
+------------------------------------------------------------------------
+   5.  14:00 UTC  |  England. Championship
+        Oxford United  vs  Hull City
+        1X2      :  W1 2.44   X 3.2   W2 2.902
+        O/U 2.5  :  Over 2.08   Under 1.72
+        GG/NG    :  GG 1.8   NG 1.905
+------------------------------------------------------------------------
+   6.  14:00 UTC  |  England. Championship
+        Queens Park Rangers  vs  Watford
+        1X2      :  W1 2.62   X 3.18   W2 2.66
+        O/U 2.5  :  Over 1.95   Under 1.82
+        GG/NG    :  GG 1.71   NG 2.018
+------------------------------------------------------------------------
+   7.  14:00 UTC  |  England. Championship
+        Sheffield United  vs  Swansea City
+        1X2      :  W1 1.84   X 3.62   W2 4.03
+        O/U 2.5  :  Over 1.85   Under 1.92
+        GG/NG    :  GG 1.72   NG 2.007
+------------------------------------------------------------------------
+   8.  14:00 UTC  |  England. Championship
+        Stoke City  vs  Sheffield Wednesday
+        1X2      :  W1 1.35   X 4.9   W2 8.15
+        O/U 2.5  :  Over 1.74   Under 2.05
+        GG/NG    :  GG 1.99   NG 1.731
+------------------------------------------------------------------------
+   9.  14:00 UTC  |  England. Championship
+        West Bromwich Albion  vs  Wrexham
+        1X2      :  W1 2.13   X 3.34   W2 3.345
+        O/U 2.5  :  Over 2   Under 1.78
+        GG/NG    :  GG 1.78   NG 1.926
+------------------------------------------------------------------------
+  10.  14:00 UTC  |  England. League One
+        Blackpool  vs  Exeter City
+        1X2      :  W1 2   X 3.5   W2 3.545
+        O/U 2.5  :  Over 1.82   Under 1.95
+        GG/NG    :  GG 1.66   NG 2.09
+------------------------------------------------------------------------
+  11.  14:00 UTC  |  England. League One
+        Bradford City  vs  Northampton Town
+        1X2      :  W1 1.39   X 4.55   W2 7.75
+        O/U 2.5  :  Over 1.83   Under 1.94
+        GG/NG    :  GG 2.05   NG 1.686
+------------------------------------------------------------------------
+  12.  14:00 UTC  |  England. League One
+        Burton Albion  vs  Barnsley
+        1X2      :  W1 2.21   X 3.38   W2 3.13
+        O/U 2.5  :  Over 1.89   Under 1.89
+        GG/NG    :  GG 1.69   NG 2.049
+------------------------------------------------------------------------
+  13.  14:00 UTC  |  England. League One
+        Huddersfield Town  vs  Reading
+        1X2      :  W1 1.81   X 3.52   W2 4.325
+        O/U 2.5  :  Over 1.97   Under 1.81
+        GG/NG    :  GG 1.83   NG 1.874
+------------------------------------------------------------------------
+  14.  14:00 UTC  |  England. League One
+        Lincoln City  vs  Wimbledon
+        1X2      :  W1 1.39   X 4.55   W2 7.75
+        O/U 2.5  :  Over 1.82   Under 1.95
+        GG/NG    :  GG 2.05   NG 1.689
+------------------------------------------------------------------------
+  15.  14:00 UTC  |  England. League One
+        Luton Town  vs  Peterborough United
+        1X2      :  W1 1.59   X 4.25   W2 4.92
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.54   NG 2.317
+------------------------------------------------------------------------
+  16.  14:00 UTC  |  England. League One
+        Plymouth Argyle  vs  Bolton Wanderers
+        1X2      :  W1 2.3   X 3.64   W2 2.798
+        O/U 2.5  :  Over 1.666   Under 2.17
+        GG/NG    :  GG 1.54   NG 2.317
+------------------------------------------------------------------------
+  17.  14:00 UTC  |  England. League One
+        Rotherham United  vs  Stevenage
+        1X2      :  W1 3.545   X 2.99   W2 2.22
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.1   NG 1.658
+------------------------------------------------------------------------
+  18.  14:00 UTC  |  England. League One
+        Stockport County  vs  Wycombe Wanderers
+        1X2      :  W1 2.21   X 3.42   W2 3.105
+        O/U 2.5  :  Over 1.79   Under 1.99
+        GG/NG    :  GG 1.62   NG 2.162
+------------------------------------------------------------------------
+  19.  14:00 UTC  |  England. League One
+        Home (Special bets)  vs  Away (Special bets)
+        1X2      :  W1 -   X -   W2 -
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+  20.  14:00 UTC  |  England. League Two
+        Accrington Stanley  vs  Crewe Alexandra
+        1X2      :  W1 3.31   X 3.34   W2 2.12
+        O/U 2.5  :  Over 1.88   Under 1.87
+        GG/NG    :  GG 1.7   NG 2.038
+------------------------------------------------------------------------
+  21.  14:00 UTC  |  England. League Two
+        Barnet  vs  Bromley
+        1X2      :  W1 2.13   X 3.34   W2 3.29
+        O/U 2.5  :  Over 1.9   Under 1.85
+        GG/NG    :  GG 1.72   NG 2.007
+------------------------------------------------------------------------
+  22.  14:30 UTC  |  Portugal. Primeira Liga
+        Gil Vicente  vs  Aves
+        1X2      :  W1 1.466   X 4.5   W2 7.9
+        O/U 2.5  :  Over 1.905   Under 1.977
+        GG/NG    :  GG 2.03   NG 1.7
+------------------------------------------------------------------------
+  23.  14:30 UTC  |  Portugal. Primeira Liga
+        Home  vs  Away
+        1X2      :  W1 1.12   X 12.5   W2 12
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.09   NG 7.39
+------------------------------------------------------------------------
+  24.  17:00 UTC  |  Portugal. Primeira Liga
+        Vitoria Guimaraes  vs  Tondela
+        1X2      :  W1 1.89   X 3.53   W2 4.57
+        O/U 2.5  :  Over 2.205   Under 1.731
+        GG/NG    :  GG 1.94   NG 1.771
+------------------------------------------------------------------------
+  25.  17:30 UTC  |  Austria. Bundesliga
+        Ried  vs  Rheindorf Altach
+        1X2      :  W1 2.12   X 3.16   W2 3.58
+        O/U 2.5  :  Over 2.31   Under 1.59
+        GG/NG    :  GG 1.97   NG 1.748
+------------------------------------------------------------------------
+  26.  18:00 UTC  |  France. Ligue 2
+        Annecy  vs  En Avant de Guingamp
+        1X2      :  W1 2.912   X 3.2   W2 2.43
+        O/U 2.5  :  Over 2   Under 1.78
+        GG/NG    :  GG 1.75   NG 1.966
+------------------------------------------------------------------------
+  27.  18:00 UTC  |  France. Ligue 2
+        Bastia  vs  Amiens SC
+        1X2      :  W1 1.91   X 3.62   W2 3.73
+        O/U 2.5  :  Over 2.03   Under 1.76
+        GG/NG    :  GG 1.84   NG 1.864
+------------------------------------------------------------------------
+  28.  18:00 UTC  |  France. Ligue 2
+        Grenoble Foot 38  vs  Clermont Foot
+        1X2      :  W1 2.62   X 3.125   W2 2.71
+        O/U 2.5  :  Over 1.94   Under 1.833
+        GG/NG    :  GG 1.69   NG 2.049
+------------------------------------------------------------------------
+  29.  18:00 UTC  |  France. Ligue 2
+        Red Star Saint-Ouen  vs  Stade Lavallois
+        1X2      :  W1 1.69   X 3.68   W2 4.895
+        O/U 2.5  :  Over 2.05   Under 1.74
+        GG/NG    :  GG 1.95   NG 1.761
+------------------------------------------------------------------------
+  30.  18:00 UTC  |  France. Ligue 2
+        USL Dunkerque  vs  Rodez Aveyron
+        1X2      :  W1 2.06   X 3.56   W2 3.32
+        O/U 2.5  :  Over 1.64   Under 2.21
+        GG/NG    :  GG 1.53   NG 2.347
+------------------------------------------------------------------------
+  31.  18:00 UTC  |  France. Ligue 2
+        Home  vs  Away
+        1X2      :  W1 1.585   X 8.3   W2 3.16
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG -   NG -
+------------------------------------------------------------------------
+  32.  18:00 UTC  |  Argentina. Primera Division
+        Club Atletico Gimnasia y Esgrima  vs  Velez Sarsfield
+        1X2      :  W1 3.77   X 2.79   W2 2.25
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.31   NG 1.546
+------------------------------------------------------------------------
+  33.  18:00 UTC  |  Argentina. Primera Division
+        Home  vs  Away
+        1X2      :  W1 2.123   X 5.05   W2 2.338
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.081   NG 7.85
+------------------------------------------------------------------------
+  34.  18:45 UTC  |  France. Ligue 1
+        Paris Saint-Germain  vs  Toulouse
+        1X2      :  W1 1.286   X 6.48   W2 11.9
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 1.83   NG 1.891
+------------------------------------------------------------------------
+  35.  18:45 UTC  |  Belgium. Jupiler League
+        Royal Antwerp  vs  Genk
+        1X2      :  W1 3.52   X 3.52   W2 2.088
+        O/U 2.5  :  Over 1.875   Under 1.946
+        GG/NG    :  GG 1.68   NG 2.06
+------------------------------------------------------------------------
+  36.  19:00 UTC  |  Spain. La Liga
+        Rayo Vallecano  vs  Elche
+        1X2      :  W1 1.796   X 3.93   W2 4.895
+        O/U 2.5  :  Over 1.863   Under 2.09
+        GG/NG    :  GG 1.72   NG 2.025
+------------------------------------------------------------------------
+  37.  19:00 UTC  |  England. Championship
+        Coventry City  vs  Derby County
+        1X2      :  W1 1.66   X 3.9   W2 4.79
+        O/U 2.5  :  Over 1.74   Under 2.05
+        GG/NG    :  GG 1.72   NG 2.007
+------------------------------------------------------------------------
+  38.  19:30 UTC  |  Portugal. Primeira Liga
+        Sporting Clube de Portugal  vs  Santa Clara
+        1X2      :  W1 1.297   X 5.78   W2 11.4
+        O/U 2.5  :  Over 1.833   Under 2.06
+        GG/NG    :  GG 2.24   NG 1.577
+------------------------------------------------------------------------
+  39.  20:15 UTC  |  Argentina. Primera Division
+        Union de Santa Fe  vs  Deportivo Riestra
+        1X2      :  W1 1.89   X 3.1   W2 4.63
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.4   NG 1.506
+------------------------------------------------------------------------
+  40.  22:30 UTC  |  Argentina. Primera Division
+        San Lorenzo de Almagro  vs  Estudiantes de La Plata
+        1X2      :  W1 3.1   X 2.69   W2 2.68
+        O/U 2.5  :  Over -   Under -
+        GG/NG    :  GG 2.33   NG 1.536
+------------------------------------------------------------------------
+
+========================================================================
+  End of list — 40 matches
+========================================================================

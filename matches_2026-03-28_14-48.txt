@@ -1,0 +1,361 @@
+======================================================================
+  1xBET GHANA — UPCOMING FOOTBALL MATCHES
+======================================================================
+  Scrape date  : Saturday, 28 March 2026
+  Scrape time  : 14:48 UTC
+  Total matches: 50
+======================================================================
+
+   1.  [Russian Championship. League 1]
+        Fakel Voronezh  vs  KAMAZ
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.63  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.07
+        GG/NG    : GG=-  NG=-
+
+   2.  [UEFA European U19 Championship Qualification. 2027]
+        Netherlands B U19  vs  Republic of North Macedonia B U19
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.08  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.82
+        GG/NG    : GG=-  NG=-
+
+   3.  [England. League One]
+        Blackpool  vs  Burton Albion
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.34  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+   4.  [England. League One]
+        Exeter City  vs  Leyton Orient
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.46  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+   5.  [England. League One]
+        Reading  vs  Wigan Athletic
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.26  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+   6.  [England. League One]
+        Stockport County  vs  Wimbledon
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.49  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.26
+        GG/NG    : GG=-  NG=-
+
+   7.  [England. League One]
+        Wycombe Wanderers  vs  Port Vale
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.46  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.22
+        GG/NG    : GG=-  NG=-
+
+   8.  [England. League One]
+        Home  vs  Away
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.33  X=-  W2=-
+        O/U 2.5  : Over=-  Under=2.04
+        GG/NG    : GG=-  NG=-
+
+   9.  [England. League Two]
+        Barnet  vs  Cambridge United
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.9  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  10.  [England. League Two]
+        Barrow  vs  Bromley
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=3.27  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  11.  [England. League Two]
+        Bristol Rovers  vs  Accrington Stanley
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.75  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.12
+        GG/NG    : GG=-  NG=-
+
+  12.  [England. League Two]
+        Colchester United  vs  Walsall
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.18  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  13.  [England. League Two]
+        Crawley Town  vs  Gillingham
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.14  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  14.  [England. League Two]
+        Crewe Alexandra  vs  Oldham Athletic
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.75  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  15.  [England. League Two]
+        Newport County  vs  Shrewsbury Town
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.35  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  16.  [England. League Two]
+        Salford City  vs  Milton Keynes Dons
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.92  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  17.  [England. League Two]
+        Swindon Town  vs  Fleetwood Town
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.06  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  18.  [England. League Two]
+        Home (Special bets)  vs  Away (Special bets)
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.74  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.61
+        GG/NG    : GG=-  NG=-
+
+  19.  [England. National League]
+        Brackley Town  vs  Tamworth
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=2.76  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  20.  [England. National League]
+        Braintree Town  vs  Carlisle United
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=5.9  X=-  W2=-
+        O/U 2.5  : Over=1.19  Under=-
+        GG/NG    : GG=-  NG=-
+
+  21.  [England. National League]
+        Gateshead  vs  Yeovil Town
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.93  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  22.  [England. National League]
+        York City  vs  Woking
+        Kick-off : 28 Mar 2026  15:00 UTC
+        1X2      : W1=1.25  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.37
+        GG/NG    : GG=-  NG=-
+
+  23.  [Spain. Segunda Division]
+        Granada  vs  Huesca
+        Kick-off : 28 Mar 2026  15:15 UTC
+        1X2      : W1=1.88  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  24.  [Spain. Segunda Division]
+        Real Valladolid  vs  Burgos
+        Kick-off : 28 Mar 2026  15:15 UTC
+        1X2      : W1=2.31  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  25.  [UEFA European U19 Championship Qualification. 2027]
+        Republic of Ireland B U19  vs  Scotland B U19
+        Kick-off : 28 Mar 2026  15:30 UTC
+        1X2      : W1=2.36  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  26.  [Friendlies. National Teams]
+        Senegal  vs  Peru
+        Kick-off : 28 Mar 2026  16:00 UTC
+        1X2      : W1=1.51  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.14
+        GG/NG    : GG=-  NG=-
+
+  27.  [Friendlies. National Teams]
+        Botswana  vs  Zimbabwe
+        Kick-off : 28 Mar 2026  16:00 UTC
+        1X2      : W1=2.68  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  28.  [UEFA European U19 Championship Qualification. 2026]
+        Denmark U19  vs  Latvia U19
+        Kick-off : 28 Mar 2026  16:00 UTC
+        1X2      : W1=1.11  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.61
+        GG/NG    : GG=-  NG=-
+
+  29.  [UEFA European U19 Championship Qualification. 2026]
+        Italy U19  vs  Slovakia U19
+        Kick-off : 28 Mar 2026  16:00 UTC
+        1X2      : W1=1.18  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.48
+        GG/NG    : GG=-  NG=-
+
+  30.  [UEFA European U19 Championship Qualification. 2026]
+        Portugal U19  vs  Serbia U19
+        Kick-off : 28 Mar 2026  16:00 UTC
+        1X2      : W1=1.41  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.17
+        GG/NG    : GG=-  NG=-
+
+  31.  [UEFA European U19 Championship Qualification. 2027]
+        Czech Republic B U19  vs  Ukraine B U19
+        Kick-off : 28 Mar 2026  16:00 UTC
+        1X2      : W1=2.36  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  32.  [Friendlies. National Teams]
+        Canada  vs  Iceland
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.57  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.12
+        GG/NG    : GG=-  NG=-
+
+  33.  [Friendlies. National Teams]
+        Hungary  vs  Slovenia
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.84  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.05
+        GG/NG    : GG=-  NG=-
+
+  34.  [Friendlies. National Teams]
+        Scotland  vs  Japan
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=3.25  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  35.  [UEFA European U19 Championship Qualification. 2026]
+        Germany U19  vs  Greece U19
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.38  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.19
+        GG/NG    : GG=-  NG=-
+
+  36.  [UEFA European U19 Championship Qualification. 2026]
+        Spain U19  vs  Finland U19
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.07  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.68
+        GG/NG    : GG=-  NG=-
+
+  37.  [UEFA European U19 Championship Qualification. 2027]
+        Austria B U19  vs  Bosnia and Herzegovina B U19
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.72  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.08
+        GG/NG    : GG=-  NG=-
+
+  38.  [UEFA European U19 Championship Qualification. 2027]
+        Switzerland B U19  vs  Wales B U19
+        Kick-off : 28 Mar 2026  17:00 UTC
+        1X2      : W1=1.88  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  39.  [Spain. Segunda Division]
+        Malaga  vs  Leganes
+        Kick-off : 28 Mar 2026  17:30 UTC
+        1X2      : W1=1.86  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  40.  [Netherlands. Eerste Divisie]
+        Willem II  vs  De Graafschap
+        Kick-off : 28 Mar 2026  17:45 UTC
+        1X2      : W1=2.19  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  41.  [Friendlies. National Teams]
+        Burkina Faso  vs  Guinea-Bissau
+        Kick-off : 28 Mar 2026  18:00 UTC
+        1X2      : W1=1.45  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.18
+        GG/NG    : GG=-  NG=-
+
+  42.  [UEFA European U19 Championship Qualification. 2027]
+        Belgium B U19  vs  Sweden B U19
+        Kick-off : 28 Mar 2026  18:00 UTC
+        1X2      : W1=1.82  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  43.  [FIFA Series]
+        American Samoa  vs  Guam
+        Kick-off : 28 Mar 2026  19:00 UTC
+        1X2      : W1=3.94  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  44.  [Friendlies. National Teams]
+        USA  vs  Belgium
+        Kick-off : 28 Mar 2026  19:30 UTC
+        1X2      : W1=2.96  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  45.  [Spain. Segunda Division]
+        Albacete Balompie  vs  Castellon
+        Kick-off : 28 Mar 2026  20:00 UTC
+        1X2      : W1=2.79  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  46.  [Spain. Segunda Division]
+        Sporting de Gijon  vs  Deportivo de La Coruna
+        Kick-off : 28 Mar 2026  20:00 UTC
+        1X2      : W1=2.44  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  47.  [Netherlands. Eerste Divisie]
+        Eindhoven  vs  Emmen
+        Kick-off : 28 Mar 2026  20:00 UTC
+        1X2      : W1=2.13  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  48.  [Friendlies. National Teams]
+        Haiti  vs  Tunisia
+        Kick-off : 29 Mar 2026  00:00 UTC
+        1X2      : W1=4.0  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+  49.  [Copa Argentina]
+        Racing Club de Avellaneda  vs  San Martin De Formosa
+        Kick-off : 29 Mar 2026  00:15 UTC
+        1X2      : W1=1.18  X=-  W2=-
+        O/U 2.5  : Over=-  Under=1.39
+        GG/NG    : GG=-  NG=-
+
+  50.  [Friendlies. National Teams]
+        Mexico  vs  Portugal
+        Kick-off : 29 Mar 2026  01:00 UTC
+        1X2      : W1=4.2  X=-  W2=-
+        O/U 2.5  : Over=-  Under=-
+        GG/NG    : GG=-  NG=-
+
+======================================================================
+  End of list — 50 matches scraped
+======================================================================
