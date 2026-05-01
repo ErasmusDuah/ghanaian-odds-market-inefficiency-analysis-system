@@ -3,50 +3,98 @@ from datetime import datetime
 from difflib import SequenceMatcher
 
 
-# ============================================================
-# QUANT BET ALPHA - ARBITRAGE ENGINE
-# ============================================================
-# Platforms: Sportybet, Betway, Football.com, 1xBet, 22Bet
-# Finds guaranteed profit opportunities
-# Applies optimal stake sizing
-# ============================================================
-
 MIN_ARB_PROFIT = 0.01
 MAX_ARB_PROFIT = 15.0
 TOTAL_CAPITAL  = 500
 
 
+def normalize_name(name):
+    """
+    Normalizes team name for comparison.
+    Removes common suffixes/prefixes that differ across platforms.
+    """
+    name = name.lower().strip()
+    # Remove common suffixes
+    for suffix in [' fc', ' sc', ' cf', ' ac', ' bk', ' fk',
+                   ' sk', ' if', ' bfk', ' spor', ' sport',
+                   ' united', ' city', ' town']:
+        if name.endswith(suffix):
+            name = name[:-len(suffix)].strip()
+    return name
+
+
 def similar(a, b):
     """
-    Checks how similar two team names are
-
-    QUANT CONCEPT - FUZZY MATCHING:
-    =================================
-    Sportybet:    "Man City"
-    Betway:       "Manchester City"
-    Football.com: "Manchester City FC"
-    1xBet:        "Manchester C"
-    22Bet:        "Manchester City"
-
-    All same team — we need to match them!
-    SequenceMatcher gives similarity 0.0-1.0
-    We use 0.6 threshold = 60% similar
+    Strict fuzzy matching — REQUIRES 0.85 similarity
     """
-    a = a.lower().strip()
-    b = b.lower().strip()
-    if a == b:           return True
-    if a in b or b in a: return True
-    return SequenceMatcher(None, a, b).ratio() >= 0.6
+    a_norm = normalize_name(a)
+    b_norm = normalize_name(b)
+
+    # Exact match after normalization
+    if a_norm == b_norm:
+        return True
+
+    # One contains the other (handles abbreviations)
+    if a_norm in b_norm or b_norm in a_norm:
+        # But only if the shorter one is at least 5 chars
+        shorter = min(len(a_norm), len(b_norm))
+        if shorter >= 5:
+            return True
+
+    # Strict ratio check
+    ratio = SequenceMatcher(None, a_norm, b_norm).ratio()
+    return ratio >= 0.85
+
+
+# ── VIRTUAL / SRL / ESPORTS KEYWORDS ──────────────────────────────────────────
+# These are simulated / virtual matches — NOT real football.
+# Must NEVER be matched with real games or used in arb calculations.
+VIRTUAL_KEYWORDS = [
+    'srl', 'simulated reality', 'esport', 'e-soccer', 'esoccer',
+    'cyber', 'virtual', 'sim match', 'eadriatic', 'gt league',
+    'efootball', 'e-football', 'fifa', 'pes ',
+]
+
+
+def is_virtual_match(match):
+    """
+    Returns True if the match is SRL / virtual / esports.
+    Checks team names AND tournament name.
+    """
+    text = ' '.join([
+        match.get('home_team', ''),
+        match.get('away_team', ''),
+        match.get('tournament', ''),
+    ]).lower()
+    return any(kw in text for kw in VIRTUAL_KEYWORDS)
+
+
+def tournament_similar(a, b):
+    """
+    Matches tournaments loosely, but strictly enforces youth/women/SRL modifiers.
+    If one is U21 and the other is not, it must return False.
+    If one is SRL and the other is not, it must return False.
+    """
+    a_norm = a.lower()
+    b_norm = b.lower()
+    
+    # Critical modifiers that MUST match
+    modifiers = ['u19', 'u20', 'u21', 'u23', 'women', 'reserves',
+                 'srl', 'esport', 'virtual', 'cyber']
+    for mod in modifiers:
+        if (mod in a_norm) != (mod in b_norm):
+            return False
+            
+    return True
 
 
 def match_all_platforms(all_matches):
     """
-    Groups the same match from different platforms together.
+    Groups same match from different platforms.
+    Matches on: home team + away team + date + tournament modifier.
 
-    QUANT CONCEPT - DATA JOINING:
-    ================================
-    Like a SQL JOIN across 5 tables.
-    Match on: home team + away team + date.
+    CRITICAL: Both home AND away must match, AND tournament modifiers must match!
+    Prevents cross-matching different games (e.g. Senior vs U21).
     """
     groups = []
     used   = set()
@@ -55,7 +103,10 @@ def match_all_platforms(all_matches):
         if i in used:
             continue
 
-        group = {'matches': [match_a], 'sources': [match_a['source']]}
+        group = {
+            'matches': [match_a],
+            'sources': [match_a['source']]
+        }
         used.add(i)
 
         for j, match_b in enumerate(all_matches):
@@ -71,12 +122,35 @@ def match_all_platforms(all_matches):
             date_a = match_a.get('kickoff', '')[:10]
             date_b = match_b.get('kickoff', '')[:10]
 
-            if date_a == date_b and \
-                    similar(home_a, home_b) and \
-                    similar(away_a, away_b):
-                group['matches'].append(match_b)
-                group['sources'].append(match_b['source'])
-                used.add(j)
+            # CRITICAL: dates must match AND both teams must match
+            if date_a != date_b:
+                continue
+
+            # Prevent matching U21 with senior teams
+            tourn_a = match_a.get('tournament', '')
+            tourn_b = match_b.get('tournament', '')
+            if not tournament_similar(tourn_a, tourn_b):
+                continue
+                
+            # Prevent team name false matches if modifiers exist in team names
+            if not tournament_similar(home_a + away_a, home_b + away_b):
+                continue
+
+            home_match = similar(home_a, home_b)
+            away_match = similar(away_a, away_b)
+
+            if not home_match or not away_match:
+                continue
+
+            # EXTRA CHECK: prevent reversed team matching
+            # (home A should NOT match away B)
+            if similar(home_a, away_b) and \
+                    similar(away_a, home_b):
+                continue
+
+            group['matches'].append(match_b)
+            group['sources'].append(match_b['source'])
+            used.add(j)
 
         if len(group['matches']) > 1:
             groups.append(group)
@@ -84,23 +158,53 @@ def match_all_platforms(all_matches):
     return groups
 
 
+def validate_odds(odds_dict, market_type):
+    """
+    CRITICAL: Validates odds before using in arb calculation.
+    Prevents fake/wrong odds from creating false arb.
+
+    Rules:
+    - All odds must be > 1.01 (genuine odds)
+    - Arb sum must be > 0.85 (real market overround)
+    - Arb sum must be < 1.5 (not absurdly unbalanced)
+    - For 1X2: draw odds must be between home and away ± 3x
+    """
+    if not odds_dict:
+        return False
+
+    if market_type == '1x2':
+        h = odds_dict.get('home', 0)
+        d = odds_dict.get('draw', 0)
+        a = odds_dict.get('away', 0)
+        if not all(o > 1.01 for o in [h, d, a]):
+            return False
+        arb = 1/h + 1/d + 1/a
+        if arb < 0.85 or arb > 1.5:
+            return False
+
+    elif market_type == 'ou':
+        ov = odds_dict.get('over', 0)
+        un = odds_dict.get('under', 0)
+        if not all(o > 1.01 for o in [ov, un]):
+            return False
+        arb = 1/ov + 1/un
+        if arb < 0.85 or arb > 1.5:
+            return False
+
+    elif market_type == 'gg':
+        y = odds_dict.get('yes', 0)
+        n = odds_dict.get('no', 0)
+        if not all(o > 1.01 for o in [y, n]):
+            return False
+        arb = 1/y + 1/n
+        if arb < 0.85 or arb > 1.5:
+            return False
+
+    return True
+
+
 def calculate_arb(odds_list):
-    """
-    Calculates arbitrage percentage.
-
-    QUANT CONCEPT - ARBITRAGE FORMULA:
-    ====================================
-    Arb Sum = 1/odds1 + 1/odds2 + ... + 1/oddsN
-
-    If Arb Sum < 1 → ARBITRAGE EXISTS!
-    Profit % = (1 - Arb Sum) / Arb Sum × 100
-
-    Example:
-    odds = [2.50, 4.50, 3.20]
-    sum  = 0.400 + 0.222 + 0.313 = 0.935
-    Profit = (1-0.935)/0.935 × 100 = 6.95%!
-    """
-    if not all(o > 0 for o in odds_list):
+    if not all(o > 1.01 for o in odds_list):
         return 0, 0
     arb_sum = sum(1 / o for o in odds_list)
     if arb_sum < 1:
@@ -110,69 +214,66 @@ def calculate_arb(odds_list):
 
 
 def calculate_stakes(odds_list, total_stake):
-    """
-    Calculates optimal stake for each outcome.
-
-    QUANT CONCEPT - OPTIMAL STAKE SIZING:
-    ========================================
-    Stake_i = (1/odds_i) / arb_sum × total_stake
-    Ensures EQUAL profit regardless of outcome!
-    """
     arb_sum = sum(1 / o for o in odds_list)
-    return [round((1 / o) / arb_sum * total_stake, 2) for o in odds_list]
+    return [round((1/o) / arb_sum * total_stake, 2)
+            for o in odds_list]
 
 
 def calculate_profits(odds_list, stakes):
-    """Calculates profit for each possible outcome."""
     total_staked = sum(stakes)
     return [round(o * s - total_staked, 2)
             for o, s in zip(odds_list, stakes)]
 
 
-def get_best_odds(outcome_key, *platform_odds_pairs):
+def get_best_odds(outcome_key, market_type,
+                  *platform_odds_pairs):
     """
-    Gets best odds across all platforms for one outcome.
+    Gets best odds across platforms for one outcome.
 
-    QUANT CONCEPT - BEST EXECUTION:
-    ==================================
-    For each outcome take the HIGHEST odds available
-    across ALL platforms — maximises potential profit.
-    Same as best execution in stock trading.
+    CRITICAL FIX: Now validates entire odds_dict first!
+    Only uses odds from platforms where the WHOLE market
+    is valid — not just one outcome in isolation.
+
+    This prevents: using Away=5.5 from a wrong match
+    where only that one outcome was grabbed incorrectly.
     """
-    candidates = [
-        (odds_dict.get(outcome_key, 0), name)
-        for odds_dict, name in platform_odds_pairs
-        if odds_dict and odds_dict.get(outcome_key, 0) > 0
-    ]
-    return max(candidates, key=lambda x: x[0]) if candidates else (0, 'N/A')
+    candidates = []
+    for odds_dict, name in platform_odds_pairs:
+        if not odds_dict:
+            continue
+        # Validate the WHOLE market from this platform
+        if not validate_odds(odds_dict, market_type):
+            continue
+        val = odds_dict.get(outcome_key, 0)
+        if val > 1.01:
+            candidates.append((val, name))
 
+    return max(candidates, key=lambda x: x[0]) \
+        if candidates else (0, 'N/A')
 
-# ── MARKET SCANNERS ────────────────────────────────────────────────────────────
 
 def scan_1x2_arb(pair, total_stake):
-    """Scans 1X2 market for arbitrage across all 5 platforms."""
-
     sb_odds  = pair['sportybet'].get('odds_1x2', {})
     bw_odds  = pair['betway'].get('odds_1x2', {})
     fc_odds  = pair['footballcom'].get('odds_1x2', {})
     ox_odds  = pair['onexbet'].get('odds_1x2', {})
     ttb_odds = pair['twentytwobet'].get('odds_1x2', {})
 
-    best_home = get_best_odds('home',
+    best_home = get_best_odds('home', '1x2',
         (sb_odds,  'Sportybet'),
         (bw_odds,  'Betway'),
         (fc_odds,  'Football.com'),
         (ox_odds,  '1xBet'),
         (ttb_odds, '22Bet'),
     )
-    best_draw = get_best_odds('draw',
+    best_draw = get_best_odds('draw', '1x2',
         (sb_odds,  'Sportybet'),
         (bw_odds,  'Betway'),
         (fc_odds,  'Football.com'),
         (ox_odds,  '1xBet'),
         (ttb_odds, '22Bet'),
     )
-    best_away = get_best_odds('away',
+    best_away = get_best_odds('away', '1x2',
         (sb_odds,  'Sportybet'),
         (bw_odds,  'Betway'),
         (fc_odds,  'Football.com'),
@@ -193,51 +294,44 @@ def scan_1x2_arb(pair, total_stake):
             'market':     '1X2',
             'arb_sum':    round(arb_sum, 4),
             'profit_pct': round(profit_pct, 2),
-            'profit_ghs': round(total_stake * profit_pct / 100, 2),
+            'profit_ghs': round(
+                total_stake * profit_pct / 100, 2),
             'bets': [
-                {
-                    'outcome':        'Home Win',
-                    'platform':       best_home[1],
-                    'odds':           best_home[0],
-                    'stake':          stakes[0],
-                    'profit_if_wins': profits[0]
-                },
-                {
-                    'outcome':        'Draw',
-                    'platform':       best_draw[1],
-                    'odds':           best_draw[0],
-                    'stake':          stakes[1],
-                    'profit_if_wins': profits[1]
-                },
-                {
-                    'outcome':        'Away Win',
-                    'platform':       best_away[1],
-                    'odds':           best_away[0],
-                    'stake':          stakes[2],
-                    'profit_if_wins': profits[2]
-                },
+                {'outcome':        'Home Win',
+                 'platform':       best_home[1],
+                 'odds':           best_home[0],
+                 'stake':          stakes[0],
+                 'profit_if_wins': profits[0]},
+                {'outcome':        'Draw',
+                 'platform':       best_draw[1],
+                 'odds':           best_draw[0],
+                 'stake':          stakes[1],
+                 'profit_if_wins': profits[1]},
+                {'outcome':        'Away Win',
+                 'platform':       best_away[1],
+                 'odds':           best_away[0],
+                 'stake':          stakes[2],
+                 'profit_if_wins': profits[2]},
             ]
         }
     return None
 
 
 def scan_ou_arb(pair, total_stake):
-    """Scans Over/Under 2.5 market for arbitrage across all 5 platforms."""
-
     sb_ou  = pair['sportybet'].get('odds_ou', {})
     bw_ou  = pair['betway'].get('odds_ou', {})
     fc_ou  = pair['footballcom'].get('odds_ou', {})
     ox_ou  = pair['onexbet'].get('odds_ou', {})
     ttb_ou = pair['twentytwobet'].get('odds_ou', {})
 
-    best_over = get_best_odds('over',
+    best_over = get_best_odds('over', 'ou',
         (sb_ou,  'Sportybet'),
         (bw_ou,  'Betway'),
         (fc_ou,  'Football.com'),
         (ox_ou,  '1xBet'),
         (ttb_ou, '22Bet'),
     )
-    best_under = get_best_odds('under',
+    best_under = get_best_odds('under', 'ou',
         (sb_ou,  'Sportybet'),
         (bw_ou,  'Betway'),
         (fc_ou,  'Football.com'),
@@ -258,44 +352,39 @@ def scan_ou_arb(pair, total_stake):
             'market':     'Over/Under 2.5',
             'arb_sum':    round(arb_sum, 4),
             'profit_pct': round(profit_pct, 2),
-            'profit_ghs': round(total_stake * profit_pct / 100, 2),
+            'profit_ghs': round(
+                total_stake * profit_pct / 100, 2),
             'bets': [
-                {
-                    'outcome':        'Over 2.5',
-                    'platform':       best_over[1],
-                    'odds':           best_over[0],
-                    'stake':          stakes[0],
-                    'profit_if_wins': profits[0]
-                },
-                {
-                    'outcome':        'Under 2.5',
-                    'platform':       best_under[1],
-                    'odds':           best_under[0],
-                    'stake':          stakes[1],
-                    'profit_if_wins': profits[1]
-                },
+                {'outcome':        'Over 2.5',
+                 'platform':       best_over[1],
+                 'odds':           best_over[0],
+                 'stake':          stakes[0],
+                 'profit_if_wins': profits[0]},
+                {'outcome':        'Under 2.5',
+                 'platform':       best_under[1],
+                 'odds':           best_under[0],
+                 'stake':          stakes[1],
+                 'profit_if_wins': profits[1]},
             ]
         }
     return None
 
 
 def scan_gg_arb(pair, total_stake):
-    """Scans GG/NG market for arbitrage across all 5 platforms."""
-
     sb_gg  = pair['sportybet'].get('odds_gg', {})
     bw_gg  = pair['betway'].get('odds_gg', {})
     fc_gg  = pair['footballcom'].get('odds_gg', {})
     ox_gg  = pair['onexbet'].get('odds_gg', {})
     ttb_gg = pair['twentytwobet'].get('odds_gg', {})
 
-    best_yes = get_best_odds('yes',
+    best_yes = get_best_odds('yes', 'gg',
         (sb_gg,  'Sportybet'),
         (bw_gg,  'Betway'),
         (fc_gg,  'Football.com'),
         (ox_gg,  '1xBet'),
         (ttb_gg, '22Bet'),
     )
-    best_no = get_best_odds('no',
+    best_no = get_best_odds('no', 'gg',
         (sb_gg,  'Sportybet'),
         (bw_gg,  'Betway'),
         (fc_gg,  'Football.com'),
@@ -316,31 +405,25 @@ def scan_gg_arb(pair, total_stake):
             'market':     'GG/NG',
             'arb_sum':    round(arb_sum, 4),
             'profit_pct': round(profit_pct, 2),
-            'profit_ghs': round(total_stake * profit_pct / 100, 2),
+            'profit_ghs': round(
+                total_stake * profit_pct / 100, 2),
             'bets': [
-                {
-                    'outcome':        'GG Yes',
-                    'platform':       best_yes[1],
-                    'odds':           best_yes[0],
-                    'stake':          stakes[0],
-                    'profit_if_wins': profits[0]
-                },
-                {
-                    'outcome':        'GG No',
-                    'platform':       best_no[1],
-                    'odds':           best_no[0],
-                    'stake':          stakes[1],
-                    'profit_if_wins': profits[1]
-                },
+                {'outcome':        'GG Yes',
+                 'platform':       best_yes[1],
+                 'odds':           best_yes[0],
+                 'stake':          stakes[0],
+                 'profit_if_wins': profits[0]},
+                {'outcome':        'GG No',
+                 'platform':       best_no[1],
+                 'odds':           best_no[0],
+                 'stake':          stakes[1],
+                 'profit_if_wins': profits[1]},
             ]
         }
     return None
 
 
-# ── DISPLAY ────────────────────────────────────────────────────────────────────
-
 def display_opportunity(opp):
-    """Displays a single arbitrage opportunity."""
     print(f"\n  {'='*55}")
     print(f"  🏆 {opp['match']}")
     print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
@@ -358,71 +441,72 @@ def display_opportunity(opp):
         print(f"        Win:   GHS {bet['profit_if_wins']:.2f}")
 
 
-# ── MAIN SCANNER ───────────────────────────────────────────────────────────────
-
 def scan_all(sportybet_matches,
              betway_matches,
              footballcom_matches=None,
              onexbet_matches=None,
              twentytwobet_matches=None,
              total_stake=TOTAL_CAPITAL):
-    """Main arbitrage scanner across all 5 platforms."""
 
     if footballcom_matches  is None: footballcom_matches  = []
     if onexbet_matches      is None: onexbet_matches      = []
     if twentytwobet_matches is None: twentytwobet_matches = []
+
+    # CRITICAL: Filter out SRL / virtual / esports matches from ALL platforms
+    sportybet_matches    = [m for m in sportybet_matches    if not is_virtual_match(m)]
+    betway_matches       = [m for m in betway_matches       if not is_virtual_match(m)]
+    footballcom_matches  = [m for m in footballcom_matches  if not is_virtual_match(m)]
+    onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m)]
+    twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m)]
 
     print("\n" + "🔍 " * 20)
     print("   ARBITRAGE SCANNER")
     print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
     print("🔍 " * 20 + "\n")
 
-    print(f"📊 Sportybet   : {len(sportybet_matches)} matches")
-    print(f"📊 Betway      : {len(betway_matches)} matches")
-    print(f"📊 Football.com: {len(footballcom_matches)} matches")
-    print(f"📊 1xBet       : {len(onexbet_matches)} matches")
-    print(f"📊 22Bet       : {len(twentytwobet_matches)} matches")
+    print(f"📊 Sportybet   : {len(sportybet_matches)}")
+    print(f"📊 Betway      : {len(betway_matches)}")
+    print(f"📊 Football.com: {len(footballcom_matches)}")
+    print(f"📊 1xBet       : {len(onexbet_matches)}")
+    print(f"📊 22Bet       : {len(twentytwobet_matches)}")
 
-    all_matches = (sportybet_matches  +
-                   betway_matches     +
+    all_matches = (sportybet_matches   +
+                   betway_matches      +
                    footballcom_matches +
-                   onexbet_matches    +
+                   onexbet_matches     +
                    twentytwobet_matches)
 
     groups = match_all_platforms(all_matches)
     print(f"\n✅ Matched across platforms: {len(groups)} events")
 
     if not groups:
-        print("\n⚠️ No matching events found across platforms!")
-        print("💡 Try running all scrapers first")
+        print("\n⚠️ No matching events found!")
         return []
 
     opportunities = []
-    print(f"\n🔍 Scanning {len(groups)} matched events...\n")
-
     empty = {'odds_1x2': {}, 'odds_ou': {}, 'odds_gg': {}}
+
+    print(f"\n🔍 Scanning {len(groups)} matched events...\n")
 
     for group in groups:
         matches    = group['matches']
         first      = matches[0]
-        match_name = f"{first['home_team']} vs {first['away_team']}"
+        match_name = (f"{first['home_team']} vs "
+                      f"{first['away_team']}")
         kickoff    = first['kickoff']
         tournament = first['tournament']
 
         pair = {
             'sportybet':    next((m for m in matches
-                                  if m['source'] == 'sportybet_gh'),    empty),
+                if m['source'] == 'sportybet_gh'),    empty),
             'betway':       next((m for m in matches
-                                  if m['source'] == 'betway_gh'),       empty),
+                if m['source'] == 'betway_gh'),       empty),
             'footballcom':  next((m for m in matches
-                                  if m['source'] == 'footballcom_gh'),  empty),
+                if m['source'] == 'footballcom_gh'),  empty),
             'onexbet':      next((m for m in matches
-                                  if m['source'] == '1xbet_gh'),        empty),
+                if m['source'] == '1xbet_gh'),        empty),
             'twentytwobet': next((m for m in matches
-                                  if m['source'] == 'twentytwobet_gh'), empty),
-            'match':      match_name,
-            'kickoff':    kickoff,
-            'tournament': tournament,
+                if m['source'] == 'twentytwobet_gh'), empty),
         }
 
         for arb_fn in [scan_1x2_arb, scan_ou_arb, scan_gg_arb]:
@@ -439,28 +523,26 @@ def scan_all(sportybet_matches,
 
     print(f"\n{'='*60}")
     print(f"✅ SCAN COMPLETE!")
-    print(f"⚽ Events scanned     : {len(groups)}")
-    print(f"🎯 Arb opportunities  : {len(opportunities)}")
+    print(f"⚽ Events scanned    : {len(groups)}")
+    print(f"🎯 Arb opportunities : {len(opportunities)}")
 
     if opportunities:
-        total_profit = sum(o['profit_ghs'] for o in opportunities)
-        best = max(opportunities, key=lambda x: x['profit_pct'])
-        print(f"💰 Total potential profit: GHS {total_profit:.2f}")
-        print(f"📈 Best: {best['profit_pct']:.2f}% on {best['match']}")
+        total_profit = sum(
+            o['profit_ghs'] for o in opportunities)
+        best = max(opportunities,
+                   key=lambda x: x['profit_pct'])
+        print(f"💰 Total potential profit: "
+              f"GHS {total_profit:.2f}")
+        print(f"📈 Best: {best['profit_pct']:.2f}% "
+              f"on {best['match']}")
     else:
         print("💡 No arb opportunities right now")
-        print("   Try again closer to kickoff times")
-        print("   Best opportunities 2-3 hours before kickoff")
 
     print(f"{'='*60}")
     return opportunities
 
 
-# ── STANDALONE RUN ─────────────────────────────────────────────────────────────
-
 def run():
-    """Loads saved odds files and runs the arbitrage scan."""
-
     print("\n" + "🚀 " * 20)
     print("   QUANT BET ALPHA - ARBITRAGE ENGINE")
     print("🚀 " * 20 + "\n")
@@ -472,17 +554,23 @@ def run():
             print(f"✅ {label}: {len(data)} matches")
             return data
         except FileNotFoundError:
-            print(f"❌ {path} not found — run the scraper first")
+            print(f"❌ {path} not found!")
             return []
 
-    sportybet_matches   = load('data/sportybet_odds.json',    'Sportybet')
-    betway_matches      = load('data/betway_odds.json',       'Betway')
-    footballcom_matches = load('data/footballcom_odds.json',  'Football.com')
-    onexbet_matches     = load('data/onexbet_odds.json',      '1xBet')
-    twentytwobet_matches = load('data/twentytwobet_odds.json', '22Bet')
+    sportybet_matches    = load(
+        'data/sportybet_odds.json',    'Sportybet')
+    betway_matches       = load(
+        'data/betway_odds.json',       'Betway')
+    footballcom_matches  = load(
+        'data/footballcom_odds.json',  'Football.com')
+    onexbet_matches      = load(
+        'data/onexbet_odds.json',      '1xBet')
+    twentytwobet_matches = load(
+        'data/twentytwobet_odds.json', '22Bet')
 
-    if not any([sportybet_matches, betway_matches, footballcom_matches,
-                onexbet_matches, twentytwobet_matches]):
+    if not any([sportybet_matches, betway_matches,
+                footballcom_matches, onexbet_matches,
+                twentytwobet_matches]):
         print("\n❌ No odds data found!")
         return []
 

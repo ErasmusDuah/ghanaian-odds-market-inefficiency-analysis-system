@@ -43,14 +43,14 @@ def run_scan():
     scan_count += 1
 
     print(f"\n{'='*60}")
-    print(f"🔍 SCAN #{scan_count}")
-    print(f"🕐 {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
+    print(f"SCAN #{scan_count}")
+    print(f"TIME: {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
     print(f"{'='*60}\n")
 
     try:
         # Clear stale data first
         clear_old_data()
-        print("🗑️  Cleared old odds data\n")
+        print("CLEARED old odds data\n")
 
         # Fetch fresh odds from all 5 platforms
         sportybet_matches    = fetch_sportybet()    or []
@@ -59,7 +59,7 @@ def run_scan():
         onexbet_matches      = fetch_onexbet()      or []
         twentytwobet_matches = fetch_twentytwobet() or []
 
-        print(f"\n📊 Matches fetched:")
+        print(f"\nMATCHES fetched:")
         print(f"   Sportybet   : {len(sportybet_matches)}")
         print(f"   Betway      : {len(betway_matches)}")
         print(f"   Football.com: {len(footballcom_matches)}")
@@ -69,7 +69,7 @@ def run_scan():
         if not any([sportybet_matches, betway_matches,
                     footballcom_matches, onexbet_matches,
                     twentytwobet_matches]):
-            print("\n⚠️  No matches fetched from any platform!")
+            print("\nWARNING: No matches fetched from any platform!")
             return
 
         # Scan for arbitrage across all 5 platforms
@@ -96,28 +96,28 @@ def run_scan():
             os.makedirs('engine', exist_ok=True)
             with open(filename, 'w') as f:
                 json.dump(opportunities, f, indent=2)
-            print(f"\n💾 Saved to {filename}")
+            print(f"\nSAVED to {filename}")
 
     except Exception as e:
-        print(f"❌ Scan error: {e}")
+        print(f"ERROR: Scan error: {e}")
         import traceback
         traceback.print_exc()
 
 
 def main():
-    print("\n" + "🚀 " * 20)
+    print("\n" + "* " * 20)
     print("   QUANT BET ALPHA - LIVE SYSTEM")
     print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🚀 " * 20)
+    print("* " * 20)
 
     send_startup_message()
     run_scan()
 
     schedule.every(5).minutes.do(run_scan)
 
-    print("\n⏰ Scheduled to scan every 5 minutes")
-    print("📱 Alerts will be sent to Telegram")
-    print("🛑 Press Ctrl+C to stop\n")
+    print("\n[Scheduled] Scanning every 5 minutes")
+    print("Alerts will be sent to Telegram")
+    print("STOP Press Ctrl+C to stop\n")
 
     while True:
         schedule.run_pending()

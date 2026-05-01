@@ -1,95 +1,1250 @@
 22BET GHANA - ALL MATCHES
-Generated: Friday, 03 April 2026 20:54:48
-Total: 13 matches
+Generated: Friday, 01 May 2026 14:19:40
+Total: 208 matches
 ============================================================
 
-⚽ Manchester City vs Liverpool FC 
-🏆 FA Cup
-🕐 2026-04-04 11:45
-1X2: 1.8 | 4.2 | 4.2
-O/U 2.5: Over 1.54 | Under 2.55
-GG/NG: Yes 1.37 | No 3.1
+⚽ Septemvri Sofia vs Montana 
+🏆 Bulgaria. First League
+🕐 2026-05-01 14:30
+1X2: 1.94 | 2.88 | 4.3
+O/U 2.5: Over 2.45 | Under 1.47
 
-⚽ Real Sociedad San Sebastian vs Levante UD 
-🏆 LaLiga
-🕐 2026-04-04 12:00
-1X2: 1.62 | 4.3 | 5.6
-O/U 2.5: Over 1.73 | Under 2.16
-GG/NG: Yes 1.25 | No 4.0
+⚽ Marítimo vs Leixoes 
+🏆 Portugal. Segunda Liga
+🕐 2026-05-01 14:30
+1X2: 2.01 | 3.09 | 3.71
+O/U 2.5: Over 2.17 | Under 1.63
 
-⚽ Sassuolo Calcio vs Cagliari Calcio 
+⚽ Chindia Targoviste vs CSA Steaua 
+🏆 Romania. Liga 2
+🕐 2026-05-01 14:30
+1X2: 3.01 | 3.02 | 2.32
+O/U 2.5: Over 2.08 | Under 1.65
+
+⚽ Talant Besh-Kungoy vs Toktogul 
+🏆 Kyrgyzstan Championship. Premier League
+🕐 2026-05-01 14:30
+1X2: 2.23 | 3.36 | 2.52
+O/U 2.5: Over 1.79 | Under 1.81
+
+⚽ OShMu-Aldier vs Dordoi Bishkek 
+🏆 Kyrgyzstan Championship. Premier League
+🕐 2026-05-01 14:30
+1X2: 2.33 | 3.37 | 2.39
+O/U 2.5: Over 1.78 | Under 1.82
+
+⚽ TJ Nový Jicín vs Havirov 
+🏆 Czech Republic. 4 Liga
+🕐 2026-05-01 14:30
+1X2: 8.4 | 5.3 | 1.23
+O/U 2.5: Over 1.38 | Under 2.48
+
+⚽ Pustá Polom vs Petrvald 
+🏆 Czech Republic. 4 Liga
+🕐 2026-05-01 14:30
+1X2: 2.88 | 3.83 | 1.98
+O/U 2.5: Over 1.42 | Under 2.46
+
+⚽ TJ Valasske Mezirici vs Sumperk 
+🏆 Czech Republic. 4 Liga
+🕐 2026-05-01 14:30
+1X2: 2.02 | 3.38 | 3.03
+O/U 2.5: Over 1.47 | Under 2.24
+
+⚽ Nova Star vs Liver Sport 
+🏆 UAE. Division 3
+🕐 2026-05-01 14:30
+1X2: 2.18 | 3.65 | 2.44
+O/U 2.5: Over 1.5 | Under 2.23
+
+⚽ Minsk vs Naftan 
+🏆 Belarus. Premier League
+🕐 2026-05-01 14:30
+1X2: 1.73 | 3.39 | 4.7
+O/U 2.5: Over 1.99 | Under 1.73
+
+⚽ FC Versailles 78 vs US Orleans 
+🏆 National
+🕐 2026-05-01 15:00
+1X2: 2.29 | 3.5 | 2.9
+O/U 2.5: Over 1.71 | Under 2.06
+
+⚽ Spaeri vs Torpedo Kutaisi 
+🏆 Georgia. Superleague
+🕐 2026-05-01 15:00
+1X2: 3.65 | 3.2 | 1.87
+O/U 2.5: Over 1.9 | Under 1.72
+
+⚽ 1. Pribram vs Dynamo Ceske Budejovice 
+🏆 Czech Republic. 2 Liga
+🕐 2026-05-01 15:00
+1X2: 1.72 | 3.48 | 3.96
+O/U 2.5: Over 1.66 | Under 1.98
+
+⚽ Prostejov vs Artis Brno 
+🏆 Czech Republic. 2 Liga
+🕐 2026-05-01 15:00
+1X2: 4.1 | 3.48 | 1.7
+O/U 2.5: Over 1.77 | Under 1.86
+
+⚽ Dziugas Telsiai vs Hegelmann Litauen 
+🏆 Lithuania. A Liga
+🕐 2026-05-01 15:00
+1X2: 2.19 | 2.99 | 3.03
+O/U 2.5: Over 2.06 | Under 1.61
+
+⚽ Sesvete vs Karlovac 
+🏆 Croatia. 1. NL
+🕐 2026-05-01 15:00
+1X2: 1.5 | 3.68 | 5.4
+O/U 2.5: Over 2.06 | Under 1.61
+
+⚽ Super Nova vs Auda 
+🏆 Latvia. Virsliga
+🕐 2026-05-01 15:00
+1X2: 4.5 | 3.52 | 1.62
+O/U 2.5: Over 1.77 | Under 1.86
+
+⚽ Sassuolo Calcio vs Torino FC 
+🏆 Primavera 1
+🕐 2026-05-01 15:00
+1X2: 2.39 | 3.6 | 2.41
+O/U 2.5: Over 1.55 | Under 2.24
+
+⚽ Covilha vs Amora 
+🏆 Portugal. Liga 3
+🕐 2026-05-01 15:00
+1X2: 2.39 | 2.9 | 2.71
+O/U 2.5: Over 2.13 | Under 1.57
+
+⚽ Real Union de Irun vs CD Alfaro 
+🏆 Segunda Federacion
+🕐 2026-05-01 15:00
+1X2: 1.14 | 6.6 | 14.0
+O/U 2.5: Over 1.37 | Under 2.7
+
+⚽ NK Grobnican vs Kustosja 
+🏆 Croatia. 2. NL
+🕐 2026-05-01 15:00
+1X2: 4.4 | 3.44 | 1.66
+O/U 2.5: Over 1.82 | Under 1.81
+
+⚽ NK Mladost Zdralovi vs NK Krizevci 
+🏆 Croatia. 2. NL
+🕐 2026-05-01 15:00
+1X2: 1.78 | 3.34 | 3.85
+O/U 2.5: Over 1.87 | Under 1.75
+
+⚽ Hrvatski Dragovoljac vs Jadran Luka Ploce 
+🏆 Croatia. 2. NL
+🕐 2026-05-01 15:00
+1X2: 2.4 | 3.34 | 2.41
+O/U 2.5: Over 1.87 | Under 1.75
+
+⚽ Mlava vs Bron Radom 
+🏆 Poland Championship. Liga 3
+🕐 2026-05-01 15:00
+1X2: 1.68 | 3.68 | 3.92
+O/U 2.5: Over 1.54 | Under 2.19
+
+⚽ Stal Krasnik vs KS Wisloka Debica 
+🏆 Poland Championship. Liga 3
+🕐 2026-05-01 15:00
+1X2: 2.9 | 3.24 | 2.14
+O/U 2.5: Over 1.76 | Under 1.87
+
+⚽ Sokol Kolbuszowa Dolna vs GPTS Avia Swidnik 
+🏆 Poland Championship. Liga 3
+🕐 2026-05-01 15:00
+1X2: 4.4 | 3.73 | 1.59
+O/U 2.5: Over 1.6 | Under 2.08
+
+⚽ Sokol Hostoun vs Kladno 
+🏆 Czech Republic. 3 Liga
+🕐 2026-05-01 15:00
+1X2: 7.9 | 4.9 | 1.27
+O/U 2.5: Over 1.41 | Under 2.39
+
+⚽ Jiskra Domazlice vs Slavia Prague III 
+🏆 Czech Republic. 3 Liga
+🕐 2026-05-01 15:00
+1X2: 1.28 | 4.8 | 7.7
+O/U 2.5: Over 1.31 | Under 2.78
+
+⚽ Trencin II vs Raca Bratislava 
+🏆 Slovakia. Liga 3
+🕐 2026-05-01 15:00
+1X2: 1.44 | 3.98 | 5.7
+O/U 2.5: Over 1.52 | Under 2.23
+
+⚽ Granada CF vs CD Tenerife 
+🏆 Primera Division Women
+🕐 2026-05-01 15:00
+1X2: 3.45 | 3.3 | 2.1
+O/U 2.5: Over 2.03 | Under 1.73
+
+⚽ Fortuna Wiener Neustadt vs ASV Schrems 
+🏆 Austria. Landesliga
+🕐 2026-05-01 15:00
+1X2: 1.27 | 5.2 | 7.2
+O/U 2.5: Over 1.29 | Under 2.87
+
+⚽ ES Hammam-Sousse vs Sfax Railways 
+🏆 Tunisia. Ligue 2
+🕐 2026-05-01 15:00
+1X2: 1.46 | 3.49 | 6.6
+O/U 2.5: Over 2.19 | Under 1.54
+
+⚽ Menzel Bourguiba vs El Makarem de Mahdia 
+🏆 Tunisia. Ligue 2
+🕐 2026-05-01 15:00
+1X2: 3.15 | 3.32 | 1.95
+O/U 2.5: Over 1.93 | Under 1.68
+
+⚽ Megrine vs Bouhajla 
+🏆 Tunisia. Ligue 2
+🕐 2026-05-01 15:00
+1X2: 1.9 | 3.04 | 3.68
+O/U 2.5: Over 2.51 | Under 1.39
+
+⚽ OC Kerkennah vs Hammam-Lif 
+🏆 Tunisia. Ligue 2
+🕐 2026-05-01 15:00
+1X2: 3.48 | 3.05 | 1.94
+O/U 2.5: Over 2.43 | Under 1.42
+
+⚽ AS Agareb vs CS M'saken 
+🏆 Tunisia. Ligue 2
+🕐 2026-05-01 15:00
+1X2: 1.89 | 2.93 | 4.0
+O/U 2.5: Over 2.65 | Under 1.34
+
+⚽ Tataouine vs ‪Sporting Club Ben Arous 
+🏆 Tunisia. Ligue 2
+🕐 2026-05-01 15:00
+1X2: 1.63 | 3.55 | 4.3
+O/U 2.5: Over 1.9 | Under 1.71
+
+⚽ Chebba vs Bousalem 
+🏆 Tunisia. Ligue 2
+🕐 2026-05-01 15:00
+1X2: 1.85 | 3.02 | 3.9
+O/U 2.5: Over 2.61 | Under 1.37
+
+⚽ Babrungas vs BFA Vilnius 
+🏆 Lithuania Championship. League 1
+🕐 2026-05-01 15:00
+1X2: 1.63 | 3.52 | 4.5
+O/U 2.5: Over 1.86 | Under 1.77
+
+⚽ Ostrov vs Baník Sokolov 
+🏆 Czech Republic. 4 Liga
+🕐 2026-05-01 15:00
+1X2: 2.1 | 3.28 | 2.93
+O/U 2.5: Over 1.57 | Under 2.13
+
+⚽ Predni Kopanina vs SK Slany 
+🏆 Czech Republic. 4 Liga
+🕐 2026-05-01 15:00
+1X2: 6.9 | 4.6 | 1.32
+O/U 2.5: Over 1.35 | Under 2.61
+
+⚽ Skastice vs Tatran Vsechovice 
+🏆 Czech Republic. 4 Liga
+🕐 2026-05-01 15:00
+1X2: 6.7 | 4.7 | 1.32
+O/U 2.5: Over 1.38 | Under 2.51
+
+⚽ ACS Kids Tampa Brasov vs Vointa Crevedia 
+🏆 Romania. Liga 3
+🕐 2026-05-01 15:00
+1X2: 3.62 | 3.61 | 1.76
+O/U 2.5: Over 1.77 | Under 1.86
+
+⚽ Mogosoaia vs CS Urban Titu 
+🏆 Romania. Liga 3
+🕐 2026-05-01 15:00
+1X2: 1.67 | 3.63 | 4.0
+O/U 2.5: Over 1.69 | Under 1.94
+
+⚽ ACS Dacia Unirea Braila vs CSM Ramnicu Sarat 
+🏆 Romania. Liga 3
+🕐 2026-05-01 15:00
+1X2: 1.92 | 3.87 | 2.93
+O/U 2.5: Over 1.28 | Under 2.92
+
+⚽ CS Stefanesti vs Popesti-Leordeni 
+🏆 Romania. Liga 3
+🕐 2026-05-01 15:00
+1X2: 2.22 | 3.38 | 2.59
+O/U 2.5: Over 1.74 | Under 1.89
+
+⚽ C.D. Municipal Limeno II vs Cacahuatique II 
+🏆 El Salvador. Reserve League
+🕐 2026-05-01 15:00
+1X2: 1.87 | 3.34 | 3.67
+O/U 2.5: Over 1.77 | Under 1.87
+
+⚽ Korona Kielce vs Piast Gliwice 
+🏆 Poland. Ekstraklasa
+🕐 2026-05-01 15:30
+1X2: 2.22 | 3.14 | 3.08
+O/U 2.5: Over 1.75 | Under 1.94
+
+⚽ ASGNN vs AS UAM 
+🏆 Niger Championship
+🕐 2026-05-01 15:30
+1X2: 1.43 | 3.38 | 7.8
+O/U 2.5: Over 2.3 | Under 1.49
+
+⚽ ASN Nigelec vs Tagour Provincial Club 
+🏆 Niger Championship
+🕐 2026-05-01 15:30
+1X2: 1.52 | 3.32 | 5.8
+O/U 2.5: Over 2.51 | Under 1.39
+
+⚽ Viking vs Rosenborg 
+🏆 Norway. Eliteserien
+🕐 2026-05-01 16:00
+1X2: 1.35 | 5.2 | 7.6
+O/U 2.5: Over 1.37 | Under 2.56
+
+⚽ Akritas Chlorakas vs Ethnikos Achna 
+🏆 Cyprus. First Division
+🕐 2026-05-01 16:00
+1X2: 2.73 | 3.38 | 2.33
+O/U 2.5: Over 1.82 | Under 1.87
+
+⚽ Olympiakos Nicosia vs Omonia Aradippou 
+🏆 Cyprus. First Division
+🕐 2026-05-01 16:00
+1X2: 2.43 | 3.28 | 2.62
+O/U 2.5: Over 1.73 | Under 1.97
+
+⚽ Puszcza Niepolomice vs Znicz Pruszkow 
+🏆 Poland Championship. Liga 1
+🕐 2026-05-01 16:00
+1X2: 2.03 | 3.08 | 3.3
+O/U 2.5: Over 1.98 | Under 1.68
+
+⚽ Vysocina Jihlava vs Sellier&Bellot Vlasim 
+🏆 Czech Republic. 2 Liga
+🕐 2026-05-01 16:00
+1X2: 2.22 | 3.14 | 2.83
+O/U 2.5: Over 1.74 | Under 1.89
+
+⚽ Middelfart G&BK vs Aarhus Fremad 
+🏆 Denmark. 1st Division
+🕐 2026-05-01 16:00
+1X2: 6.6 | 4.7 | 1.37
+O/U 2.5: Over 1.45 | Under 2.29
+
+⚽ Flora Tallinn II vs Maardu Linnameeskond 
+🏆 Estonia. Esiliiga
+🕐 2026-05-01 16:00
+1X2: 1.42 | 4.5 | 5.1
+O/U 2.5: Over 1.17 | Under 3.71
+
+⚽ Ungmennafelagid Afturelding vs Iþrottafelagið Volsungur 
+🏆 Iceland. 1. Deild
+🕐 2026-05-01 16:00
+1X2: 1.099 | 7.2 | 12.0
+O/U 2.5: Over 1.17 | Under 3.69
+
+⚽ CWKS Resovia Rzeszow vs KKS 1925 Kalisz 
+🏆 Poland Championship. Liga 2
+🕐 2026-05-01 16:00
+1X2: 1.59 | 3.58 | 4.7
+O/U 2.5: Over 1.68 | Under 1.96
+
+⚽ Sport Huancayo II vs Bentin Tacna Heroica 
+🏆 Peru. Liga 2
+🕐 2026-05-01 16:00
+1X2: 1.99 | 3.18 | 3.27
+O/U 2.5: Over 1.74 | Under 1.89
+
+⚽ Epinal vs Biesheim ASC 
+🏆 National 2
+🕐 2026-05-01 16:00
+1X2: 2.28 | 3.0 | 3.05
+O/U 2.5: Over 2.2 | Under 1.55
+
+⚽ AS Cannes vs FC Goal 
+🏆 National 2
+🕐 2026-05-01 16:00
+1X2: 1.43 | 4.5 | 5.6
+O/U 2.5: Over 1.48 | Under 2.36
+
+⚽ Fjolnir vs Magni 
+🏆 Iceland. 2 Delid
+🕐 2026-05-01 16:00
+1X2: 1.42 | 4.6 | 4.9
+O/U 2.5: Over 1.29 | Under 2.87
+
+⚽ TMT vs Real de Banjul 
+🏆 Gambian Championship. 1st Division
+🕐 2026-05-01 16:00
+1X2: 3.55 | 2.67 | 2.15
+O/U 2.5: Over 2.82 | Under 1.3
+
+⚽ Pama vs Leithaprodersdorf 
+🏆 Austria. Landesliga
+🕐 2026-05-01 16:00
+1X2: 3.22 | 3.56 | 1.89
+O/U 2.5: Over 1.44 | Under 2.31
+
+⚽ Stadlau vs 1980 Wien 
+🏆 Austria. Landesliga
+🕐 2026-05-01 16:00
+1X2: 3.32 | 3.42 | 1.89
+O/U 2.5: Over 1.5 | Under 2.17
+
+⚽ SPG Edelserpentin vs ASK Horitschon 
+🏆 Austria. Landesliga
+🕐 2026-05-01 16:00
+1X2: 1.71 | 3.73 | 3.72
+O/U 2.5: Over 1.5 | Under 2.27
+
+⚽ Phoenix Johvi vs FA Tartu Kalev 
+🏆 Estonia. Esiliiga B
+🕐 2026-05-01 16:00
+1X2: 1.81 | 4.2 | 3.04
+O/U 2.5: Over 1.15 | Under 3.91
+
+⚽ St. Polten (Women) vs Sturm Graz (Women) 
+🏆 Austria. ÖFB-Frauenliga. Women
+🕐 2026-05-01 16:00
+1X2: 1.38 | 4.6 | 5.7
+O/U 2.5: Over 1.51 | Under 2.27
+
+⚽ Bouri vs Etehad Al Reef 
+🏆 Bahrain. Second Division
+🕐 2026-05-01 16:00
+1X2: 1.5 | 3.77 | 5.2
+O/U 2.5: Over 1.68 | Under 1.96
+
+⚽ Busaiteen Club vs Al Tadamun Buri 
+🏆 Bahrain. Second Division
+🕐 2026-05-01 16:00
+1X2: 1.48 | 3.81 | 5.4
+O/U 2.5: Over 1.66 | Under 1.98
+
+⚽ Isa Town vs Umm Al Hassam 
+🏆 Bahrain. Second Division
+🕐 2026-05-01 16:00
+1X2: 2.64 | 3.03 | 2.36
+O/U 2.5: Over 1.82 | Under 1.82
+
+⚽ Cece United vs District 17 
+🏆 Liberia. Division 2
+🕐 2026-05-01 16:00
+1X2: 3.62 | 3.58 | 1.77
+O/U 2.5: Over 1.57 | Under 2.13
+
+⚽ Union Gurten vs Junge Wikinger Ried 
+🏆 Austria. Regionalliga Central
+🕐 2026-05-01 16:00
+1X2: 1.3 | 4.8 | 7.0
+O/U 2.5: Over 1.39 | Under 2.45
+
+⚽ Sport Union Mauer vs Oberwart 
+🏆 Austria. Regionalliga East
+🕐 2026-05-01 16:00
+1X2: 4.5 | 3.65 | 1.6
+O/U 2.5: Over 1.72 | Under 1.9
+
+⚽ Al-Arabi Al Saudi vs Al Jubail Club 
+🏆 Saudi Arabia. Division 1
+🕐 2026-05-01 16:10
+1X2: 1.71 | 3.54 | 3.94
+O/U 2.5: Over 1.68 | Under 1.96
+
+⚽ RC Deportivo La Coruna vs CD Leganes 
+🏆 LaLiga 2
+🕐 2026-05-01 16:30
+1X2: 1.55 | 4.3 | 6.0
+O/U 2.5: Over 1.81 | Under 1.97
+
+⚽ Fortune Farato vs Gambia Ports Authority 
+🏆 Gambian Championship. 1st Division
+🕐 2026-05-01 16:30
+1X2: 2.57 | 2.69 | 2.68
+O/U 2.5: Over 2.82 | Under 1.3
+
+⚽ Steve Biko vs Banjul Hawks 
+🏆 Gambian Championship. 1st Division
+🕐 2026-05-01 16:30
+1X2: 2.36 | 2.59 | 3.2
+O/U 2.5: Over 3.0 | Under 1.26
+
+⚽ Medina United vs Falcons 
+🏆 Gambian Championship. 1st Division
+🕐 2026-05-01 16:30
+1X2: 2.51 | 2.59 | 2.87
+O/U 2.5: Over 2.99 | Under 1.27
+
+⚽ Al-Zawra'a vs Duhok 
+🏆 Iraq. Stars League
+🕐 2026-05-01 16:30
+1X2: 1.72 | 3.19 | 4.4
+O/U 2.5: Over 2.04 | Under 1.62
+
+⚽ Al-Karma vs Newroz Sulaymaniyah 
+🏆 Iraq. Stars League
+🕐 2026-05-01 16:30
+1X2: 1.52 | 3.52 | 5.5
+O/U 2.5: Over 1.92 | Under 1.71
+
+⚽ Avarta vs Skjold 
+🏆 Denmark. Denmark Series
+🕐 2026-05-01 16:30
+1X2: 1.38 | 5.0 | 5.1
+O/U 2.5: Over 1.25 | Under 3.08
+
+⚽ Lokomotiv Moscow vs Dynamo Moscow 
+🏆 Russia. Premier League
+🕐 2026-05-01 16:30
+1X2: 2.24 | 3.84 | 3.05
+O/U 2.5: Over 1.5 | Under 2.31
+
+⚽ Gorilla vs Rwanda Police 
+🏆 Rwanda. National League
+🕐 2026-05-01 16:30
+1X2: 3.12 | 2.65 | 2.36
+O/U 2.5: Over 2.65 | Under 1.34
+
+⚽ Al Ain vs Al-Wahda Abu Dhabi 
+🏆 UAE Cup
+🕐 2026-05-01 16:45
+1X2: 1.6 | 3.42 | 4.9
+O/U 2.5: Over 1.83 | Under 1.8
+
+⚽ ASAC Concorde vs Armee 
+🏆 Mauritania. Division 2
+🕐 2026-05-01 16:45
+1X2: 1.7 | 3.22 | 4.5
+O/U 2.5: Over 2.25 | Under 1.51
+
+⚽ Gaziantep vs Besiktas 
+🏆 Turkey. SuperLiga
+🕐 2026-05-01 17:00
+1X2: 3.43 | 3.82 | 2.01
+O/U 2.5: Over 1.38 | Under 2.49
+
+⚽ Brondby vs Nordsjaelland 
+🏆 Denmark. Superliga
+🕐 2026-05-01 17:00
+1X2: 2.07 | 3.73 | 2.96
+O/U 2.5: Over 1.37 | Under 2.56
+
+⚽ Dobrudzha Dobrich vs Lokomotiv Sofia 
+🏆 Bulgaria. First League
+🕐 2026-05-01 17:00
+1X2: 2.39 | 3.18 | 2.78
+O/U 2.5: Over 2.05 | Under 1.67
+
+⚽ Zamalek vs Al Ahly Cairo 
+🏆 Egypt. Premier League
+🕐 2026-05-01 17:00
+1X2: 3.41 | 2.99 | 2.03
+O/U 2.5: Over 1.98 | Under 1.68
+
+⚽ Manisa vs Sakaryaspor 
+🏆 Turkey. TFF 1. Lig
+🕐 2026-05-01 17:00
+1X2: 1.3 | 5.0 | 6.8
+O/U 2.5: Over 1.35 | Under 2.61
+
+⚽ Rustavi vs Dila Gori 
+🏆 Georgia. Superleague
+🕐 2026-05-01 17:00
+1X2: 3.03 | 2.87 | 2.26
+O/U 2.5: Over 2.21 | Under 1.53
+
+⚽ AaB Fodbold vs Hobro 
+🏆 Denmark. 1st Division
+🕐 2026-05-01 17:00
+1X2: 2.5 | 3.38 | 2.47
+O/U 2.5: Over 1.8 | Under 1.89
+
+⚽ DJK Vilzing vs Schwaben Augsburg 
+🏆 Regionalliga Bavaria
+🕐 2026-05-01 17:00
+1X2: 2.15 | 3.45 | 2.8
+O/U 2.5: Over 1.59 | Under 2.17
+
+⚽ Tenerife CD vs Barakaldo CF 
+🏆 Primera Federacion
+🕐 2026-05-01 17:00
+1X2: 2.0 | 3.1 | 3.6
+O/U 2.5: Over 2.19 | Under 1.56
+
+⚽ Hellerup IK vs Næstved 
+🏆 Denmark. 2nd Division
+🕐 2026-05-01 17:00
+1X2: 5.6 | 4.2 | 1.47
+O/U 2.5: Over 1.6 | Under 2.17
+
+⚽ Vendsyssel vs Thisted 
+🏆 Denmark. 2nd Division
+🕐 2026-05-01 17:00
+1X2: 1.65 | 3.65 | 4.7
+O/U 2.5: Over 1.85 | Under 1.85
+
+⚽ Roskilde vs Akademisk 
+🏆 Denmark. 2nd Division
+🕐 2026-05-01 17:00
+1X2: 3.15 | 3.57 | 2.01
+O/U 2.5: Over 1.59 | Under 2.2
+
+⚽ Zawisza Bydgoszcz vs Flota Swinoujscie 
+🏆 Poland Championship. Liga 3
+🕐 2026-05-01 17:00
+1X2: 1.26 | 5.0 | 8.1
+O/U 2.5: Over 1.37 | Under 2.54
+
+⚽ IFK Stocksund vs Vasalunds 
+🏆 Sweden. Division 1
+🕐 2026-05-01 17:00
+1X2: 4.2 | 4.1 | 1.57
+O/U 2.5: Over 1.3 | Under 2.82
+
+⚽ AD Huracan vs CD Marino 
+🏆 U19 Division de Honor Juvenil
+🕐 2026-05-01 17:00
+1X2: 1.65 | 3.8 | 4.1
+O/U 2.5: Over 1.6 | Under 2.16
+
+⚽ Emelec (Women) vs Deportivo Ibarra (Women) 
+🏆 Ecuador. Serie A. Women
+🕐 2026-05-01 17:00
+1X2: 4.4 | 4.1 | 1.54
+O/U 2.5: Over 1.39 | Under 2.45
+
+⚽ Grasshopper Club Zurich (Women) vs Zurich (Women) 
+🏆 Switzerland Championship. Women
+🕐 2026-05-01 17:00
+1X2: 2.15 | 3.34 | 2.8
+O/U 2.5: Over 1.68 | Under 1.96
+
+⚽ Servette Chenois (Women) vs Aarau (Women) 
+🏆 Switzerland Championship. Women
+🕐 2026-05-01 17:00
+1X2: 1.053 | 7.4 | 22.0
+O/U 2.5: Over 1.62 | Under 2.04
+
+⚽ Basel (Women) vs St. Gallen (Women) 
+🏆 Switzerland Championship. Women
+🕐 2026-05-01 17:00
+1X2: 1.74 | 3.63 | 3.68
+O/U 2.5: Over 1.68 | Under 1.96
+
+⚽ Al Shamal vs Al Sadd 
+🏆 Qatar Emir Cup
+🕐 2026-05-01 17:00
+1X2: 3.72 | 3.48 | 1.77
+O/U 2.5: Over 1.47 | Under 2.24
+
+⚽ Al-Gharafa vs Umm Salal 
+🏆 Qatar Emir Cup
+🕐 2026-05-01 17:00
+1X2: 1.85 | 3.58 | 3.32
+O/U 2.5: Over 1.38 | Under 2.51
+
+⚽ Lafnitz vs Union Dietach 
+🏆 Austria. Regionalliga Central
+🕐 2026-05-01 17:00
+1X2: 1.54 | 4.1 | 4.4
+O/U 2.5: Over 1.36 | Under 2.58
+
+⚽ Favoritner AC vs Donau 
+🏆 Austria. Regionalliga East
+🕐 2026-05-01 17:10
+1X2: 2.3 | 3.65 | 2.36
+O/U 2.5: Over 1.53 | Under 2.21
+
+⚽ Csikszereda Miercurea Ciuc vs FCSB 
+🏆 Romania. Liga 1
+🕐 2026-05-01 17:30
+1X2: 5.9 | 4.3 | 1.45
+O/U 2.5: Over 1.59 | Under 2.2
+
+⚽ Aubagne FC vs Stade Briochin 
+🏆 National
+🕐 2026-05-01 17:30
+1X2: 2.6 | 3.5 | 2.5
+O/U 2.5: Over 1.72 | Under 2.05
+
+⚽ FC Fleury 91 vs Le Puy Foot 43 Auvergne 
+🏆 National
+🕐 2026-05-01 17:30
+1X2: 2.11 | 3.45 | 3.25
+O/U 2.5: Over 1.71 | Under 2.06
+
+⚽ Stade Nyonnais vs Wil 1900 
+🏆 Switzerland. Challenge League
+🕐 2026-05-01 17:30
+1X2: 2.67 | 3.32 | 2.25
+O/U 2.5: Over 1.59 | Under 2.12
+
+⚽ Istres FC vs US Creteil-Lusitanos 
+🏆 National 2
+🕐 2026-05-01 17:30
+1X2: 2.42 | 3.25 | 2.65
+O/U 2.5: Over 1.86 | Under 1.77
+
+⚽ Deutschkreutz vs Oberpullendorf 
+🏆 Austria. Landesliga
+🕐 2026-05-01 17:30
+1X2: 1.88 | 3.58 | 3.24
+O/U 2.5: Over 1.55 | Under 2.17
+
+⚽ Wiener Sport-Club vs Mannsdorf 
+🏆 Austria. Regionalliga East
+🕐 2026-05-01 17:30
+1X2: 2.82 | 3.32 | 2.15
+O/U 2.5: Over 1.65 | Under 2.0
+
+⚽ Kremser-Rehberg vs SR Fach Donaufeld 
+🏆 Austria. Regionalliga East
+🕐 2026-05-01 17:30
+1X2: 1.83 | 3.65 | 3.32
+O/U 2.5: Over 1.51 | Under 2.27
+
+⚽ Al Draih vs Abha 
+🏆 Saudi Arabia. Division 1
+🕐 2026-05-01 17:50
+1X2: 1.61 | 3.83 | 4.2
+O/U 2.5: Over 1.41 | Under 2.39
+
+⚽ Waalwijk vs Roda JC Kerkrade 
+🏆 Netherlands. Eerste Divisie
+🕐 2026-05-01 18:00
+1X2: 1.89 | 3.58 | 3.58
+O/U 2.5: Over 1.57 | Under 2.25
+
+⚽ Zalaegerszegi vs Puskas Akademia 
+🏆 Hungary. NB I
+🕐 2026-05-01 18:00
+1X2: 2.14 | 3.02 | 3.11
+O/U 2.5: Over 1.89 | Under 1.75
+
+⚽ FC Everton vs Brentford 
+🏆 U21 Professional Development League
+🕐 2026-05-01 18:00
+1X2: 2.26 | 3.65 | 2.5
+O/U 2.5: Over 1.28 | Under 3.25
+
+⚽ Aston Villa FC vs Manchester City FC 
+🏆 U21 Premier League 2
+🕐 2026-05-01 18:00
+1X2: 5.4 | 5.0 | 1.38
+O/U 2.5: Over 1.3 | Under 3.15
+
+⚽ Chelsea FC vs Tottenham Hotspur FC 
+🏆 U21 Premier League 2
+🕐 2026-05-01 18:00
+1X2: 1.49 | 4.6 | 4.5
+O/U 2.5: Over 1.26 | Under 3.4
+
+⚽ FC Suderelbe 1949 vs HEBC Hamburg 
+🏆 Oberliga Hamburg
+🕐 2026-05-01 18:00
+1X2: 1.74 | 4.3 | 3.3
+O/U 2.5: Over 1.2 | Under 3.95
+
+⚽ Club 24 de Setiembre Aregua vs Limpeno 
+🏆 Paraguay. Third Division
+🕐 2026-05-01 18:00
+1X2: 1.73 | 3.38 | 4.1
+O/U 2.5: Over 1.74 | Under 1.89
+
+⚽ Juventude Rio Grande do Sul (Women) vs Cruzeiro (Women) 
+🏆 Brazil Championship. Women
+🕐 2026-05-01 18:00
+1X2: 6.4 | 4.1 | 1.38
+O/U 2.5: Over 1.73 | Under 1.9
+
+⚽ Athletic Club MG vs Betim 
+🏆 Brazil. Campeonato Mineiro U20
+🕐 2026-05-01 18:00
+1X2: 1.51 | 3.58 | 5.5
+O/U 2.5: Over 1.89 | Under 1.74
+
+⚽ Boston City Brasil vs Sao Joao del-Rei 
+🏆 Brazil. Campeonato Mineiro U20
+🕐 2026-05-01 18:00
+1X2: 1.72 | 3.56 | 3.88
+O/U 2.5: Over 1.63 | Under 2.03
+
+⚽ Ranheim vs Moss 
+🏆 Norway. Adeccoligaen
+🕐 2026-05-01 18:00
+1X2: 1.87 | 3.59 | 3.57
+O/U 2.5: Over 1.54 | Under 2.29
+
+⚽ Tubarao vs Gremio Esportivo Juventus 
+🏆 Brazil. Campeonato Catarinense. Second Division
+🕐 2026-05-01 18:00
+1X2: 1.63 | 3.2 | 5.1
+O/U 2.5: Over 2.27 | Under 1.5
+
+⚽ Benfica (Women) vs Sporting (Women) 
+🏆 Portugal Championship. Women
+🕐 2026-05-01 18:00
+1X2: 1.45 | 3.91 | 5.6
+O/U 2.5: Over 1.71 | Under 1.92
+
+⚽ Genk (Women) vs K.V.C. Westerlo (Women) 
+🏆 Belgium Championship. Women
+🕐 2026-05-01 18:00
+1X2: 1.63 | 3.59 | 4.3
+O/U 2.5: Over 1.74 | Under 1.89
+
+⚽ Zacatecoluca II vs Inter FA II 
+🏆 El Salvador. Reserve League
+🕐 2026-05-01 18:00
+1X2: 3.1 | 3.54 | 1.94
+O/U 2.5: Over 1.66 | Under 1.98
+
+⚽ CD FAS II vs CD Platense Zacatecoluca II 
+🏆 El Salvador. Reserve League
+🕐 2026-05-01 18:00
+1X2: 1.37 | 4.1 | 6.8
+O/U 2.5: Over 1.5 | Under 2.17
+
+⚽ Deportivo Hercules II vs Isidro II 
+🏆 El Salvador. Reserve League
+🕐 2026-05-01 18:00
+1X2: 2.3 | 3.29 | 2.53
+O/U 2.5: Over 1.71 | Under 1.92
+
+⚽ Aguila II vs C.D. Luis Ángel Firpo II 
+🏆 El Salvador. Reserve League
+🕐 2026-05-01 18:00
+1X2: 1.86 | 3.36 | 3.51
+O/U 2.5: Over 1.61 | Under 2.06
+
+⚽ Fuerte San Francisco II vs Alianza San Salvador II 
+🏆 El Salvador. Reserve League
+🕐 2026-05-01 18:00
+1X2: 4.1 | 3.52 | 1.69
+O/U 2.5: Over 1.58 | Under 2.11
+
+⚽ Friburguense Atletico Clube vs Abril 7 
+🏆 Brazil. Campeonato Carioca B2 U20
+🕐 2026-05-01 18:00
+1X2: 2.11 | 3.61 | 2.69
+O/U 2.5: Over 1.46 | Under 2.26
+
+⚽ Xamax vs Aarau 
+🏆 Switzerland. Challenge League
+🕐 2026-05-01 18:15
+1X2: 4.6 | 4.1 | 1.52
+O/U 2.5: Over 1.37 | Under 2.54
+
+⚽ Legia Warsaw vs Widzew Lodz 
+🏆 Poland. Ekstraklasa
+🕐 2026-05-01 18:30
+1X2: 2.12 | 2.95 | 3.55
+O/U 2.5: Over 2.15 | Under 1.61
+
+⚽ Gornik Leczna vs Slask Wroclaw 
+🏆 Poland Championship. Liga 1
+🕐 2026-05-01 18:30
+1X2: 3.67 | 3.52 | 1.78
+O/U 2.5: Over 1.65 | Under 2.02
+
+⚽ Zrinjski vs Zeljeznicar 
+🏆 Bosnia and Herzegovina. Premier League
+🕐 2026-05-01 18:30
+1X2: 1.46 | 3.54 | 6.5
+O/U 2.5: Over 2.13 | Under 1.58
+
+⚽ Velež Mostar vs Radnik Bijeljina 
+🏆 Bosnia and Herzegovina. Premier League
+🕐 2026-05-01 18:30
+1X2: 1.33 | 3.98 | 8.7
+O/U 2.5: Over 2.08 | Under 1.45
+
+⚽ Usher Celtic vs Kilbarrack United 
+🏆 Ireland. Leinster League
+🕐 2026-05-01 18:30
+1X2: 7.9 | 4.2 | 1.32
+O/U 2.5: Over 1.57 | Under 2.13
+
+⚽ Portalban-Gletterens vs Echallens 
+🏆 Switzerland. First League
+🕐 2026-05-01 18:30
+1X2: 2.41 | 3.63 | 2.34
+O/U 2.5: Over 1.62 | Under 2.06
+
+⚽ Pisa SC vs US Lecce 
 🏆 Serie A
-🕐 2026-04-04 13:00
-1X2: 2.03 | 3.35 | 4.2
-O/U 2.5: Over 2.15 | Under 1.74
-GG/NG: Yes 1.42 | No 2.9
+🕐 2026-05-01 18:45
+1X2: 3.65 | 3.05 | 2.35
+O/U 2.5: Over 2.6 | Under 1.53
 
-⚽ RCD Mallorca vs Real Madrid 
+⚽ Cercle Brugge vs Zulte Waregem 
+🏆 Belgium. Jupiler League	
+🕐 2026-05-01 18:45
+1X2: 1.91 | 3.74 | 3.62
+O/U 2.5: Over 1.58 | Under 2.3
+
+⚽ Livingston vs Aberdeen 
+🏆 Scotland. Premier League
+🕐 2026-05-01 18:45
+1X2: 2.75 | 3.16 | 2.42
+O/U 2.5: Over 1.83 | Under 1.87
+
+⚽ Galway vs St Patrick's Athletic 
+🏆 Ireland. Premier League
+🕐 2026-05-01 18:45
+1X2: 3.73 | 3.28 | 1.94
+O/U 2.5: Over 2.03 | Under 1.7
+
+⚽ Drogheda United vs Sligo Rovers 
+🏆 Ireland. Premier League
+🕐 2026-05-01 18:45
+1X2: 1.87 | 3.46 | 3.77
+O/U 2.5: Over 1.89 | Under 1.81
+
+⚽ Dundalk vs Shelbourne 
+🏆 Ireland. Premier League
+🕐 2026-05-01 18:45
+1X2: 2.31 | 3.48 | 2.69
+O/U 2.5: Over 1.8 | Under 1.9
+
+⚽ Dunfermline Athletic vs Arbroath 
+🏆 Scotland. Championship
+🕐 2026-05-01 18:45
+1X2: 2.13 | 2.92 | 3.25
+O/U 2.5: Over 2.15 | Under 1.57
+
+⚽ Ayr United vs St. Johnstone 
+🏆 Scotland. Championship
+🕐 2026-05-01 18:45
+1X2: 4.5 | 3.58 | 1.61
+O/U 2.5: Over 1.72 | Under 1.92
+
+⚽ Greenock Morton vs Airdrieonians 
+🏆 Scotland. Championship
+🕐 2026-05-01 18:45
+1X2: 2.15 | 3.16 | 2.96
+O/U 2.5: Over 1.78 | Under 1.86
+
+⚽ Partick Thistle vs Queen's Park 
+🏆 Scotland. Championship
+🕐 2026-05-01 18:45
+1X2: 1.5 | 3.78 | 5.3
+O/U 2.5: Over 1.64 | Under 2.04
+
+⚽ Raith Rovers vs Ross County 
+🏆 Scotland. Championship
+🕐 2026-05-01 18:45
+1X2: 3.0 | 3.56 | 1.98
+O/U 2.5: Over 1.82 | Under 1.82
+
+⚽ Bray Wanderers vs Treaty United 
+🏆 Ireland. Division 1
+🕐 2026-05-01 18:45
+1X2: 1.6 | 3.63 | 4.6
+O/U 2.5: Over 1.73 | Under 1.91
+
+⚽ Cork City vs Cobh Ramblers 
+🏆 Ireland. Division 1
+🕐 2026-05-01 18:45
+1X2: 1.4 | 4.0 | 6.3
+O/U 2.5: Over 1.75 | Under 1.89
+
+⚽ Wexford vs Finn Harps 
+🏆 Ireland. Division 1
+🕐 2026-05-01 18:45
+1X2: 1.7 | 3.57 | 3.97
+O/U 2.5: Over 1.78 | Under 1.86
+
+⚽ University College Dublin vs Longford Town 
+🏆 Ireland. Division 1
+🕐 2026-05-01 18:45
+1X2: 1.67 | 3.44 | 4.3
+O/U 2.5: Over 1.82 | Under 1.82
+
+⚽ Athlone Town vs Kerry FC 
+🏆 Ireland. Division 1
+🕐 2026-05-01 18:45
+1X2: 2.3 | 2.94 | 2.91
+O/U 2.5: Over 2.12 | Under 1.59
+
+⚽ Glebe North vs MP Dublin 
+🏆 Ireland. Leinster League
+🕐 2026-05-01 18:45
+1X2: 2.79 | 3.63 | 2.08
+
+⚽ Home Farm vs St. Patrick's CYFC 
+🏆 Ireland. Leinster League
+🕐 2026-05-01 18:45
+1X2: 1.98 | 3.63 | 2.91
+
+⚽ Crusaders vs Annagh United 
+🏆 Northern Ireland. Qualification
+🕐 2026-05-01 18:45
+1X2: 1.39 | 4.6 | 5.4
+O/U 2.5: Over 1.55 | Under 2.17
+
+⚽ Leeds United vs Burnley FC 
+🏆 Premier League
+🕐 2026-05-01 19:00
+1X2: 1.4 | 5.2 | 8.2
+O/U 2.5: Over 1.66 | Under 2.29
+
+⚽ Girona FC vs RCD Mallorca 
 🏆 LaLiga
-🕐 2026-04-04 14:15
-1X2: 5.8 | 4.5 | 1.57
-O/U 2.5: Over 1.67 | Under 2.26
-GG/NG: Yes 4.2 | No 1.23
+🕐 2026-05-01 19:00
+1X2: 2.06 | 3.5 | 3.85
+O/U 2.5: Over 1.88 | Under 1.97
 
-⚽ Strasbourg Alsace vs OGC Nice 
-🏆 Ligue 1
-🕐 2026-04-04 15:00
-1X2: 1.91 | 3.8 | 4.1
-O/U 2.5: Over 1.7 | Under 2.21
-GG/NG: Yes 1.41 | No 2.95
+⚽ Real Zaragoza vs Granada CF 
+🏆 LaLiga 2
+🕐 2026-05-01 19:00
+1X2: 2.07 | 3.35 | 3.85
+O/U 2.5: Over 2.13 | Under 1.69
 
-⚽ Hellas Verona vs ACF Fiorentina 
-🏆 Serie A
-🕐 2026-04-04 16:00
-1X2: 4.2 | 3.5 | 1.97
-O/U 2.5: Over 2.18 | Under 1.72
-GG/NG: Yes 2.9 | No 1.41
+⚽ Shamrock Rovers vs Waterford 
+🏆 Ireland. Premier League
+🕐 2026-05-01 19:00
+1X2: 1.27 | 5.4 | 8.5
+O/U 2.5: Over 1.55 | Under 2.09
 
-⚽ Chelsea FC vs Port Vale 
-🏆 FA Cup
-🕐 2026-04-04 16:15
-1X2: 1.07 | 15.0 | 35.0
-O/U 2.5: Over 1.22 | Under 4.6
+⚽ Bohemian Dublin vs Derry City 
+🏆 Ireland. Premier League
+🕐 2026-05-01 19:00
+1X2: 1.82 | 3.47 | 4.0
+O/U 2.5: Over 1.97 | Under 1.74
 
-⚽ Real Betis Seville vs Espanyol Barcelona 
-🏆 LaLiga
-🕐 2026-04-04 16:30
-1X2: 1.74 | 4.0 | 4.9
-O/U 2.5: Over 1.89 | Under 1.95
-GG/NG: Yes 1.31 | No 3.5
+⚽ San Antonio Bulo Bulo vs Independiente Petrolero 
+🏆 Bolivia. Primera Division
+🕐 2026-05-01 19:00
+1X2: 1.38 | 4.6 | 5.6
+O/U 2.5: Over 1.34 | Under 2.65
 
-⚽ Stade Brest 29 vs Stade Rennes 
-🏆 Ligue 1
-🕐 2026-04-04 17:00
-1X2: 3.05 | 3.55 | 2.37
-O/U 2.5: Over 1.87 | Under 1.98
-GG/NG: Yes 2.18 | No 1.69
+⚽ Santos (Women) vs Internacional (Women) 
+🏆 Brazil Championship. Women
+🕐 2026-05-01 19:00
+1X2: 2.15 | 3.1 | 2.99
+O/U 2.5: Over 1.98 | Under 1.66
 
-⚽ Lazio Rome vs Parma Calcio 
-🏆 Serie A
-🕐 2026-04-04 18:45
-1X2: 1.82 | 3.55 | 5.0
-O/U 2.5: Over 2.28 | Under 1.66
-GG/NG: Yes 1.31 | No 3.5
+⚽ Atletico Mineiro (Women) vs Fluminense RJ (Women) 
+🏆 Brazil Championship. Women
+🕐 2026-05-01 19:00
+1X2: 2.91 | 2.99 | 2.26
+O/U 2.5: Over 2.19 | Under 1.54
 
-⚽ Southampton FC vs Arsenal FC 
-🏆 FA Cup
-🕐 2026-04-04 19:00
-1X2: 8.4 | 5.6 | 1.36
-O/U 2.5: Over 1.53 | Under 2.6
-GG/NG: Yes 6.2 | No 1.13
+⚽ Motagua II vs Deportivo Choloma II 
+🏆 Honduras. Liga Nacional. Reserve League
+🕐 2026-05-01 19:00
+1X2: 1.22 | 6.1 | 7.3
+O/U 2.5: Over 1.12 | Under 4.3
 
-⚽ Atletico Madrid vs FC Barcelona 
-🏆 LaLiga
-🕐 2026-04-04 19:00
-1X2: 3.15 | 3.85 | 2.2
-O/U 2.5: Over 1.48 | Under 2.75
-GG/NG: Yes 2.3 | No 1.62
+⚽ Cobh Wanderers vs College Corinthians 
+🏆 Ireland. Munster Senior League
+🕐 2026-05-01 19:00
+1X2: 3.45 | 3.36 | 1.88
+O/U 2.5: Over 1.64 | Under 2.02
 
-⚽ Lille OSC vs RC Lens 
-🏆 Ligue 1
-🕐 2026-04-04 19:05
-1X2: 2.8 | 3.4 | 2.65
-O/U 2.5: Over 1.83 | Under 2.02
-GG/NG: Yes 1.96 | No 1.85
+⚽ Carrigaline United vs Mayfield United 
+🏆 Ireland. Munster Senior League
+🕐 2026-05-01 19:00
+1X2: 3.06 | 3.18 | 2.08
+O/U 2.5: Over 1.8 | Under 1.83
+
+⚽ Inchicore Athletic vs Crumlin United 
+🏆 Ireland. Metropolitan Cup
+🕐 2026-05-01 19:00
+1X2: 2.08 | 3.63 | 2.79
+
+⚽ Inter de Bebedouro vs GD Saocarlense 
+🏆 Brazil. Campeonato Paulista A4
+🕐 2026-05-01 19:00
+1X2: 1.81 | 2.88 | 4.5
+O/U 2.5: Over 2.64 | Under 1.37
+
+⚽ Grotta Seltjarnarnes vs Leiknir Reykjavík 
+🏆 Iceland. 1. Deild
+🕐 2026-05-01 19:15
+1X2: 2.48 | 3.58 | 2.28
+O/U 2.5: Over 1.42 | Under 2.37
+
+⚽ HK Kopavogur vs KF Aegir Thorlakshofn 
+🏆 Iceland. 1. Deild
+🕐 2026-05-01 19:15
+1X2: 1.21 | 5.6 | 8.7
+O/U 2.5: Over 1.24 | Under 3.14
+
+⚽ Knattspyrnufelagið Þrottur vs Iþrottafelag Reykjavikur 
+🏆 Iceland. 1. Deild
+🕐 2026-05-01 19:15
+1X2: 1.56 | 4.0 | 4.3
+O/U 2.5: Over 1.34 | Under 2.64
+
+⚽ CF Algeciras vs FC Cartagena 
+🏆 Primera Federacion
+🕐 2026-05-01 19:15
+1X2: 2.7 | 2.9 | 2.6
+O/U 2.5: Over 2.55 | Under 1.42
+
+⚽ Sporting Clube de Portugal II vs S.L. Benfica II 
+🏆 Portugal. Segunda Liga
+🕐 2026-05-01 19:30
+1X2: 2.45 | 3.36 | 2.54
+O/U 2.5: Over 1.82 | Under 1.87
+
+⚽ Deportes Naval Talcahuano vs Constitucion Unido 
+🏆 Chile. Tercera Division
+🕐 2026-05-01 19:30
+1X2: 1.64 | 3.73 | 4.3
+O/U 2.5: Over 1.56 | Under 2.16
+
+⚽ Ferroviaria SP (Women) vs Mixto Esporte Clube (Women) 
+🏆 Brazil Championship. Women
+🕐 2026-05-01 20:00
+1X2: 1.099 | 6.5 | 14.2
+O/U 2.5: Over 1.46 | Under 2.26
+
+⚽ Imperial Unido vs Atletico Oriente Santiago 
+🏆 Chile. Tercera Division
+🕐 2026-05-01 20:00
+1X2: 1.82 | 3.52 | 3.48
+O/U 2.5: Over 1.61 | Under 2.06
+
+⚽ Gremio Porto Alegrense (Women) vs Corinthians Paulista (Women) 
+🏆 Brazil Championship. Women
+🕐 2026-05-01 20:30
+1X2: 6.1 | 4.3 | 1.38
+O/U 2.5: Over 1.7 | Under 1.93
+
+⚽ Llaneros (Women) vs Junior (Women) 
+🏆 Colombia Championship. Women
+🕐 2026-05-01 20:30
+1X2: 1.87 | 3.24 | 3.61
+O/U 2.5: Over 1.97 | Under 1.67
+
+⚽ Atletico Nacional (Women) vs Independiente Medellin (Women) 
+🏆 Colombia Championship. Women
+🕐 2026-05-01 20:30
+1X2: 1.5 | 3.61 | 5.6
+O/U 2.5: Over 2.0 | Under 1.65
+
+⚽ Sportivo Trinidense vs 2 de Mayo 
+🏆 Paraguay. Primera Division
+🕐 2026-05-01 20:45
+1X2: 1.95 | 3.14 | 3.89
+O/U 2.5: Over 2.15 | Under 1.6
+
+⚽ Inter Panama vs Bambu Colon 
+🏆 Panama. Tercera Division
+🕐 2026-05-01 20:59
+1X2: 1.87 | 3.34 | 3.67
+O/U 2.5: Over 1.4 | Under 2.6
+
+⚽ C.D. Municipal Limeno vs CD Cacahuatique 
+🏆 El Salvador. Primera Division
+🕐 2026-05-01 21:00
+1X2: 1.7 | 3.28 | 4.4
+O/U 2.5: Over 1.86 | Under 1.77
+
+⚽ Fuerte San Francisco vs Alianza San Salvador 
+🏆 El Salvador. Primera Division
+🕐 2026-05-01 21:00
+1X2: 4.7 | 3.34 | 1.65
+O/U 2.5: Over 1.87 | Under 1.76
+
+⚽ Zacatecoluca vs Inter FA 
+🏆 El Salvador. Primera Division
+🕐 2026-05-01 21:00
+1X2: 4.7 | 3.36 | 1.64
+O/U 2.5: Over 1.85 | Under 1.78
+
+⚽ FAS vs CD Platense Zacatecoluca 
+🏆 El Salvador. Primera Division
+🕐 2026-05-01 21:00
+1X2: 1.27 | 4.7 | 8.5
+O/U 2.5: Over 1.52 | Under 2.23
+
+⚽ Aguila vs C.D. Luis Angel Firpo 
+🏆 El Salvador. Primera Division
+🕐 2026-05-01 21:00
+1X2: 2.18 | 2.85 | 3.22
+O/U 2.5: Over 1.93 | Under 1.7
+
+⚽ CD Hercules vs A.D. Isidro Metapán 
+🏆 El Salvador. Primera Division
+🕐 2026-05-01 21:00
+1X2: 3.25 | 3.12 | 2.02
+O/U 2.5: Over 1.79 | Under 1.84
+
+⚽ Assermurb vs AD Vasco da Gama 
+🏆 Brazil. Campeonato Acriano U20
+🕐 2026-05-01 21:00
+1X2: 7.3 | 5.6 | 1.24
+O/U 2.5: Over 1.18 | Under 4.3
+
+⚽ Club Bamin Real Potosi vs Real Oruro 
+🏆 Bolivia. Primera Division
+🕐 2026-05-01 21:15
+1X2: 1.66 | 3.63 | 4.1
+O/U 2.5: Over 1.54 | Under 2.21
+
+⚽ Universidad Catolica Quito vs Independiente del Valle 
+🏆 Ecuador. Serie A
+🕐 2026-05-01 21:30
+1X2: 2.42 | 3.1 | 2.82
+O/U 2.5: Over 1.75 | Under 1.93
+
+⚽ UMECIT (Women) vs Rayadas de Chiriqui (Women) 
+🏆 Panama. First Division. Women
+🕐 2026-05-01 22:00
+1X2: 1.93 | 3.52 | 3.14
+O/U 2.5: Over 1.52 | Under 2.23
+
+⚽ Once Caldas vs Club Atletico Nacional SA 
+🏆 Colombia. Categoria Primera A
+🕐 2026-05-01 23:00
+1X2: 2.88 | 3.02 | 2.41
+O/U 2.5: Over 1.72 | Under 1.98
+
+⚽ Club Libertad vs Club Sportivo San Lorenzo 
+🏆 Paraguay. Primera Division
+🕐 2026-05-01 23:00
+1X2: 1.62 | 3.62 | 5.1
+O/U 2.5: Over 1.96 | Under 1.72
+
+⚽ Richmond Kickers vs Westchester SC 
+🏆 USA. USL League One
+🕐 2026-05-01 23:00
+1X2: 1.99 | 3.29 | 3.16
+O/U 2.5: Over 1.65 | Under 2.0
+
+⚽ Inter Miami Academy vs Empire Weston 
+🏆 USA. UPSL
+🕐 2026-05-01 23:00
+1X2: 3.3 | 3.91 | 1.78
+O/U 2.5: Over 1.31 | Under 2.78
+
+⚽ Sportivo Trinidense II vs 2 de Mayo II 
+🏆 Paraguay. Reserve League
+🕐 2026-05-01 23:00
+1X2: 2.5 | 3.48 | 2.25
+O/U 2.5: Over 1.44 | Under 2.31
+
+⚽ DC Power (Women) vs Dallas Trinity (Women) 
+🏆 USA. USL. SuperLiga. Women
+🕐 2026-05-01 23:00
+1X2: 1.98 | 3.12 | 3.36
+O/U 2.5: Over 2.11 | Under 1.58
+
+⚽ Inter Toronto vs Atletico Ottawa 
+🏆 Canada. Premier League
+🕐 2026-05-01 23:30
+1X2: 2.51 | 2.94 | 2.53
+O/U 2.5: Over 1.92 | Under 1.71
 

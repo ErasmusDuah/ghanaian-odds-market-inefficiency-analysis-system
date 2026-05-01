@@ -1,6 +1,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 import json
+import time as _time
 from datetime import datetime, timedelta
 import aiohttp
 
@@ -58,6 +59,7 @@ async def fetch_page(session, page_num,
 
 
 async def scrape_footballcom():
+    start = _time.time()
     print("\n" + "🟡 " * 20)
     print("   FOOTBALL.COM GHANA SCRAPER")
     print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
@@ -163,7 +165,9 @@ async def scrape_footballcom():
     # Sort by kickoff time
     all_matches.sort(key=lambda x: x['kickoff'])
 
+    elapsed = _time.time() - start
     print(f"\n✅ Total matches fetched: {len(all_matches)}")
+    print(f"⏱️  Completed in {elapsed:.1f}s")
     return all_matches
 
 

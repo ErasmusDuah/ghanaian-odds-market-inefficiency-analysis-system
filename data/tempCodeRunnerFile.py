@@ -274,8 +274,4 @@ def run():
         print(f"   Open the .txt file to see all 224 matches!")
     else:
         print("\n⚠️ No matches found")
-    return matches
-
-
-if __name__ == "__main__":
-    run()
+    retur

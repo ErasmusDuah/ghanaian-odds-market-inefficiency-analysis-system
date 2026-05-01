@@ -1,6 +1,7 @@
 import asyncio
 from playwright.async_api import async_playwright
 import json
+import time as _time
 from datetime import datetime, timedelta
 import aiohttp
 
@@ -55,12 +56,13 @@ async def fetch_page(session, skip, headers):
 
 
 async def scrape_betway():
-    print("\n" + "🔵 " * 20)
+    start = _time.time()
+    print("\n" + "* " * 20)
     print("   BETWAY GHANA SCRAPER")
     print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🔵 " * 20 + "\n")
+    print("* " * 20 + "\n")
 
-    print("🌐 Getting Betway session...")
+    print("[INFO] Getting Betway session...")
     cookies = await get_cookies()
 
     headers = {
@@ -104,9 +106,9 @@ async def scrape_betway():
             for event in events:
                 epoch = event.get('expectedStartEpoch', 0)
                 kickoff_dt = datetime.fromtimestamp(epoch)
-                if kickoff_dt.date() in [today, tomorrow]:
+                if kickoff_dt.date() == today:
                     valid_events.append(event)
-                elif kickoff_dt.date() > tomorrow:
+                elif kickoff_dt.date() > today:
                     stop = True
                     break
 
@@ -131,6 +133,9 @@ async def scrape_betway():
         'outcomes': all_outcomes,
         'prices': all_prices
     }
+
+    elapsed = _time.time() - start
+    print(f"⏱️  Completed in {elapsed:.1f}s")
 
     return parse_betway_data(raw_data, today, tomorrow)
 
@@ -285,16 +290,13 @@ def parse_betway_data(raw_data, today, tomorrow):
                 o.get('away', 0) > 1:
             if kickoff_dt.date() == today:
                 today_matches.append(match)
-            else:
-                tomorrow_matches.append(match)
 
     if today_matches:
         matches = today_matches
-        print(f"  📅 Today's matches: {len(matches)}")
+        print(f"  [INFO] Today's matches: {len(matches)}")
     else:
-        matches = tomorrow_matches
-        print(f"  📅 No today matches — "
-              f"using tomorrow: {len(matches)}")
+        matches = []
+        print("[INFO] No matches available for today.")
 
     matches.sort(key=lambda x: x['kickoff'])
     return matches
@@ -302,20 +304,17 @@ def parse_betway_data(raw_data, today, tomorrow):
 
 def display_matches(matches):
     if not matches:
-        print("⚠️ No matches found!")
+        print("WARNING: No matches found!")
         return
 
-    print(f"\n📋 BETWAY GHANA")
-    print(f"⚽ Total matches: {len(matches)}")
+    print("\nBETWAY GHANA")
+    print(f"Total matches: {len(matches)}")
     print("=" * 50)
 
-    print("\n📝 Sample (first 10 matches):")
+    print("\nSample (first 10 matches):")
     for match in matches[:10]:
-        live_tag = "🔴" if match.get('is_live') else ""
-        print(f"  {live_tag} {match['home_team']} vs "
-              f"{match['away_team']} | "
-              f"{match['kickoff']} | "
-              f"{match['tournament']}")
+        live_tag = "[LIVE]" if match.get('is_live') else ""
+        print(f"  {live_tag} {match['home_team']} vs {match['away_team']} | {match['kickoff']} | {match['tournament']}")
 
     if len(matches) > 10:
         print(f"\n  ... and {len(matches) - 10} more matches")
@@ -342,10 +341,9 @@ def run():
             for match in matches:
                 live_tag = "🔴 LIVE" if match.get(
                     'is_live') else ""
-                f.write(f"⚽ {match['home_team']} vs "
-                        f"{match['away_team']} {live_tag}\n")
-                f.write(f"🏆 {match['tournament']}\n")
-                f.write(f"🕐 {match['kickoff']}\n")
+                f.write(f"{match['home_team']} vs {match['away_team']} {live_tag}\n")
+                f.write(f"{match['tournament']}\n")
+                f.write(f"{match['kickoff']}\n")
 
                 if match['odds_1x2']:
                     o = match['odds_1x2']
@@ -361,8 +359,8 @@ def run():
                             f"No {gg['no']}\n")
                 f.write("\n")
 
-        print(f"💾 Saved to data/betway_odds.json")
-        print(f"📄 Full list saved to data/betway_matches.txt")
+        print(f"Saved to data/betway_odds.json")
+        print(f"Full list saved to data/betway_matches.txt")
     else:
         print("⚠️ No matches found")
 
