@@ -1,5 +1,7 @@
 import asyncio
 from playwright.async_api import async_playwright
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 import json
 import time as _time
 from datetime import datetime, timedelta
@@ -134,9 +136,6 @@ async def scrape_betway():
         'prices': all_prices
     }
 
-    elapsed = _time.time() - start
-    print(f"⏱️  Completed in {elapsed:.1f}s")
-
     return parse_betway_data(raw_data, today, tomorrow)
 
 
@@ -243,29 +242,32 @@ def parse_betway_data(raw_data, today, tomorrow):
                             'away': away_price
                         }
 
-            # Over/Under 2.5
+            # Over/Under dynamically
             if '[total goals]' in market_name or \
                     'total=' in market_id.lower() or \
                     'total' in market_name:
-                over_out = next(
-                    (o for o in market_outcomes
-                     if '2.5' in o.get('outcomeId', '') and
-                     o.get('outcomeId', '').endswith('12')),
-                    None)
-                under_out = next(
-                    (o for o in market_outcomes
-                     if '2.5' in o.get('outcomeId', '') and
-                     not o.get('outcomeId', '').endswith('12')),
-                    None)
-
-                if over_out and under_out:
-                    match['odds_ou'] = {
-                        'line': 2.5,
-                        'over': price_map.get(
-                            over_out.get('outcomeId'), 0),
-                        'under': price_map.get(
-                            under_out.get('outcomeId'), 0)
-                    }
+                import re
+                for o in market_outcomes:
+                    o_id = str(o.get('outcomeId', ''))
+                    m = re.search(r'(\d+\.5)', o_id)
+                    if m:
+                        line_str = m.group(1)
+                        if line_str not in match['odds_ou']:
+                            match['odds_ou'][line_str] = {}
+                        
+                        price = price_map.get(o_id, 0)
+                        if price > 1.01:
+                            if o_id.endswith('12'):
+                                match['odds_ou'][line_str]['over'] = price
+                            else:
+                                match['odds_ou'][line_str]['under'] = price
+                
+                # Cleanup incomplete lines
+                complete_ou = {}
+                for l_str, vals in match['odds_ou'].items():
+                    if vals.get('over', 0) > 1 and vals.get('under', 0) > 1:
+                        complete_ou[l_str] = vals
+                match['odds_ou'] = complete_ou
 
             # BTTS
             if '[both teams to score]' in market_name:
@@ -322,6 +324,8 @@ def display_matches(matches):
 
 
 def run():
+    import time as _time
+    start = _time.time()
     matches = asyncio.run(scrape_betway())
 
     if matches:
@@ -350,9 +354,9 @@ def run():
                     f.write(f"1X2: {o['home']} | "
                             f"{o['draw']} | {o['away']}\n")
                 if match['odds_ou']:
-                    ou = match['odds_ou']
-                    f.write(f"O/U 2.5: Over {ou['over']} | "
-                            f"Under {ou['under']}\n")
+                    for line_str, ou in match['odds_ou'].items():
+                        f.write(f"O/U {line_str}: Over {ou['over']} | "
+                                f"Under {ou['under']}\n")
                 if match['odds_gg']:
                     gg = match['odds_gg']
                     f.write(f"GG/NG: Yes {gg['yes']} | "
@@ -361,6 +365,8 @@ def run():
 
         print(f"Saved to data/betway_odds.json")
         print(f"Full list saved to data/betway_matches.txt")
+        print(f"   Open the .txt file to see all {len(matches)} matches!")
+        print(f"⏱️  Scraping completed in {_time.time() - start:.1f}s")
     else:
         print("⚠️ No matches found")
 

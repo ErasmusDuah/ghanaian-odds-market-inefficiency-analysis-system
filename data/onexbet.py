@@ -1,561 +1,453 @@
 """
-1xBet Ghana Scraper — onexbet.py
-=================================
-Fast scraper: browser captures API URL, then fetches ALL data
-via in-browser JavaScript (stays in auth context).
+1xBet Ghana football prematch odds (ASYNC AIOHTTP VERSION).
 
-Strategy:
-  1. Open browser, navigate to prematch page
-  2. Capture the event/list API URL from intercepted response
-  3. Use page.evaluate() to re-fetch with count=500 (all-in-one)
-  4. Parse & filter to today's upcoming matches
-  5. Close browser — total time ~10-15s
-
-Same platform as 22Bet — uses identical API structure.
+Fetches all leagues globally and processes odds for all matches occurring today.
+Outputs to the standard format required by the arbitrage engine.
 """
+from __future__ import annotations
 
+import argparse
 import asyncio
+import aiohttp
 import json
 import os
-import re
-import time as _time
-from datetime import datetime, timedelta
+import sys
+import time
+from datetime import date, datetime, timezone
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+from zoneinfo import ZoneInfo
 
-from playwright.async_api import async_playwright
+DEFAULT_SITE = "https://1xbet.mobi"
+REFERRER = "https://1xbet.mobi/en/line/football"
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+TIMEZONE = "Africa/Accra"
 
-SITE_URL     = 'https://1xbet.com.gh'
-PREMATCH_URL = f'{SITE_URL}/prematch/football'
-LEGACY_URL   = f'{SITE_URL}/en/line/football'
-OUTPUT_DIR   = 'data'
+OU_TOTALS: Tuple[float, ...] = (1.5, 2.5, 3.5, 4.5, 5.5)
+DEFAULT_TF_MS = 172800000
 
 
-async def scrape_onexbet():
-    """Main scraper — browser-based but fast."""
-    start = _time.time()
-
-    captured_url  = None
-    captured_data = None
-    api_type      = None   # 'event_list' or 'linefeed'
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                       'AppleWebKit/537.36 (KHTML, like Gecko) '
-                       'Chrome/122.0.0.0 Safari/537.36',
-            viewport={'width': 1366, 'height': 768},
-        )
-
-        # Block heavy assets for speed
-        await context.route(
-            re.compile(r'\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|mp4|mp3)(\?|$)', re.I),
-            lambda route: route.abort()
-        )
-
-        page = await context.new_page()
-
-        async def on_response(response):
-            nonlocal captured_url, captured_data, api_type
-            if captured_url:
-                return
-            url = response.url
-            try:
-                # Modern event/list API (same as 22Bet)
-                if 'event/list' in url:
-                    body = await response.body()
-                    if len(body) < 200:
-                        return
-                    data = json.loads(body)
-                    inner = data.get('data', {})
-                    if 'items' in inner and inner['items']:
-                        captured_url  = url
-                        captured_data = inner
-                        api_type = 'event_list'
-                        total   = inner.get('totalCount', 0)
-                        last_pg = inner.get('lastPage', 1)
-                        print(f"  📥 Captured event/list: "
-                              f"{len(inner['items'])} events "
-                              f"(total={total}, pages={last_pg})")
-                        return
-
-                # Legacy LineFeed API
-                if 'LineFeed' in url:
-                    if any(x in url for x in (
-                        'banner', 'TopGames', 'WebGetTop',
-                        'GetTopChamp', 'Sports?')):
-                        return
-                    body = await response.body()
-                    if len(body) < 100:
-                        return
-                    data = json.loads(body)
-                    events = extract_linefeed_events(data)
-                    if len(events) >= 3:
-                        captured_url  = url
-                        captured_data = events
-                        api_type = 'linefeed'
-                        print(f"  📥 Captured LineFeed: {len(events)} events")
-                        return
-            except Exception:
-                pass
-
-        page.on('response', on_response)
-
-        # Try modern prematch URL first
-        print("🌐 Loading 1xBet (prematch)...")
+async def async_linefeed_get(
+    session: aiohttp.ClientSession,
+    site: str,
+    method: str,
+    params: Dict[str, Any],
+    referer: str,
+    max_attempts: int = 3,
+) -> dict:
+    origin = site.rstrip("/")
+    # Format query string correctly including array/list parameters
+    q_parts = []
+    for k, v in params.items():
+        if isinstance(v, list):
+            for item in v:
+                q_parts.append(f"{k}={item}")
+        else:
+            q_parts.append(f"{k}={v}")
+    q = "&".join(q_parts)
+    
+    url = f"{origin}/service-api/LineFeed/{method}?{q}"
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Referer": referer,
+        "Origin": origin,
+        "Accept": "application/json",
+    }
+    
+    for attempt in range(max_attempts):
         try:
-            await page.goto(PREMATCH_URL, timeout=30000,
-                            wait_until='domcontentloaded')
+            async with session.get(url, headers=headers) as resp:
+                if resp.status == 200:
+                    data = await resp.json(content_type=None)
+                    if data.get("Success") is False:
+                        print(f"  ⚠️ LineFeed error for {method}: {data.get('Error')}")
+                        return {}
+                    return data
         except Exception as e:
-            print(f"  ⚠️ {str(e)[:60]}")
+            if attempt == max_attempts - 1:
+                print(f"  ⚠️ Request failed for {method} after {max_attempts} attempts: {e}")
+            else:
+                await asyncio.sleep(0.5 * (attempt + 1))
+    return {}
 
-        # Wait up to 12s for API
-        for _ in range(24):
-            if captured_url:
-                break
-            await page.wait_for_timeout(500)
 
-        # If prematch didn't work, try legacy URL
-        if not captured_url:
-            print("  ⚠️ No data from prematch, trying legacy URL...")
-            try:
-                await page.goto(LEGACY_URL, timeout=30000,
-                                wait_until='domcontentloaded')
-            except Exception as e:
-                print(f"  ⚠️ {str(e)[:60]}")
+def kickoff_utc_from_game(game: dict) -> Optional[datetime]:
+    s = game.get("S")
+    if s is None:
+        return None
+    try:
+        return datetime.fromtimestamp(int(s), tz=timezone.utc)
+    except (OSError, ValueError, OverflowError, TypeError):
+        return None
 
-            for _ in range(30):
-                if captured_url:
-                    break
-                await page.wait_for_timeout(500)
 
-        if not captured_url:
-            print("❌ Could not capture 1xBet API")
-            await browser.close()
+def ou_json_key(total: float) -> str:
+    s = str(total).replace(".", "_")
+    return f"over_under_{s}"
+
+
+def _outcome_price(e: dict) -> Any:
+    if e.get("CV") is not None and e.get("CV") != "":
+        return e.get("CV")
+    return e.get("C")
+
+
+def iter_linefeed_outcomes(game: dict) -> List[dict]:
+    out: List[dict] = []
+    for e in game.get("E") or []:
+        if isinstance(e, dict):
+            out.append(e)
+    for ae in game.get("AE") or []:
+        for me in ae.get("ME") or []:
+            if isinstance(me, dict):
+                out.append(me)
+    for ge in game.get("GE") or []:
+        gid = ge.get("G")
+        for col in ge.get("E") or []:
+            if not isinstance(col, list):
+                continue
+            for item in col:
+                if not isinstance(item, dict):
+                    continue
+                e2 = dict(item)
+                if e2.get("G") is None and gid is not None:
+                    e2["G"] = gid
+                out.append(e2)
+    return out
+
+
+def build_odds_block(entries: Iterable[dict]) -> Dict[str, Any]:
+    entries = list(entries)
+    block: Dict[str, Any] = {}
+
+    x2: Dict[int, Any] = {}
+    for e in entries:
+        if e.get("G") == 1 and e.get("T") in (1, 2, 3):
+            x2[int(e["T"])] = _outcome_price(e)
+    if len(x2) == 3:
+        block["match_result"] = {"home": x2[1], "draw": x2[2], "away": x2[3]}
+
+    by_p: Dict[float, Dict[int, Any]] = {}
+    for e in entries:
+        if e.get("G") != 17:
+            continue
+        t = e.get("T")
+        p = e.get("P")
+        if t not in (9, 10) or p is None:
+            continue
+        try:
+            pf = round(float(p), 2)
+        except (TypeError, ValueError):
+            continue
+        by_p.setdefault(pf, {})[int(t)] = _outcome_price(e)
+
+    for total in OU_TOTALS:
+        row = by_p.get(total)
+        if row and 9 in row and 10 in row:
+            block[ou_json_key(total)] = {"over": row[9], "under": row[10]}
+
+    gg: Dict[str, Any] = {}
+    for e in entries:
+        if e.get("G") != 19:
+            continue
+        t = e.get("T")
+        if t == 180:
+            gg["gg"] = _outcome_price(e)
+        elif t == 181:
+            gg["ng"] = _outcome_price(e)
+    if gg.get("gg") is not None and gg.get("ng") is not None:
+        block["gg_ng"] = gg
+
+    return block
+
+
+async def fetch_champs_async(session: aiohttp.ClientSession, site: str, tf_ms: int, referer: str) -> List[dict]:
+    data = await async_linefeed_get(
+        session, site, "GetChampsZip",
+        {"sport": 1, "lng": "en", "tf": tf_ms, "tz": 0},
+        referer,
+    )
+    return list(data.get("Value") or [])
+
+
+async def fetch_champ_games_async(session: aiohttp.ClientSession, site: str, li: int, tf_ms: int, referer: str) -> Optional[dict]:
+    return await async_linefeed_get(
+        session, site, "GetChampZip",
+        {"lng": "en", "champ": li, "tf": tf_ms, "afterDays": 0, "tz": 0, "sport": 1},
+        referer,
+    )
+
+
+async def fetch_game_zip_async(session: aiohttp.ClientSession, site: str, game_id: int, referer: str) -> Optional[dict]:
+    data = await async_linefeed_get(
+        session, site, "GetGameZip",
+        {"id": game_id, "lng": "en", "cfview": 0, "isSubGames": "true",
+         "GroupEvents": "true", "countevents": 250},
+        referer,
+    )
+    return data.get("Value") if isinstance(data.get("Value"), dict) else None
+
+
+async def collect_today_games_async(
+    site: str,
+    tf_ms: int,
+    referer: str,
+    target: date,
+    tz: ZoneInfo,
+    now_utc: datetime,
+) -> List[dict]:
+    # Lower limits significantly to avoid 1xbet rate-limiting/blocking connections
+    async with aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(limit=50),
+        headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
+    ) as session:
+        # 1. Fetch all champs (leagues)
+        concurrent = asyncio.Semaphore(25)
+        champs = await fetch_champs_async(session, site, tf_ms, referer)
+        if not champs:
             return []
 
-        # ── Process based on API type ─────────────────────────────────────
-        all_matches = []
+        # 2. Concurrently fetch all games within those leagues
+        sem_champ = asyncio.Semaphore(50)
+        
+        async def get_champ_games(li: int) -> List[Tuple[int, dict, str]]:
+            async with sem_champ:
+                blob = await fetch_champ_games_async(session, site, li, tf_ms, referer)
+                if not blob or not isinstance(blob.get("Value"), dict):
+                    return []
+                val = blob["Value"]
+                league_name = (val.get("L") or val.get("LE") or "").strip()
+                
+                out_local = []
+                for g in val.get("G") or []:
+                    if not isinstance(g, dict):
+                        continue
+                    gid = g.get("I")
+                    if gid is None:
+                        continue
+                    kick = kickoff_utc_from_game(g)
+                    if kick is None:
+                        continue
+                    local_d = kick.astimezone(tz).date()
+                    if local_d != target or kick <= now_utc:
+                        continue
+                    out_local.append((int(gid), g, league_name))
+                return out_local
 
-        if api_type == 'event_list':
-            all_matches = await process_event_list(
-                page, captured_url, captured_data)
+        print(f"  ⚡ Fetching games for {len(champs)} leagues...")
+        champ_tasks = [get_champ_games(ch.get("LI")) for ch in champs if ch.get("LI")]
+        champ_results = await asyncio.gather(*champ_tasks)
 
-        elif api_type == 'linefeed':
-            all_matches = await process_linefeed(
-                page, captured_url, captured_data)
+        stubs = []
+        seen_game_ids = set()
+        for batch in champ_results:
+            for gid, g, league_name in batch:
+                if gid not in seen_game_ids:
+                    seen_game_ids.add(gid)
+                    stubs.append((gid, g, league_name))
 
-        await browser.close()
+        if not stubs:
+            return []
 
-    elapsed = _time.time() - start
-    print(f"⏱️  Completed in {elapsed:.1f}s")
-    return all_matches
+        # 3. Concurrently fetch full odds (GetGameZip) for matching games
+        sem_game = asyncio.Semaphore(50)
+        
+        async def load_odds(item: Tuple[int, dict, str]) -> dict:
+            gid, stub, league_fallback = item
+            async with sem_game:
+                league = (stub.get("LE") or stub.get("L") or league_fallback or "").strip()
+                kick = kickoff_utc_from_game(stub)
+                assert kick is not None
+                
+                # Base odds from ChampZip
+                odds = build_odds_block(iter_linefeed_outcomes(stub))
+                
+                # Detailed odds from GameZip
+                detail = await fetch_game_zip_async(session, site, gid, referer)
+                if detail:
+                    odds = {**odds, **build_odds_block(iter_linefeed_outcomes(detail))}
+                    
+                return {
+                    "event_id": gid,
+                    "kickoff_utc": kick.isoformat().replace("+00:00", "Z"),
+                    "league": league,
+                    "home_team": (stub.get("O1") or "").strip(),
+                    "away_team": (stub.get("O2") or "").strip(),
+                    "odds": odds,
+                }
+
+        print(f"  ⚡ Fetching full odds lines for {len(stubs)} matches...")
+        game_tasks = [load_odds(stub) for stub in stubs]
+        matches = await asyncio.gather(*game_tasks)
+
+        matches.sort(key=lambda x: x.get("kickoff_utc") or "")
+        return matches
 
 
-# ── EVENT/LIST PROCESSING (modern API, same as 22Bet) ─────────────────────────
+def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[dict]:
+    standard = []
+    for m in raw_matches:
+        odds_raw = m.get("odds") or {}
 
-async def process_event_list(page, captured_url, captured_data):
-    """Process the modern event/list API with batched fetching."""
-    # API ignores count param, stuck at 50/page. Use batched parallel fetch.
-    last_page = captured_data.get('lastPage', 1)
-    all_pages = [captured_data]
-
-    if last_page > 1:
-        BATCH_SIZE = 8
-        all_page_urls = []
-        for pg in range(2, last_page + 1):
-            if 'page=' in captured_url:
-                pg_url = re.sub(r'page=\d+', f'page={pg}', captured_url)
-            else:
-                sep = '&' if '?' in captured_url else '?'
-                pg_url = f'{captured_url}{sep}page={pg}'
-            all_page_urls.append(pg_url)
-
-        print(f"  ⚡ Fetching {len(all_page_urls)} pages "
-              f"(batches of {BATCH_SIZE})...")
-
-        for batch_start in range(0, len(all_page_urls), BATCH_SIZE):
-            batch = all_page_urls[batch_start:batch_start + BATCH_SIZE]
-            batch_json = json.dumps(batch)
-            batch_num = batch_start // BATCH_SIZE + 1
-            total_batches = (len(all_page_urls) + BATCH_SIZE - 1) // BATCH_SIZE
-
+        # --- 1X2 ---
+        mr = odds_raw.get("match_result") or {}
+        odds_1x2 = {}
+        if mr.get("home") and mr.get("draw") and mr.get("away"):
             try:
-                more = await page.evaluate(f"""
-                    async () => {{
-                        const urls = {batch_json};
-                        return await Promise.all(
-                            urls.map(url =>
-                                fetch(url, {{ credentials: 'include' }})
-                                    .then(r => r.json())
-                                    .catch(() => null)
-                            )
-                        );
-                    }}
-                """)
-                for r in (more or []):
-                    if r:
-                        inner2 = r.get('data', {})
-                        if inner2 and 'items' in inner2:
-                            all_pages.append(inner2)
-                print(f"  ✅ Batch {batch_num}/{total_batches} done "
-                      f"({len(all_pages)} pages total)")
-            except Exception as e:
-                print(f"  ⚠️ Batch {batch_num} error: {str(e)[:60]}")
+                odds_1x2 = {
+                    "home": float(mr["home"]),
+                    "draw": float(mr["draw"]),
+                    "away": float(mr["away"]),
+                }
+            except (TypeError, ValueError):
+                odds_1x2 = {}
 
-            if batch_start + BATCH_SIZE < len(all_page_urls):
-                await page.wait_for_timeout(300)
-
-        print(f"  ✅ All {len(all_pages)} pages fetched")
-
-    # Merge pages
-    all_items, comp_map, league_map, odds_map = merge_event_pages(all_pages)
-    print(f"📦 Total raw events: {len(all_items)}")
-    return filter_event_list_matches(all_items, comp_map, league_map, odds_map)
-
-
-def merge_event_pages(all_pages):
-    """Merge multiple event/list pages into combined maps."""
-    all_items  = []
-    comp_map   = {}
-    league_map = {}
-    odds_map   = {}
-
-    for inner in all_pages:
-        all_items.extend(inner.get('items', []))
-        relations = inner.get('relations', {})
-
-        raw_comp = relations.get('competitors', [])
-        if isinstance(raw_comp, list):
-            for c in raw_comp:
-                if c.get('id') is not None:
-                    comp_map[c['id']] = c
-        elif isinstance(raw_comp, dict):
-            comp_map.update(raw_comp)
-
-        raw_league = relations.get('league', [])
-        if isinstance(raw_league, list):
-            for lg in raw_league:
-                if lg.get('id') is not None:
-                    league_map[lg['id']] = lg
-        elif isinstance(raw_league, dict):
-            league_map.update(raw_league)
-
-        raw_odds = relations.get('odds', {})
-        if isinstance(raw_odds, dict):
-            for eid, markets in raw_odds.items():
-                if eid in odds_map:
-                    if isinstance(markets, list):
-                        odds_map[eid].extend(markets)
-                    else:
-                        odds_map[eid] = markets
-                else:
-                    odds_map[eid] = markets if isinstance(markets, list) else [markets]
-
-    return all_items, comp_map, league_map, odds_map
-
-
-def parse_event_list_item(item, comp_map, league_map, odds_map):
-    """Parse one event/list item into standard match format."""
-    event_id  = str(item.get('id'))
-    c1_id     = item.get('competitor1Id')
-    c2_id     = item.get('competitor2Id')
-    league_id = item.get('leagueId')
-    time_str  = item.get('time', '')
-    status    = item.get('status', 0)
-
-    c1     = comp_map.get(c1_id, {}) or {}
-    c2     = comp_map.get(c2_id, {}) or {}
-    league = league_map.get(league_id, {}) or {}
-
-    home_team   = c1.get('name', '')
-    away_team   = c2.get('name', '')
-    league_name = league.get('name', '')
-
-    if not home_team or not away_team:
-        return None
-    if status in [2, 3, 4]:
-        return None
-
-    try:
-        kickoff_dt = datetime.strptime(time_str, '%Y-%m-%d %H:%M:%S')
-        kickoff    = kickoff_dt.strftime('%Y-%m-%d %H:%M')
-    except Exception:
-        return None
-
-    match = {
-        'home_team': home_team, 'away_team': away_team,
-        'kickoff': kickoff, 'tournament': league_name,
-        'is_live': (status == 1), 'source': '1xbet_gh',
-        'odds_1x2': {}, 'odds_ou': {}, 'odds_gg': {},
-    }
-
-    for market in (odds_map.get(event_id, []) or []):
-        mid  = market.get('id')
-        spec = market.get('specifiers', '') or ''
-        outs = market.get('outcomes', [])
-
-        if mid == 621:
-            h = next((o.get('odds') for o in outs
-                      if o.get('id') == 1 and o.get('active') == 1), None)
-            d = next((o.get('odds') for o in outs
-                      if o.get('id') == 2 and o.get('active') == 1), None)
-            a = next((o.get('odds') for o in outs
-                      if o.get('id') == 3 and o.get('active') == 1), None)
-            if h and d and a:
-                match['odds_1x2'] = {
-                    'home': float(h), 'draw': float(d), 'away': float(a)}
-
-        if mid == 289 and 'total=2.5' in spec:
-            ov = next((o.get('odds') for o in outs
-                       if o.get('id') == 12 and o.get('active') == 1), None)
-            un = next((o.get('odds') for o in outs
-                       if o.get('id') == 13 and o.get('active') == 1), None)
-            if ov and un:
-                match['odds_ou'] = {
-                    'line': 2.5, 'over': float(ov), 'under': float(un)}
-
-    if not match['odds_1x2']:
-        return None
-    return match
-
-
-def filter_event_list_matches(all_items, comp_map, league_map, odds_map):
-    """Filter event/list items to **today only** (no tomorrow fallback)."""
-    now = datetime.now()
-    today = now.date()
-    today_matches = []
-    for item in all_items:
-        try:
-            m = parse_event_list_item(item, comp_map, league_map, odds_map)
-            if not m:
+        # --- Over/Under ---
+        odds_ou = {}
+        for total in OU_TOTALS:
+            internal_key = ou_json_key(total)
+            line = odds_raw.get(internal_key)
+            if not line:
                 continue
-            kdt = datetime.strptime(m['kickoff'], '%Y-%m-%d %H:%M')
-            if kdt <= now:
+            try:
+                odds_ou[str(total)] = {
+                    "over": float(line["over"]),
+                    "under": float(line["under"])
+                }
+            except (TypeError, ValueError, KeyError):
                 continue
-            if kdt.date() == today:
-                today_matches.append(m)
-        except Exception:
-            continue
-    if today_matches:
-        today_matches.sort(key=lambda x: x['kickoff'])
-        print(f"✅ Upcoming matches: {len(today_matches)}")
-        return today_matches
-    print("⚠️ No matches for today")
-    return []
+
+        # --- GG/NG ---
+        gn = odds_raw.get("gg_ng") or {}
+        odds_gg = {}
+        if gn.get("gg") and gn.get("ng"):
+            try:
+                odds_gg = {
+                    "yes": float(gn["gg"]),
+                    "no":  float(gn["ng"]),
+                }
+            except (TypeError, ValueError):
+                odds_gg = {}
+
+        # --- Kickoff ---
+        ku = m.get("kickoff_utc") or ""
+        kickoff_str = ""
+        if ku:
+            try:
+                dt = datetime.fromisoformat(ku.replace("Z", "+00:00"))
+                kickoff_str = dt.astimezone(tz).strftime("%Y-%m-%d %H:%M")
+            except ValueError:
+                kickoff_str = ku[:16].replace("T", " ")
+
+        standard.append({
+            "home_team":  (m.get("home_team") or "").strip(),
+            "away_team":  (m.get("away_team") or "").strip(),
+            "kickoff":    kickoff_str,
+            "tournament": (m.get("league") or "").strip(),
+            "is_live":    False,
+            "source":     "1xbet_gh",
+            "odds_1x2":   odds_1x2,
+            "odds_ou":    odds_ou,
+            "odds_gg":    odds_gg,
+        })
+
+    return standard
 
 
-# ── LINEFEED PROCESSING (legacy API) ─────────────────────────────────────────
+def run() -> List[dict]:
+    started = time.perf_counter()
 
-def extract_linefeed_events(data):
-    """Recursively pull all match dicts (those with O1 + O2 fields)."""
-    found = []
-    def walk(node):
-        if isinstance(node, dict):
-            if {'O1', 'O2'} <= node.keys():
-                found.append(node)
-                return
-            for v in node.values():
-                walk(v)
-        elif isinstance(node, list):
-            for item in node:
-                walk(item)
-    walk(data)
-    return found
-
-
-async def process_linefeed(page, captured_url, initial_events):
-    """Process legacy LineFeed API data."""
-    # Try to get more events with count=500
-    big_url = re.sub(r'count=\d+', 'count=500', captured_url)
-    if 'count=' not in big_url:
-        sep = '&' if '?' in big_url else '?'
-        big_url = f'{big_url}{sep}count=500'
-
-    all_events = list(initial_events)
-
-    print(f"  ⚡ Re-fetching with count=500...")
-    try:
-        result = await page.evaluate(f"""
-            async () => {{
-                try {{
-                    const resp = await fetch("{big_url}", {{
-                        credentials: 'include',
-                        headers: {{
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }}
-                    }});
-                    return await resp.json();
-                }} catch(e) {{
-                    return null;
-                }}
-            }}
-        """)
-        if result:
-            events = extract_linefeed_events(result)
-            if events and len(events) > len(all_events):
-                all_events = events
-                print(f"  ✅ Got {len(all_events)} events")
-    except Exception as e:
-        print(f"  ⚠️ Re-fetch failed: {str(e)[:60]}")
-
-    return filter_linefeed_matches(all_events)
-
-
-def norm_ts(ts):
-    if not ts:
-        return 0
-    ts = int(ts)
-    if ts > 9_999_999_999:
-        ts //= 1000
-    return ts
-
-
-def filter_linefeed_matches(raw_events):
-    """Parse and filter LineFeed events to **today only** (no tomorrow fallback)."""
-    import time
-    now = datetime.now()
-    today = now.date()
-    now_ts = int(time.time())
-
-    today_matches = []
-
-    for ev in raw_events:
-        if not ev.get('O1') or not ev.get('O2'):
-            continue
-        # Only football (sport ID 1)
-        sport_id = ev.get('SI') or ev.get('SportId') or ev.get('sport_id')
-        if sport_id is not None and int(sport_id) != 1:
-            continue
-        # Skip non‑football tournaments
-        league = (ev.get('LE') or '').lower()
-        non_football = ['ufc', 'nhl', 'nba', 'nfl', 'mlb', 'tennis',
-                        'boxing', 'mma', 'hockey', 'basketball',
-                        'baseball', 'cricket', 'rugby', 'handball',
-                        'volleyball', 'table tennis', 'badminton',
-                        'darts', 'snooker', 'counter-strike', 'dota',
-                        'league of legends', 'valorant']
-        if any(nf in league for nf in non_football):
-            continue
-        start_ts = norm_ts(ev.get('S') or 0)
-        if start_ts <= now_ts:
-            continue
+    if hasattr(sys.stdout, "reconfigure"):
         try:
-            dt = datetime.fromtimestamp(start_ts)
-        except Exception:
-            continue
-        kickoff = dt.strftime('%Y-%m-%d %H:%M')
-        # Parse odds from E array
-        w1 = x = w2 = over = under = 0.0
-        for item in (ev.get('E') or []):
-            g, t, p_val = item.get('G'), item.get('T'), item.get('P')
-            val = float(item.get('CV', 0) or 0)
-            if g == 1:
-                if t == 1 and not w1: w1 = val
-                if t == 2 and not x:  x  = val
-                if t == 3 and not w2: w2 = val
-            elif g == 17 and p_val is not None:
-                try:
-                    pf = float(p_val)
-                except (ValueError, TypeError):
-                    pf = 0.0
-                if abs(pf - 2.5) < 0.01:
-                    if t == 9  and not over:  over  = val
-                    if t == 10 and not under: under = val
-        if not (w1 and x and w2):
-            continue
-        match = {
-            'home_team': ev.get('O1', '?'),
-            'away_team': ev.get('O2', '?'),
-            'kickoff': kickoff,
-            'tournament': ev.get('LE') or 'Unknown',
-            'is_live': False,
-            'source': '1xbet_gh',
-            'odds_1x2': {'home': w1, 'draw': x, 'away': w2},
-            'odds_ou': {'line': 2.5, 'over': over, 'under': under} if over and under else {},
-            'odds_gg': {},
-        }
-        if dt.date() == today:
-            today_matches.append(match)
-    if today_matches:
-        today_matches.sort(key=lambda x: x['kickoff'])
-        print(f"✅ Upcoming matches: {len(today_matches)}")
-        return today_matches
-    print("⚠️ No matches for today")
-    return []
+            sys.stdout.reconfigure(encoding="utf-8")
+        except (OSError, ValueError):
+            pass
 
+    tz = ZoneInfo(TIMEZONE)
+    now_utc = datetime.now(timezone.utc)
+    now_local = now_utc.astimezone(tz)
+    today = now_local.date()
 
-# ── DISPLAY & SAVE ────────────────────────────────────────────────────────────
+    print("\n" + "🔵 " * 20)
+    print("   1XBET GHANA SCRAPER (ASYNC AIOHTTP)")
+    print(f"   {now_local.strftime('%A, %d %B %Y %H:%M:%S')}")
+    print("🔵 " * 20 + "\n")
 
-def display_matches(matches):
-    if not matches:
-        print("⚠️ No matches found")
-        return
-    print(f"\n📋 1XBET GHANA")
-    print(f"⚽ Total matches: {len(matches)}")
-    print("=" * 50)
-    print("\n📝 Sample (first 10):")
-    for match in matches[:10]:
-        live_tag = "🔴" if match.get('is_live') else ""
-        print(f"  {live_tag} {match['home_team']} vs "
-              f"{match['away_team']} | {match['kickoff']} | "
-              f"{match['tournament']}")
-    if len(matches) > 10:
-        print(f"  ... and {len(matches) - 10} more")
-    print("=" * 50)
+    raw_matches = asyncio.run(collect_today_games_async(
+        site=DEFAULT_SITE,
+        tf_ms=DEFAULT_TF_MS,
+        referer=REFERRER,
+        target=today,
+        tz=tz,
+        now_utc=now_utc,
+    ))
 
+    # Convert to standard format
+    matches = _convert_to_standard_format(raw_matches, tz)
 
-def save_results(matches):
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    jfile = os.path.join(OUTPUT_DIR, 'onexbet_odds.json')
-    tfile = os.path.join(OUTPUT_DIR, 'onexbet_matches.txt')
+    n = len(matches)
 
-    with open(jfile, 'w', encoding='utf-8') as f:
-        json.dump(matches, f, indent=2, ensure_ascii=False)
-
-    with open(tfile, 'w', encoding='utf-8') as f:
-        f.write("1XBET GHANA - ALL MATCHES\n")
-        f.write(f"Generated: "
-                f"{datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}\n")
-        f.write(f"Total: {len(matches)} matches\n")
-        f.write("=" * 60 + "\n\n")
-        for match in matches:
-            live_tag = "🔴 LIVE" if match.get('is_live') else ""
-            f.write(f"⚽ {match['home_team']} vs "
-                    f"{match['away_team']} {live_tag}\n")
-            f.write(f"🏆 {match['tournament']}\n")
-            f.write(f"🕐 {match['kickoff']}\n")
-            if match['odds_1x2']:
-                o = match['odds_1x2']
-                f.write(f"1X2: {o['home']} | {o['draw']} | {o['away']}\n")
-            if match['odds_ou']:
-                ou = match['odds_ou']
-                f.write(f"O/U 2.5: Over {ou['over']} | Under {ou['under']}\n")
-            f.write("\n")
-
-    return jfile, tfile
-
-
-# ── PUBLIC run() ───────────────────────────────────────────────────────────────
-
-def run():
-    print("\n" + "🔴 " * 20)
-    print("   1XBET GHANA SCRAPER")
-    print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🔴 " * 20 + "\n")
-
-    matches = asyncio.run(scrape_onexbet())
-
-    if matches:
-        display_matches(matches)
-        jfile, tfile = save_results(matches)
-        print(f"💾 Saved to {jfile}")
-        print(f"📄 Full list saved to {tfile}")
+    if n == 0:
+        print(f"⚠️  No prematch matches found for today.")
     else:
-        print("\n⚠️ No matches found")
+        print(f"\n📋 1XBET GHANA")
+        print(f"⚽ Total matches: {n}")
+        print("=" * 50)
+        head = min(10, n)
+        print(f"\n📝 Sample (first {head}):")
+        for m in matches[:head]:
+            print(f"   {m['home_team']} vs {m['away_team']} | {m['kickoff']} | {m['tournament']}")
+        if n > head:
+            print(f"  ... and {n - head} more")
+        print("=" * 50)
+
+    # Save files
+    os.makedirs("data", exist_ok=True)
+    json_path = os.path.join("data", "onexbet_odds.json")
+    txt_path  = os.path.join("data", "onexbet_matches.txt")
+
+    with open(json_path, "w", encoding="utf-8") as jf:
+        json.dump(matches, jf, ensure_ascii=False, indent=2)
+
+    with open(txt_path, "w", encoding="utf-8") as tf:
+        tf.write("1XBET GHANA - ALL MATCHES\n")
+        tf.write(f"Generated: {now_local.strftime('%A, %d %B %Y %H:%M:%S')}\n")
+        tf.write(f"Total: {n} matches\n")
+        tf.write("=" * 60 + "\n\n")
+        
+        if not matches:
+            tf.write(f"No prematch football for today ({TIMEZONE}).\n")
+        else:
+            for m in matches:
+                tf.write(f"⚽ {m['home_team']} vs {m['away_team']}\n")
+                tf.write(f"🏆 {m['tournament']}\n")
+                tf.write(f"🕐 {m['kickoff']}\n")
+                if m["odds_1x2"]:
+                    o = m["odds_1x2"]
+                    tf.write(f"1X2: {o['home']} | {o['draw']} | {o['away']}\n")
+                for line_str, ou in (m["odds_ou"] or {}).items():
+                    tf.write(f"O/U {line_str}: Over {ou['over']} | Under {ou['under']}\n")
+                if m["odds_gg"]:
+                    gg = m["odds_gg"]
+                    tf.write(f"GG/NG: Yes {gg.get('yes', '?')} | No {gg.get('no', '?')}\n")
+                tf.write("\n")
+
+    elapsed = time.perf_counter() - started
+    print(f"💾 Saved to {json_path}")
+    print(f"📄 Full list: {txt_path}")
+    if n > 0:
+        print(f"   Open the .txt file to see all {n} matches!")
+    print(f"⏱️  Scraping completed in {elapsed:.1f}s")
 
     return matches
 
 
-if __name__ == "__main__":
+def main() -> int:
     run()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

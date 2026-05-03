@@ -1,5 +1,7 @@
 import asyncio
 from playwright.async_api import async_playwright
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 import json
 import time as _time
 from datetime import datetime, timedelta
@@ -96,12 +98,11 @@ async def scrape_footballcom():
     async with aiohttp.ClientSession(
             cookies=cookies_list) as session:
 
-        # Try today first
+        # ── TODAY ────────────────────────────────────────────
         print("📅 Fetching today's matches...")
         start_ms, end_ms = get_today_timestamps()
 
-        data = await fetch_page(
-            session, 1, start_ms, end_ms, headers)
+        data = await fetch_page(session, 1, start_ms, end_ms, headers)
 
         if data:
             matches = parse_response(data)
@@ -110,13 +111,42 @@ async def scrape_footballcom():
             print(f"  ✅ Page 1: {len(matches)} matches "
                   f"(Total: {total})")
 
-            # Fetch remaining pages
-            if total > 100:
+            # Keep fetching pages until API returns empty
+            page_num = 2
+            while True:
+                data = await fetch_page(
+                    session, page_num, start_ms, end_ms, headers)
+                if not data:
+                    break
+                matches = parse_response(data)
+                if not matches:
+                    break
+                all_matches.extend(matches)
+                print(f"  ✅ Page {page_num}: "
+                      f"{len(matches)} matches "
+                      f"(Total: {len(all_matches)})")
+                page_num += 1
+                await asyncio.sleep(0.3)
+
+        # ── TOMORROW (fallback if today is empty) ────────────
+        if not all_matches:
+            print("\n📅 No today matches — fetching tomorrow...")
+            start_ms, end_ms = get_tomorrow_timestamps()
+
+            data = await fetch_page(session, 1, start_ms, end_ms, headers)
+
+            if data:
+                matches = parse_response(data)
+                all_matches.extend(matches)
+                total = data.get('data', {}).get('totalSize', 0)
+                print(f"  ✅ Page 1: {len(matches)} matches "
+                      f"(Total: {total})")
+
+                # Keep fetching pages until API returns empty
                 page_num = 2
                 while True:
                     data = await fetch_page(
-                        session, page_num,
-                        start_ms, end_ms, headers)
+                        session, page_num, start_ms, end_ms, headers)
                     if not data:
                         break
                     matches = parse_response(data)
@@ -129,45 +159,10 @@ async def scrape_footballcom():
                     page_num += 1
                     await asyncio.sleep(0.3)
 
-        # If no today matches fetch tomorrow
-        if not all_matches:
-            print("\n📅 No today matches — fetching tomorrow...")
-            start_ms, end_ms = get_tomorrow_timestamps()
-
-            data = await fetch_page(
-                session, 1, start_ms, end_ms, headers)
-
-            if data:
-                matches = parse_response(data)
-                all_matches.extend(matches)
-                total = data.get('data', {}).get('totalSize', 0)
-                print(f"  ✅ Page 1: {len(matches)} matches "
-                      f"(Total: {total})")
-
-                if total > 100:
-                    page_num = 2
-                    while True:
-                        data = await fetch_page(
-                            session, page_num,
-                            start_ms, end_ms, headers)
-                        if not data:
-                            break
-                        matches = parse_response(data)
-                        if not matches:
-                            break
-                        all_matches.extend(matches)
-                        print(f"  ✅ Page {page_num}: "
-                              f"{len(matches)} matches "
-                              f"(Total: {len(all_matches)})")
-                        page_num += 1
-                        await asyncio.sleep(0.3)
-
     # Sort by kickoff time
     all_matches.sort(key=lambda x: x['kickoff'])
 
-    elapsed = _time.time() - start
     print(f"\n✅ Total matches fetched: {len(all_matches)}")
-    print(f"⏱️  Completed in {elapsed:.1f}s")
     return all_matches
 
 
@@ -244,9 +239,11 @@ def parse_event(event, tournament_name='', now=None):
 
         if market_id == '18' and len(outcomes) >= 2:
             desc = outcomes[0].get('desc', '')
-            if '2.5' in str(desc):
-                match['odds_ou'] = {
-                    'line': 2.5,
+            import re
+            m = re.search(r'(\d+\.5)', str(desc))
+            if m:
+                line_str = m.group(1)
+                match['odds_ou'][line_str] = {
                     'over': float(outcomes[0].get('odds', 0) or 0),
                     'under': float(outcomes[1].get('odds', 0) or 0)
                 }
@@ -285,6 +282,8 @@ def display_matches(matches):
 
 
 def run():
+    import time as _time
+    start = _time.time()
     matches = asyncio.run(scrape_footballcom())
     if matches:
         display_matches(matches)
@@ -301,8 +300,7 @@ def run():
             f.write("=" * 60 + "\n\n")
 
             for match in matches:
-                live_tag = "🔴 LIVE" if match.get(
-                    'is_live') else ""
+                live_tag = "🔴 LIVE" if match.get('is_live') else ""
                 f.write(f"⚽ {match['home_team']} vs "
                         f"{match['away_team']} {live_tag}\n")
                 f.write(f"🏆 {match['tournament']}\n")
@@ -313,9 +311,9 @@ def run():
                     f.write(f"1X2: {o['home']} | "
                             f"{o['draw']} | {o['away']}\n")
                 if match['odds_ou']:
-                    ou = match['odds_ou']
-                    f.write(f"O/U 2.5: Over {ou['over']} | "
-                            f"Under {ou['under']}\n")
+                    for line_str, ou in match['odds_ou'].items():
+                        f.write(f"O/U {line_str}: Over {ou['over']} | "
+                                f"Under {ou['under']}\n")
                 if match['odds_gg']:
                     gg = match['odds_gg']
                     f.write(f"GG/NG: Yes {gg['yes']} | "
@@ -324,6 +322,8 @@ def run():
 
         print(f"💾 Saved to data/footballcom_odds.json")
         print(f"📄 Full list saved to data/footballcom_matches.txt")
+        print(f"   Open the .txt file to see all {len(matches)} matches!")
+        print(f"⏱️  Scraping completed in {_time.time() - start:.1f}s")
     else:
         print("\n⚠️ No matches found")
     return matches

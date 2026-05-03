@@ -1,8 +1,19 @@
+import sys
 import time
 import schedule
 import os
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Fix for Windows console emoji printing
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
+# Read stake from .env — change STARTING_CAPITAL in .env to use a different amount
+TOTAL_STAKE = int(os.getenv('STARTING_CAPITAL', 500))
 
 from data.sportybet    import run as fetch_sportybet
 from data.betway       import run as fetch_betway
@@ -45,9 +56,13 @@ def run_scan():
     print(f"\n{'='*60}")
     print(f"SCAN #{scan_count}")
     print(f"TIME: {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
+    print(f"STAKE: GHS {TOTAL_STAKE}")
     print(f"{'='*60}\n")
 
     try:
+        # Start the master stopwatch
+        cycle_start_time = time.time()
+
         # Clear stale data first
         clear_old_data()
         print("CLEARED old odds data\n")
@@ -59,12 +74,6 @@ def run_scan():
         onexbet_matches      = fetch_onexbet()      or []
         twentytwobet_matches = fetch_twentytwobet() or []
 
-        print(f"\nMATCHES fetched:")
-        print(f"   Sportybet   : {len(sportybet_matches)}")
-        print(f"   Betway      : {len(betway_matches)}")
-        print(f"   Football.com: {len(footballcom_matches)}")
-        print(f"   1xBet       : {len(onexbet_matches)}")
-        print(f"   22Bet       : {len(twentytwobet_matches)}")
 
         if not any([sportybet_matches, betway_matches,
                     footballcom_matches, onexbet_matches,
@@ -73,21 +82,23 @@ def run_scan():
             return
 
         # Scan for arbitrage across all 5 platforms
-        opportunities = scan_all(
+        opportunities, events_scanned = scan_all(
             sportybet_matches,
             betway_matches,
             footballcom_matches,
             onexbet_matches,
             twentytwobet_matches,
-            total_stake=500,
+            total_stake=TOTAL_STAKE,
+            cycle_start_time=cycle_start_time
         )
 
-        # Send Telegram alerts
+        # Send Telegram alerts (Summary FIRST, then the detailed matches)
+        cycle_time_seconds = time.time() - cycle_start_time
+        send_scan_summary(opportunities, events_scanned, cycle_time_seconds)
+
         if opportunities:
             for opp in opportunities:
                 send_arb_alert(opp)
-
-        send_scan_summary(opportunities, scan_count)
 
         # Save opportunities to file
         if opportunities:

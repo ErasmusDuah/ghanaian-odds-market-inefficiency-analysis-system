@@ -1,11 +1,14 @@
 import json
+import os
 from datetime import datetime
 from difflib import SequenceMatcher
+from dotenv import load_dotenv
 
+load_dotenv()
 
 MIN_ARB_PROFIT = 0.01
 MAX_ARB_PROFIT = 15.0
-TOTAL_CAPITAL  = 500
+TOTAL_CAPITAL  = int(os.getenv('STARTING_CAPITAL', 500))
 
 
 def normalize_name(name):
@@ -318,56 +321,80 @@ def scan_1x2_arb(pair, total_stake):
 
 
 def scan_ou_arb(pair, total_stake):
-    sb_ou  = pair['sportybet'].get('odds_ou', {})
+    def filter_to_main_line(ou_dict):
+        if not ou_dict: return {}
+        # Find the line with the smallest difference between over and under (the "Main" line)
+        best_line = min(ou_dict.keys(), key=lambda k: abs(ou_dict[k]['over'] - ou_dict[k]['under']))
+        return {best_line: ou_dict[best_line]}
+
+    # SportyBet and Football.com hide alternate lines for some leagues,
+    # so we restrict them to ONLY their main, visible line.
+    sb_ou  = filter_to_main_line(pair['sportybet'].get('odds_ou', {}))
+    fc_ou  = filter_to_main_line(pair['footballcom'].get('odds_ou', {}))
+    
+    # Betway, 1xBet, 22Bet display all lines clearly, so keep all of them
     bw_ou  = pair['betway'].get('odds_ou', {})
-    fc_ou  = pair['footballcom'].get('odds_ou', {})
     ox_ou  = pair['onexbet'].get('odds_ou', {})
     ttb_ou = pair['twentytwobet'].get('odds_ou', {})
 
-    best_over = get_best_odds('over', 'ou',
-        (sb_ou,  'Sportybet'),
-        (bw_ou,  'Betway'),
-        (fc_ou,  'Football.com'),
-        (ox_ou,  '1xBet'),
-        (ttb_ou, '22Bet'),
-    )
-    best_under = get_best_odds('under', 'ou',
-        (sb_ou,  'Sportybet'),
-        (bw_ou,  'Betway'),
-        (fc_ou,  'Football.com'),
-        (ox_ou,  '1xBet'),
-        (ttb_ou, '22Bet'),
-    )
+    all_lines = set()
+    for ou in [sb_ou, bw_ou, fc_ou, ox_ou, ttb_ou]:
+        all_lines.update(ou.keys())
 
-    if not all([best_over[0], best_under[0]]):
-        return None
+    opportunities = []
 
-    odds_list = [best_over[0], best_under[0]]
-    arb_sum, profit_pct = calculate_arb(odds_list)
+    for line_str in all_lines:
+        sb_line = sb_ou.get(line_str, {})
+        bw_line = bw_ou.get(line_str, {})
+        fc_line = fc_ou.get(line_str, {})
+        ox_line = ox_ou.get(line_str, {})
+        ttb_line = ttb_ou.get(line_str, {})
 
-    if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
-        stakes  = calculate_stakes(odds_list, total_stake)
-        profits = calculate_profits(odds_list, stakes)
-        return {
-            'market':     'Over/Under 2.5',
-            'arb_sum':    round(arb_sum, 4),
-            'profit_pct': round(profit_pct, 2),
-            'profit_ghs': round(
-                total_stake * profit_pct / 100, 2),
-            'bets': [
-                {'outcome':        'Over 2.5',
-                 'platform':       best_over[1],
-                 'odds':           best_over[0],
-                 'stake':          stakes[0],
-                 'profit_if_wins': profits[0]},
-                {'outcome':        'Under 2.5',
-                 'platform':       best_under[1],
-                 'odds':           best_under[0],
-                 'stake':          stakes[1],
-                 'profit_if_wins': profits[1]},
-            ]
-        }
-    return None
+        best_over = get_best_odds('over', 'ou',
+            (sb_line,  'Sportybet'),
+            (bw_line,  'Betway'),
+            (fc_line,  'Football.com'),
+            (ox_line,  '1xBet'),
+            (ttb_line, '22Bet'),
+        )
+        best_under = get_best_odds('under', 'ou',
+            (sb_line,  'Sportybet'),
+            (bw_line,  'Betway'),
+            (fc_line,  'Football.com'),
+            (ox_line,  '1xBet'),
+            (ttb_line, '22Bet'),
+        )
+
+        if not all([best_over[0], best_under[0]]):
+            continue
+
+        odds_list = [best_over[0], best_under[0]]
+        arb_sum, profit_pct = calculate_arb(odds_list)
+
+        if MIN_ARB_PROFIT <= profit_pct <= MAX_ARB_PROFIT:
+            stakes  = calculate_stakes(odds_list, total_stake)
+            profits = calculate_profits(odds_list, stakes)
+            opportunities.append({
+                'market':     f'Over/Under {line_str}',
+                'arb_sum':    round(arb_sum, 4),
+                'profit_pct': round(profit_pct, 2),
+                'profit_ghs': round(
+                    total_stake * profit_pct / 100, 2),
+                'bets': [
+                    {'outcome':        f'Over {line_str}',
+                     'platform':       best_over[1],
+                     'odds':           best_over[0],
+                     'stake':          stakes[0],
+                     'profit_if_wins': profits[0]},
+                    {'outcome':        f'Under {line_str}',
+                     'platform':       best_under[1],
+                     'odds':           best_under[0],
+                     'stake':          stakes[1],
+                     'profit_if_wins': profits[1]},
+                ]
+            })
+            
+    return opportunities if opportunities else None
 
 
 def scan_gg_arb(pair, total_stake):
@@ -446,7 +473,8 @@ def scan_all(sportybet_matches,
              footballcom_matches=None,
              onexbet_matches=None,
              twentytwobet_matches=None,
-             total_stake=TOTAL_CAPITAL):
+             total_stake=TOTAL_CAPITAL,
+             cycle_start_time=None):
 
     if footballcom_matches  is None: footballcom_matches  = []
     if onexbet_matches      is None: onexbet_matches      = []
@@ -459,17 +487,6 @@ def scan_all(sportybet_matches,
     onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m)]
     twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m)]
 
-    print("\n" + "🔍 " * 20)
-    print("   ARBITRAGE SCANNER")
-    print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🔍 " * 20 + "\n")
-
-    print(f"📊 Sportybet   : {len(sportybet_matches)}")
-    print(f"📊 Betway      : {len(betway_matches)}")
-    print(f"📊 Football.com: {len(footballcom_matches)}")
-    print(f"📊 1xBet       : {len(onexbet_matches)}")
-    print(f"📊 22Bet       : {len(twentytwobet_matches)}")
-
     all_matches = (sportybet_matches   +
                    betway_matches      +
                    footballcom_matches +
@@ -477,7 +494,6 @@ def scan_all(sportybet_matches,
                    twentytwobet_matches)
 
     groups = match_all_platforms(all_matches)
-    print(f"\n✅ Matched across platforms: {len(groups)} events")
 
     if not groups:
         print("\n⚠️ No matching events found!")
@@ -485,8 +501,6 @@ def scan_all(sportybet_matches,
 
     opportunities = []
     empty = {'odds_1x2': {}, 'odds_ou': {}, 'odds_gg': {}}
-
-    print(f"\n🔍 Scanning {len(groups)} matched events...\n")
 
     for group in groups:
         matches    = group['matches']
@@ -510,8 +524,14 @@ def scan_all(sportybet_matches,
         }
 
         for arb_fn in [scan_1x2_arb, scan_ou_arb, scan_gg_arb]:
-            arb = arb_fn(pair, total_stake)
-            if arb:
+            arb_result = arb_fn(pair, total_stake)
+            if not arb_result:
+                continue
+                
+            if not isinstance(arb_result, list):
+                arb_result = [arb_result]
+                
+            for arb in arb_result:
                 opp = {
                     'match':      match_name,
                     'kickoff':    kickoff,
@@ -519,27 +539,40 @@ def scan_all(sportybet_matches,
                     **arb
                 }
                 opportunities.append(opp)
-                display_opportunity(opp)
 
     print(f"\n{'='*60}")
-    print(f"✅ SCAN COMPLETE!")
+    print("SCAN COMPLETE!")
     print(f"⚽ Events scanned    : {len(groups)}")
+    
+    import time
+    if cycle_start_time:
+        total_seconds = time.time() - cycle_start_time
+        total_minutes = total_seconds / 60
+        print(f"⏱️ Total cycle time: {total_seconds:.1f} seconds ({total_minutes:.1f} minutes)")
+
     print(f"🎯 Arb opportunities : {len(opportunities)}")
 
     if opportunities:
-        total_profit = sum(
-            o['profit_ghs'] for o in opportunities)
-        best = max(opportunities,
-                   key=lambda x: x['profit_pct'])
-        print(f"💰 Total potential profit: "
-              f"GHS {total_profit:.2f}")
-        print(f"📈 Best: {best['profit_pct']:.2f}% "
-              f"on {best['match']}")
+        total_profit = sum(o['profit_ghs'] for o in opportunities)
+        best = max(opportunities, key=lambda x: x['profit_pct'])
+        print(f"💰 Total potential profit: GHS {total_profit:.2f}")
+        print(f"📈 Best: {best['profit_pct']:.2f}% on {best['match']}")
+        
+        # Now print all the actual opportunities
+        for opp in opportunities:
+            display_opportunity(opp)
     else:
         print("💡 No arb opportunities right now")
 
+    print(f"\n{'='*60}")
+    print("MATCHES FETCHED PER PLATFORM:")
+    print(f"  Sportybet   : {len(sportybet_matches)}")
+    print(f"  Betway      : {len(betway_matches)}")
+    print(f"  Football.com: {len(footballcom_matches)}")
+    print(f"  1xBet       : {len(onexbet_matches)}")
+    print(f"  22Bet       : {len(twentytwobet_matches)}")
     print(f"{'='*60}")
-    return opportunities
+    return opportunities, len(groups)
 
 
 def run():
@@ -574,7 +607,7 @@ def run():
         print("\n❌ No odds data found!")
         return []
 
-    opportunities = scan_all(
+    opportunities, _ = scan_all(
         sportybet_matches,
         betway_matches,
         footballcom_matches,

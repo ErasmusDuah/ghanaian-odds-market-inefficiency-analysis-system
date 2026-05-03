@@ -1,4 +1,29 @@
+# Environment & secrets — NEVER commit these
 .env
+
+# Python cache
 __pycache__/
 *.pyc
-*.json
+*.pyo
+
+# Generated odds data (rebuilt on every run)
+data/*.json
+data/*.txt
+
+# Ledger database (keep locally, not in git)
+data/ledger.db
+
+# Saved arb snapshots
+engine/arb_*.json
+
+# Debug & scratch files
+*.html
+1x_debug.html
+captured_*.json
+raw_events_*.json
+betway_upcoming_*.json
+scratch_*.json
+scratch_*.py
+tempCodeRunnerFile.py
+matches_*.json
+matches_*.txt

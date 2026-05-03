@@ -32,44 +32,50 @@ def send_arb_alert(opportunity):
     bet_lines = ""
     for bet in bets:
         bet_lines += (
-            f"\n🎯 <b>{bet['platform']}</b>"
-            f"\n   Bet: {bet['outcome']}"
-            f"\n   Odds: {bet['odds']}"
-            f"\n   Stake: GHS {bet['stake']:.2f}"
+            f"\n\n     🎯 <b>{bet['platform']}</b>"
+            f"\n        Bet:   {bet['outcome']}"
+            f"\n        Odds:  {bet['odds']}"
+            f"\n        Stake: GHS {bet['stake']:.2f}"
+            f"\n        Win:   GHS {bet['profit_if_wins']:.2f}"
         )
 
     message = (
-        f"🚨 <b>ARB OPPORTUNITY FOUND!</b>\n\n"
-        f"⚽ <b>{opportunity['match']}</b>\n"
-        f"🏆 {opportunity['tournament']}\n"
-        f"🕐 Kickoff: {opportunity['kickoff']}\n\n"
+        f"🏆 <b>{opportunity['match']}</b>\n"
+        f"📅 {opportunity['kickoff']} | {opportunity['tournament']}\n"
+        f"==================================\n"
         f"📊 Market: {opportunity['market']}\n"
-        f"💰 Profit: {opportunity['profit_pct']:.2f}%"
-        f" = GHS {opportunity['profit_ghs']:.2f}\n\n"
+        f"💰 Profit: {opportunity['profit_pct']:.2f}% = GHS {opportunity['profit_ghs']:.2f}\n"
+        f"💵 Total Stake: GHS 500\n\n"
         f"📋 <b>BETS TO PLACE:</b>"
-        f"{bet_lines}\n\n"
-        f"⚡ Found at: "
-        f"{datetime.now().strftime('%H:%M:%S')}"
+        f"{bet_lines}"
     )
 
     return send_message(message)
 
 
-def send_scan_summary(opportunities, scan_num):
+def send_scan_summary(opportunities, events_scanned, cycle_time_seconds):
     """Sends scan summary"""
+    
+    total_minutes = cycle_time_seconds / 60
 
     if opportunities:
+        total_profit = sum(o['profit_ghs'] for o in opportunities)
+        best = max(opportunities, key=lambda x: x['profit_pct'])
+        
         message = (
-            f"✅ <b>Scan #{scan_num} Complete</b>\n"
-            f"🎯 {len(opportunities)} opportunities found!\n"
-            f"💰 Total profit: GHS "
-            f"{sum(o['profit_ghs'] for o in opportunities):.2f}\n"
-            f"🕐 {datetime.now().strftime('%H:%M:%S')}"
+            f"<b>SCAN COMPLETE!</b>\n"
+            f"⚽ Events scanned    : {events_scanned}\n"
+            f"⏱️ Total cycle time: {cycle_time_seconds:.1f} seconds ({total_minutes:.1f} minutes)\n"
+            f"🎯 Arb opportunities : {len(opportunities)}\n"
+            f"💰 Total potential profit: GHS {total_profit:.2f}\n"
+            f"📈 Best: {best['profit_pct']:.2f}% on {best['match']}"
         )
     else:
         message = (
-            f"🔍 <b>Scan #{scan_num}</b> — No arb yet\n"
-            f"🕐 {datetime.now().strftime('%H:%M:%S')}"
+            f"<b>SCAN COMPLETE!</b>\n"
+            f"⚽ Events scanned    : {events_scanned}\n"
+            f"⏱️ Total cycle time: {cycle_time_seconds:.1f} seconds ({total_minutes:.1f} minutes)\n"
+            f"💡 No arb opportunities right now"
         )
 
     return send_message(message)

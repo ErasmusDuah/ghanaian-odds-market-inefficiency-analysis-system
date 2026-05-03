@@ -1,4 +1,6 @@
 import asyncio
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
 import json
 import time as _time
 from datetime import datetime
@@ -116,9 +118,7 @@ async def scrape_all_matches():
     # Sort by kickoff time
     all_matches.sort(key=lambda x: x['kickoff'])
 
-    elapsed = _time.time() - start
     print(f"\n[INFO] Total matches fetched: {len(all_matches)}")
-    print(f"[INFO] Completed in {elapsed:.1f}s")
     return all_matches
 
 
@@ -197,9 +197,11 @@ def parse_event(event, tournament_name='', now=None):
 
         if market_id == '18' and len(outcomes) >= 2:
             desc = outcomes[0].get('desc', '')
-            if '2.5' in str(desc):
-                match['odds_ou'] = {
-                    'line': 2.5,
+            import re
+            m = re.search(r'(\d+\.5)', str(desc))
+            if m:
+                line_str = m.group(1)
+                match['odds_ou'][line_str] = {
                     'over': float(outcomes[0].get('odds', 0) or 0),
                     'under': float(outcomes[1].get('odds', 0) or 0)
                 }
@@ -234,6 +236,8 @@ def display_matches(matches):
     print("=" * 50)
 
 def run():
+    import time as _time
+    start = _time.time()
     matches = asyncio.run(scrape_all_matches())
     if matches:
         display_matches(matches)
@@ -261,8 +265,8 @@ def run():
                     o = match['odds_1x2']
                     f.write(f"1X2: {o['home']} | {o['draw']} | {o['away']}\n")
                 if match['odds_ou']:
-                    ou = match['odds_ou']
-                    f.write(f"O/U 2.5: Over {ou['over']} | Under {ou['under']}\n")
+                    for line_str, ou in match['odds_ou'].items():
+                        f.write(f"O/U {line_str}: Over {ou['over']} | Under {ou['under']}\n")
                 if match['odds_gg']:
                     gg = match['odds_gg']
                     f.write(f"GG/NG: Yes {gg['yes']} | "
@@ -271,7 +275,8 @@ def run():
 
         print(f"Saved to data/sportybet_odds.json")
         print(f"Full list saved to data/sportybet_matches.txt")
-        print(f"   Open the .txt file to see all 224 matches!")
+        print(f"   Open the .txt file to see all {len(matches)} matches!")
+        print(f"⏱️  Scraping completed in {_time.time() - start:.1f}s")
     else:
         print("\n⚠️ No matches found")
     return matches
