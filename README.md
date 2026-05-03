@@ -12,7 +12,7 @@ Scans **5 platforms** simultaneously and identifies risk-free arbitrage opportun
 | Betway GH | Browser (Playwright) | ~45s |
 | Football.com GH | Browser (Playwright) | ~45s |
 
-## 🚀 Setup on a New PC
+##  Setup on a New PC
 
 ### 1. Install Python
 Download Python 3.11+ from [python.org](https://python.org/downloads). Make sure to tick **"Add to PATH"** during installation.
