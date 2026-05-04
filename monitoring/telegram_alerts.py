@@ -7,6 +7,7 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+TOTAL_STAKE = int(os.getenv('STARTING_CAPITAL', 500))
 
 
 def send_message(message, reply_markup=None):
@@ -72,7 +73,7 @@ def send_arb_alert(opportunity):
         f"==================================\n"
         f"📊 Market: {opportunity['market']}\n"
         f"💰 Profit: {opportunity['profit_pct']:.2f}% = GHS {opportunity['profit_ghs']:.2f}\n"
-        f"💵 Total Stake: GHS 500\n\n"
+        f"💵 Total Stake: GHS {TOTAL_STAKE}\n\n"
         f"📋 <b>BETS TO PLACE:</b>"
         f"{bet_lines}\n\n"
         f"⏰ <i>Act fast — odds shift quickly!</i>\n"
