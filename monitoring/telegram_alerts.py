@@ -39,8 +39,7 @@ PLATFORM_URLS = {
 
 
 def send_arb_alert(opportunity):
-    """Sends arbitrage opportunity alert with inline keyboard buttons that open
-    bookmaker links in the device's external browser (not Telegram's in-app browser)."""
+    """Sends arbitrage opportunity alert."""
 
     home = opportunity['match'].split(' vs ')[0].strip()
     away = opportunity['match'].split(' vs ')[-1].strip()
@@ -57,6 +56,7 @@ def send_arb_alert(opportunity):
             f"\n   Stake: GHS {bet['stake']:.2f}"
             f"\n   Win:   GHS {bet['profit_if_wins']:.2f}"
         )
+
     message = (
         f"⚡ <b>ARB OPPORTUNITY FOUND!</b>\n"
         f"==================================\n"
