@@ -25,29 +25,47 @@ def send_message(message):
         return False
 
 
+PLATFORM_URLS = {
+    'Sportybet':    'https://www.sportybet.com/gh/sport/football/',
+    'Betway':       'https://www.betway.com.gh/sport/soccer/',
+    'Football.com': 'https://www.football.com.gh/',
+    '1xBet':        'https://1xbet.com.gh/en/line/football/',
+    '22Bet':        'https://22bet.com.gh/prematch/football',
+}
+
+
 def send_arb_alert(opportunity):
-    """Sends arbitrage opportunity alert"""
+    """Sends arbitrage opportunity alert with direct bookmaker links."""
+
+    home = opportunity['match'].split(' vs ')[0].strip()
+    away = opportunity['match'].split(' vs ')[-1].strip()
 
     bets = opportunity.get('bets', [])
     bet_lines = ""
     for bet in bets:
+        platform_url = PLATFORM_URLS.get(bet['platform'], '#')
         bet_lines += (
-            f"\n\n     🎯 <b>{bet['platform']}</b>"
-            f"\n        Bet:   {bet['outcome']}"
-            f"\n        Odds:  {bet['odds']}"
-            f"\n        Stake: GHS {bet['stake']:.2f}"
-            f"\n        Win:   GHS {bet['profit_if_wins']:.2f}"
+            f"\n\n🎯 <b>{bet['platform']}</b>"
+            f"\n   Bet:   {bet['outcome']}"
+            f"\n   Odds:  {bet['odds']}"
+            f"\n   Stake: GHS {bet['stake']:.2f}"
+            f"\n   Win:   GHS {bet['profit_if_wins']:.2f}"
+            f"\n   🔗 <a href=\"{platform_url}\">Open {bet['platform']}</a>"
         )
 
     message = (
+        f"⚡ <b>ARB OPPORTUNITY FOUND!</b>\n"
+        f"==================================\n"
         f"🏆 <b>{opportunity['match']}</b>\n"
         f"📅 {opportunity['kickoff']} | {opportunity['tournament']}\n"
+        f"🔎 Search: <code>{home} vs {away}</code>\n"
         f"==================================\n"
         f"📊 Market: {opportunity['market']}\n"
         f"💰 Profit: {opportunity['profit_pct']:.2f}% = GHS {opportunity['profit_ghs']:.2f}\n"
         f"💵 Total Stake: GHS 500\n\n"
         f"📋 <b>BETS TO PLACE:</b>"
-        f"{bet_lines}"
+        f"{bet_lines}\n\n"
+        f"⏰ <i>Act fast — odds shift quickly!</i>"
     )
 
     return send_message(message)
