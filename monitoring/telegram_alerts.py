@@ -47,8 +47,6 @@ def send_arb_alert(opportunity):
 
     bets = opportunity.get('bets', [])
     bet_lines = ""
-    # Build one inline keyboard button per platform (opens in external browser)
-    keyboard_buttons = []
     for bet in bets:
         platform_url = PLATFORM_URLS.get(bet['platform'], '#')
         bet_lines += (
@@ -59,11 +57,6 @@ def send_arb_alert(opportunity):
             f"\n   Stake: GHS {bet['stake']:.2f}"
             f"\n   Win:   GHS {bet['profit_if_wins']:.2f}"
         )
-        # Each platform gets its own row so the label is clearly readable
-        keyboard_buttons.append([
-            {"text": f"🌐 Open {bet['platform']}", "url": platform_url}
-        ])
-
     message = (
         f"⚡ <b>ARB OPPORTUNITY FOUND!</b>\n"
         f"==================================\n"
@@ -76,14 +69,10 @@ def send_arb_alert(opportunity):
         f"💵 Total Stake: GHS {TOTAL_STAKE}\n\n"
         f"📋 <b>BETS TO PLACE:</b>"
         f"{bet_lines}\n\n"
-        f"⏰ <i>Act fast — odds shift quickly!</i>\n"
-        f"👇 <i>Tap a button below to open the platform in your browser:</i>"
+        f"⏰ <i>Act fast — odds shift quickly!</i>"
     )
 
-    # Inline keyboard — URL buttons always open in the external browser
-    reply_markup = {"inline_keyboard": keyboard_buttons} if keyboard_buttons else None
-
-    return send_message(message, reply_markup=reply_markup)
+    return send_message(message)
 
 
 def send_scan_summary(opportunities, events_scanned, cycle_time_seconds):
