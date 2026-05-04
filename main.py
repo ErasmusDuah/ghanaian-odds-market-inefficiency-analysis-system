@@ -1,6 +1,5 @@
 import sys
 import time
-import schedule
 import os
 import json
 from datetime import datetime
@@ -30,6 +29,7 @@ from monitoring.telegram_alerts import (
 )
 
 scan_count = 0
+next_run_time = None
 
 
 def clear_old_data():
@@ -50,8 +50,11 @@ def clear_old_data():
 
 
 def run_scan():
-    global scan_count
+    global scan_count, next_run_time
     scan_count += 1
+
+    # Lock in the next run time NOW — before any scraping starts
+    next_run_time = time.time() + 5 * 60
 
     print(f"\n{'='*60}")
     print(f"SCAN #{scan_count}")
@@ -122,17 +125,16 @@ def main():
     print("* " * 20)
 
     send_startup_message()
-    run_scan()
+    run_scan()  # next_run_time is set inside here
 
-    schedule.every(5).minutes.do(run_scan)
-
-    print("\n[Scheduled] Scanning every 5 minutes")
+    print("\n[Scheduled] Scanning every 5 minutes (interval starts when scraping starts)")
     print("Alerts will be sent to Telegram")
     print("STOP Press Ctrl+C to stop\n")
 
     while True:
-        schedule.run_pending()
-        time.sleep(30)
+        if time.time() >= next_run_time:
+            run_scan()
+        time.sleep(1)
 
 
 if __name__ == "__main__":
