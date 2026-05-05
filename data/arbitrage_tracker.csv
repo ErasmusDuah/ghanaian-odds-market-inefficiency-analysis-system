@@ -1,0 +1,3 @@
+Date,Time,Match,Tournament,Kickoff,Market,Platform 1,Bet 1,Odds 1,Stake 1 (GHS),Win 1 (GHS),Platform 2,Bet 2,Odds 2,Stake 2 (GHS),Win 2 (GHS),Total Stake (GHS),Profit %,Profit (GHS)
+2026-05-05,06:57:57,Test Team A vs Test Team B,Test League,2026-05-05 15:00,Over/Under 2.5,1xBet,Over 2.5,2.1,250,525,Betway,Under 2.5,2.1,250,525,500,5.25,26.25
+2026-05-05,06:58:13,Test Team A vs Test Team B,Test League,2026-05-05 15:00,Over/Under 2.5,1xBet,Over 2.5,2.1,250,525,Betway,Under 2.5,2.1,250,525,500,5.25,26.25
