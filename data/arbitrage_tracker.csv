@@ -1,3 +1,6 @@
 Date,Time,Match,Tournament,Kickoff,Market,Platform 1,Bet 1,Odds 1,Stake 1 (GHS),Win 1 (GHS),Platform 2,Bet 2,Odds 2,Stake 2 (GHS),Win 2 (GHS),Total Stake (GHS),Profit %,Profit (GHS)
 2026-05-05,06:57:57,Test Team A vs Test Team B,Test League,2026-05-05 15:00,Over/Under 2.5,1xBet,Over 2.5,2.1,250,525,Betway,Under 2.5,2.1,250,525,500,5.25,26.25
 2026-05-05,06:58:13,Test Team A vs Test Team B,Test League,2026-05-05 15:00,Over/Under 2.5,1xBet,Over 2.5,2.1,250,525,Betway,Under 2.5,2.1,250,525,500,5.25,26.25
+2026-05-06,04:38:28,Bechem United vs Dreams FC,Premier League,2026-05-06 15:00,1X2,Football.com,Home Win,1.85,271.21,1.74,1xBet,Draw,3.44,145.86,1.76,500,0.35,1.74
+2026-05-06,04:38:28,Waterhouse FC vs Dunbeholden FC,Premier League,2026-05-06 20:30,Over/Under 3.5,Betway,Over 3.5,2.7,192.48,19.7,1xBet,Under 3.5,1.69,307.52,19.71,500,3.94,19.7
+2026-05-06,04:38:28,TJ Jiskra Usti nad Orlici vs Hradec Kralove II,Czech Republic. 3 Liga,2026-05-06 15:00,1X2,1xBet,Home Win,2.96,178.08,27.13,22Bet,Draw,3.44,153.23,27.12,500,5.43,27.13
