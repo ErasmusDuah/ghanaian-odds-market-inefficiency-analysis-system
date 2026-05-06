@@ -44,7 +44,8 @@ async def get_cookies():
 
 async def fetch_page(session, skip, headers):
     """Fetches a page of upcoming matches"""
-    url = BETWAY_UPCOMING_URL.format(skip=skip)
+    base_url = BETWAY_UPCOMING_URL.format(skip=skip)
+    url = f"{base_url}&_t={int(_time.time() * 1000)}"
     try:
         async with session.get(
                 url, headers=headers,
@@ -73,6 +74,8 @@ async def scrape_betway():
                      'Chrome/120.0.0.0 Safari/537.36',
         'Referer': BETWAY_HOME_URL,
         'Accept': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
     }
 
     all_events = []
@@ -149,6 +152,8 @@ def parse_betway_data(raw_data, today, tomorrow):
     price_map = {
         p.get('outcomeId'): p.get('priceDecimal', 0)
         for p in prices
+        if p.get('priceDecimal', 0) > 1.0
+        and not p.get('isSuspended', False)
     }
 
     market_map = {}
@@ -181,6 +186,13 @@ def parse_betway_data(raw_data, today, tomorrow):
         if not home_team or not away_team:
             continue
 
+        # CRITICAL: Skip events that are locked/padlocked (isActive=False)
+        # The padlock on the website means the entire event is deactivated
+        if event.get('isActive') is False:
+            continue
+        if event.get('isSuspended', False):
+            continue
+
         # Skip esports/virtual matches
         esports_keywords = [
             'eadriatic', 'gt league', 'esport',
@@ -210,9 +222,23 @@ def parse_betway_data(raw_data, today, tomorrow):
             market_name = market.get('name', '').lower()
             market_id = market.get('marketId', '')
 
+            # Skip suspended/inactive markets
+            if market.get('isSuspended', False):
+                continue
+
             market_outcomes = outcomes_by_market.get(
                 market_id, [])
 
+            if not market_outcomes:
+                continue
+            
+            # Filter out suspended/inactive outcomes
+            market_outcomes = [
+                o for o in market_outcomes
+                if not o.get('isSuspended', False)
+                and o.get('isActive', True)
+            ]
+            
             if not market_outcomes:
                 continue
 

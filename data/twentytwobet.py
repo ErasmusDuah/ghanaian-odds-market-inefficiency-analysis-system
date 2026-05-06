@@ -36,11 +36,13 @@ EVENT_LIST_QUERY = (
 
 
 async def fetch_event_list_page(session: aiohttp.ClientSession, page: int) -> dict:
-    url = f"{API_BASE}{EVENT_LIST_PATH}?{EVENT_LIST_QUERY}&page={page}"
+    url = f"{API_BASE}{EVENT_LIST_PATH}?{EVENT_LIST_QUERY}&page={page}&_t={int(_time.time() * 1000)}"
     async with session.get(url, headers={
         "User-Agent": USER_AGENT,
         "Referer": REFERRER,
         "Accept": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
     }, timeout=aiohttp.ClientTimeout(total=20)) as resp:
         if resp.status != 200:
             raise RuntimeError(f"HTTP {resp.status} on page {page}")

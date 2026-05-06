@@ -42,7 +42,7 @@ def send_message(message, reply_markup=None, silent=False):
 PLATFORM_URLS = {
     'Sportybet':    'https://www.sportybet.com/gh/sport/football/',
     'Betway':       'https://www.betway.com.gh/sport/soccer/',
-    'Football.com': 'https://www.football.com.gh/',
+    'Football.com': 'https://www.football.com/gh/sport/football',
     '1xBet':        'https://1xbet.com.gh/en/line/football/',
     '22Bet':        'https://22bet.com.gh/prematch/football',
 }

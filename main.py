@@ -37,6 +37,8 @@ next_run_time = None
 
 def clear_old_data():
     """Delete old odds files before each scan."""
+    import glob
+    
     files = [
         'data/sportybet_odds.json',
         'data/betway_odds.json',
@@ -50,6 +52,13 @@ def clear_old_data():
                 os.remove(f)
         except Exception:
             pass
+            
+    # Delete old timestamped arb files to clean up the engine folder
+    try:
+        for f in glob.glob('engine/arb_*.json'):
+            os.remove(f)
+    except Exception:
+        pass
 
 
 def _safe_fetch(fetch_fn, platform_name):
@@ -140,8 +149,7 @@ def run_scan():
     # Save opportunities to file
     if opportunities:
         try:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename  = f"engine/arb_{timestamp}.json"
+            filename  = "engine/opportunities.json"
             os.makedirs('engine', exist_ok=True)
             with open(filename, 'w') as f:
                 json.dump(opportunities, f, indent=2)

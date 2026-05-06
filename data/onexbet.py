@@ -54,6 +54,8 @@ async def async_linefeed_get(
         "Referer": referer,
         "Origin": origin,
         "Accept": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
     }
     
     for attempt in range(max_attempts):
@@ -97,11 +99,11 @@ def _outcome_price(e: dict) -> Any:
 def iter_linefeed_outcomes(game: dict) -> List[dict]:
     out: List[dict] = []
     for e in game.get("E") or []:
-        if isinstance(e, dict):
+        if isinstance(e, dict) and not e.get("B"):
             out.append(e)
     for ae in game.get("AE") or []:
         for me in ae.get("ME") or []:
-            if isinstance(me, dict):
+            if isinstance(me, dict) and not me.get("B"):
                 out.append(me)
     for ge in game.get("GE") or []:
         gid = ge.get("G")
@@ -110,6 +112,8 @@ def iter_linefeed_outcomes(game: dict) -> List[dict]:
                 continue
             for item in col:
                 if not isinstance(item, dict):
+                    continue
+                if item.get("B"):
                     continue
                 e2 = dict(item)
                 if e2.get("G") is None and gid is not None:

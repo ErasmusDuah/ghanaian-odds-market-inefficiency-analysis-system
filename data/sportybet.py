@@ -26,9 +26,10 @@ TOMORROW_URL = (
 
 async def fetch_page_direct(session, page_num,
                             use_tomorrow, headers):
-    url = TOMORROW_URL.format(page=page_num) \
+    base_url = TOMORROW_URL.format(page=page_num) \
         if use_tomorrow \
         else TODAY_URL.format(page=page_num)
+    url = f"{base_url}&_t={int(_time.time() * 1000)}"
     try:
         async with session.get(
                 url, headers=headers,
@@ -54,6 +55,8 @@ async def scrape_all_matches():
                      'Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://www.sportybet.com/gh/sport/football',
         'Accept': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
     }
 
     all_matches = []
@@ -192,31 +195,45 @@ def parse_event(event, tournament_name='', now=None):
 
     for market in markets:
         market_id = str(market.get('id', ''))
+        market_status = market.get('status', '')
+        
+        # Skip suspended/deactivated/closed markets
+        if market_status in ['suspended', 'deactivated', 'closed',
+                              'Suspended', 'Deactivated', 'Closed']:
+            continue
+        
         outcomes = market.get('outcomes', [])
+        
+        # Filter out suspended/inactive outcomes
+        active_outcomes = [
+            o for o in outcomes
+            if o.get('isActive', 1) != 0
+            and str(o.get('odds', 0) or 0) not in ('0', '', 'None')
+        ]
 
-        if market_id == '1' and len(outcomes) >= 3:
-            match['odds_1x2'] = {
-                'home': float(outcomes[0].get('odds', 0) or 0),
-                'draw': float(outcomes[1].get('odds', 0) or 0),
-                'away': float(outcomes[2].get('odds', 0) or 0)
-            }
+        if market_id == '1' and len(active_outcomes) >= 3:
+            h = float(active_outcomes[0].get('odds', 0) or 0)
+            d = float(active_outcomes[1].get('odds', 0) or 0)
+            a = float(active_outcomes[2].get('odds', 0) or 0)
+            if h > 1.01 and d > 1.01 and a > 1.01:
+                match['odds_1x2'] = {'home': h, 'draw': d, 'away': a}
 
-        if market_id == '18' and len(outcomes) >= 2:
-            desc = outcomes[0].get('desc', '')
+        if market_id == '18' and len(active_outcomes) >= 2:
+            desc = active_outcomes[0].get('desc', '')
             import re
             m = re.search(r'(\d+\.5)', str(desc))
             if m:
                 line_str = m.group(1)
-                match['odds_ou'][line_str] = {
-                    'over': float(outcomes[0].get('odds', 0) or 0),
-                    'under': float(outcomes[1].get('odds', 0) or 0)
-                }
+                ov = float(active_outcomes[0].get('odds', 0) or 0)
+                un = float(active_outcomes[1].get('odds', 0) or 0)
+                if ov > 1.01 and un > 1.01:
+                    match['odds_ou'][line_str] = {'over': ov, 'under': un}
 
-        if market_id == '29' and len(outcomes) >= 2:
-            match['odds_gg'] = {
-                'yes': float(outcomes[0].get('odds', 0) or 0),
-                'no': float(outcomes[1].get('odds', 0) or 0)
-            }
+        if market_id == '29' and len(active_outcomes) >= 2:
+            y = float(active_outcomes[0].get('odds', 0) or 0)
+            n = float(active_outcomes[1].get('odds', 0) or 0)
+            if y > 1.01 and n > 1.01:
+                match['odds_gg'] = {'yes': y, 'no': n}
 
     return match
 

@@ -1,0 +1,27 @@
+[
+  {
+    "match": "Bayern Munich vs Paris Saint-Germain",
+    "kickoff": "2026-05-06 19:00",
+    "tournament": "International Clubs. UEFA Champions League",
+    "market": "Over/Under 3.5",
+    "arb_sum": 0.9806,
+    "profit_pct": 1.98,
+    "profit_ghs": 9.91,
+    "bets": [
+      {
+        "outcome": "Over 3.5",
+        "platform": "1xBet",
+        "odds": 1.678,
+        "stake": 303.88,
+        "profit_if_wins": 9.91
+      },
+      {
+        "outcome": "Under 3.5",
+        "platform": "Betway",
+        "odds": 2.6,
+        "stake": 196.12,
+        "profit_if_wins": 9.91
+      }
+    ]
+  }
+]
