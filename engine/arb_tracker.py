@@ -18,6 +18,7 @@ HEADERS = [
     'Market',
     'Platform 1', 'Bet 1', 'Odds 1', 'Stake 1 (GHS)', 'Win 1 (GHS)',
     'Platform 2', 'Bet 2', 'Odds 2', 'Stake 2 (GHS)', 'Win 2 (GHS)',
+    'Platform 3', 'Bet 3', 'Odds 3', 'Stake 3 (GHS)', 'Win 3 (GHS)',
     'Total Stake (GHS)', 'Profit %', 'Profit (GHS)'
 ]
 
@@ -64,9 +65,9 @@ def save_arbitrage_opportunities(opportunities, total_stake):
     for opp in opportunities:
         bets = opp.get('bets', [])
         
-        # We assume 2-way arbs for now based on the headers
         p1 = bets[0] if len(bets) > 0 else {}
         p2 = bets[1] if len(bets) > 1 else {}
+        p3 = bets[2] if len(bets) > 2 else {}
         
         row = {
             'Date': date_str,
@@ -85,6 +86,11 @@ def save_arbitrage_opportunities(opportunities, total_stake):
             'Odds 2': p2.get('odds', ''),
             'Stake 2 (GHS)': round(p2.get('stake', 0), 2) if p2.get('stake') else '',
             'Win 2 (GHS)': round(p2.get('profit_if_wins', 0), 2) if p2.get('profit_if_wins') else '',
+            'Platform 3': p3.get('platform', ''),
+            'Bet 3': p3.get('outcome', ''),
+            'Odds 3': p3.get('odds', '') if p3 else '',
+            'Stake 3 (GHS)': round(p3.get('stake', 0), 2) if p3.get('stake') else '',
+            'Win 3 (GHS)': round(p3.get('profit_if_wins', 0), 2) if p3.get('profit_if_wins') else '',
             'Total Stake (GHS)': total_stake,
             'Profit %': round(opp.get('profit_pct', 0), 2),
             'Profit (GHS)': round(opp.get('profit_ghs', 0), 2)

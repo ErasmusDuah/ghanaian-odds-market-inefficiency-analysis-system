@@ -627,7 +627,6 @@ def run():
         footballcom_matches,
         onexbet_matches,
         twentytwobet_matches,
-        total_stake=TOTAL_CAPITAL
     )
 
     if opportunities:
