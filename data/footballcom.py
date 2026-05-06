@@ -175,10 +175,16 @@ def parse_response(data):
 
     for tournament in tournaments:
         tournament_name = tournament.get('name', '')
+        category_name   = tournament.get('categoryName', '')
+        # Build "Country. Tournament" label (e.g. "Jamaica. Premier League")
+        if category_name and not tournament_name.lower().startswith(category_name.lower()):
+            full_tournament = f"{category_name}. {tournament_name}"
+        else:
+            full_tournament = tournament_name
         events = tournament.get('events', [])
         for event in events:
             try:
-                match = parse_event(event, tournament_name, now)
+                match = parse_event(event, full_tournament, now)
                 if match:
                     matches.append(match)
             except Exception:

@@ -289,6 +289,13 @@ async def collect_today_games_async(
 def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[dict]:
     standard = []
     for m in raw_matches:
+        home_team = (m.get("home_team") or "").strip()
+        away_team = (m.get("away_team") or "").strip()
+        
+        # Skip outrights / special markets that don't have both teams
+        if not home_team or not away_team:
+            continue
+
         odds_raw = m.get("odds") or {}
 
         # --- 1X2 ---

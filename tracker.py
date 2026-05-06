@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-LEDGER_FILE = os.path.join(os.path.dirname(__file__), 'data', 'ledger.csv')
+TRACKER_FILE = os.path.join(os.path.dirname(__file__), 'data', 'stake_tracker.csv')
 STARTING_CAPITAL = float(os.getenv('STARTING_CAPITAL', 500))
 
 HEADERS = [
@@ -37,19 +37,19 @@ LINE = "-" * 65
 
 
 def ensure_ledger():
-    if not os.path.exists(LEDGER_FILE):
-        with open(LEDGER_FILE, 'w', newline='', encoding='utf-8') as f:
+    if not os.path.exists(TRACKER_FILE):
+        with open(TRACKER_FILE, 'w', newline='', encoding='utf-8') as f:
             csv.writer(f).writerow(HEADERS)
 
 
 def read_all():
     ensure_ledger()
-    with open(LEDGER_FILE, 'r', encoding='utf-8') as f:
+    with open(TRACKER_FILE, 'r', encoding='utf-8') as f:
         return list(csv.DictReader(f))
 
 
 def write_all(rows):
-    with open(LEDGER_FILE, 'w', newline='', encoding='utf-8') as f:
+    with open(TRACKER_FILE, 'w', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(f, fieldnames=HEADERS)
         w.writeheader()
         w.writerows(rows)
@@ -144,7 +144,7 @@ def log_bet():
     print(f"     {match} | {market}")
     print(f"     Total Staked : GHS {total}")
     print(f"     Expected Win : GHS {exp_ghs} ({exp_pct}%)")
-    print(f"\n  💡 Open data/ledger.csv in Excel to see your ledger.\n")
+    print(f"\n  💡 Open data/stake_tracker.csv in Excel to see your stake tracker.\n")
 
 
 # ─── RESULT ────────────────────────────────────────────────────────────────────
@@ -245,7 +245,7 @@ def show_summary():
         pl_str = f"GHS {float(r['Actual Profit/Loss (GHS)']):+.2f}" if r['Actual Profit/Loss (GHS)'] else f"({r['Expected Profit (GHS)']} exp)"
         print(f"  {r['ID']:<4} {r['Date']:<12} {r['Match'][:27]:<28} {r['Market'][:15]:<16} {r['Status']:<9} {pl_str:>12}")
 
-    print(f"\n  📂 Full ledger: data/ledger.csv  (open in Excel)\n")
+    print(f"\n  📂 Full stake tracker: data/stake_tracker.csv  (open in Excel)\n")
 
 
 # ─── MAIN ──────────────────────────────────────────────────────────────────────

@@ -2,13 +2,13 @@ import json
 import os
 from datetime import datetime
 from difflib import SequenceMatcher
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
-load_dotenv()
+# Absolute path to .env — read fresh on every call, never cached
+_ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
 
 MIN_ARB_PROFIT = 0.01
 MAX_ARB_PROFIT = 15.0
-TOTAL_CAPITAL  = int(os.getenv('STARTING_CAPITAL', 500))
 
 
 def normalize_name(name):
@@ -458,7 +458,8 @@ def display_opportunity(opp):
     print(f"  📊 Market: {opp['market']}")
     print(f"  💰 Profit: {opp['profit_pct']:.2f}% "
           f"= GHS {opp['profit_ghs']:.2f}")
-    print(f"  💵 Total Stake: GHS {TOTAL_CAPITAL}")
+    total_stake_used = sum(bet.get('stake', 0) for bet in opp['bets'])
+    print(f"  💵 Total Stake: GHS {total_stake_used:.2f}")
     print(f"\n  📋 BETS TO PLACE:")
     for bet in opp['bets']:
         print(f"\n     🎯 {bet['platform']}")
@@ -473,8 +474,13 @@ def scan_all(sportybet_matches,
              footballcom_matches=None,
              onexbet_matches=None,
              twentytwobet_matches=None,
-             total_stake=TOTAL_CAPITAL,
+             total_stake=None,
              cycle_start_time=None):
+
+    # If no stake was passed in, read it live from .env right now
+    if total_stake is None:
+        _env = dotenv_values(_ENV_PATH)
+        total_stake = int(_env.get('STARTING_CAPITAL', 500))
 
     if footballcom_matches  is None: footballcom_matches  = []
     if onexbet_matches      is None: onexbet_matches      = []
@@ -497,7 +503,7 @@ def scan_all(sportybet_matches,
 
     if not groups:
         print("\n⚠️ No matching events found!")
-        return []
+        return [], 0
 
     opportunities = []
     empty = {'odds_1x2': {}, 'odds_ou': {}, 'odds_gg': {}}
@@ -508,7 +514,15 @@ def scan_all(sportybet_matches,
         match_name = (f"{first['home_team']} vs "
                       f"{first['away_team']}")
         kickoff    = first['kickoff']
+        # Prefer a tournament label that includes a country prefix
+        # (e.g. "Jamaica. Premier League" from Sportybet/22Bet)
+        # over a bare name (e.g. "Premier League" from Betway/1xBet)
         tournament = first['tournament']
+        for m in matches:
+            t = m.get('tournament', '')
+            if '.' in t and len(t) > len(tournament):
+                tournament = t
+                break
 
         pair = {
             'sportybet':    next((m for m in matches
