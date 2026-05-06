@@ -15,6 +15,7 @@ data/ledger.db
 
 # Saved arb snapshots
 engine/arb_*.json
+engine/opportunities.json
 
 # Debug & scratch files
 *.html
