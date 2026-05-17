@@ -414,16 +414,22 @@ def run() -> list:
     Scrapes today's MSport Ghana matches, saves to data/, and returns match list.
     """
     started = time.perf_counter()
+    now = datetime.now()
+    print(banner(now))
+
     project_root = Path(__file__).resolve().parents[1]
     output_dir = project_root / "data"
     config = ScrapeConfig(output_dir=output_dir)
 
     result = scrape_today(config)
     if result.matches:
-        save_outputs(result.matches, output_dir)
+        json_path, txt_path = save_outputs(result.matches, output_dir)
+    else:
+        json_path = output_dir / "msport_odds.json"
+        txt_path  = output_dir / "msport_matches.txt"
 
     elapsed = time.perf_counter() - started
-    print(f"  ✅ MSport: {len(result.matches)} matches ({elapsed:.1f}s)")
+    print_summary(result, json_path, txt_path, elapsed)
     return result.matches
 
 
