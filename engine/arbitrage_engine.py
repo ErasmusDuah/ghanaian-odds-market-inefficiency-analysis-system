@@ -321,18 +321,10 @@ def scan_1x2_arb(pair, total_stake):
 
 
 def scan_ou_arb(pair, total_stake):
-    def filter_to_main_line(ou_dict):
-        if not ou_dict: return {}
-        # Find the line with the smallest difference between over and under (the "Main" line)
-        best_line = min(ou_dict.keys(), key=lambda k: abs(ou_dict[k]['over'] - ou_dict[k]['under']))
-        return {best_line: ou_dict[best_line]}
-
-    # SportyBet and Football.com hide alternate lines for some leagues,
-    # so we restrict them to ONLY their main, visible line.
-    sb_ou  = filter_to_main_line(pair['sportybet'].get('odds_ou', {}))
-    fc_ou  = filter_to_main_line(pair['footballcom'].get('odds_ou', {}))
-    
-    # Betway, 1xBet, 22Bet display all lines clearly, so keep all of them
+    # Use ALL O/U lines from ALL platforms — no restriction.
+    # More lines = more chances to catch arb across different bookmaker line offerings.
+    sb_ou  = pair['sportybet'].get('odds_ou', {})
+    fc_ou  = pair['footballcom'].get('odds_ou', {})
     bw_ou  = pair['betway'].get('odds_ou', {})
     ox_ou  = pair['onexbet'].get('odds_ou', {})
     ttb_ou = pair['twentytwobet'].get('odds_ou', {})

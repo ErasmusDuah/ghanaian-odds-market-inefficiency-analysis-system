@@ -35,11 +35,12 @@ from data.onexbet      import run as fetch_onexbet
 from data.twentytwobet import run as fetch_twentytwobet
 from data.msport       import run as fetch_msport
 
+from data.bangbet  import run as fetch_bangbet
+
 # ── INACTIVE platforms (uncomment when scrapers are stable) ───────────────────
 # from data.soccabet import run as fetch_soccabet
 # from data.betpawa  import run as fetch_betpawa
 # from data.supabet  import run as fetch_supabet
-# from data.bangbet  import run as fetch_bangbet
 
 from engine.experimental_engine import run_experimental, display_all
 
@@ -54,6 +55,7 @@ ACTIVE_SCRAPERS = [
     ('1xBet',        fetch_onexbet),
     ('22Bet',        fetch_twentytwobet),
     ('MSport',       fetch_msport),
+    ('Bangbet',      fetch_bangbet),
 ]
 
 
@@ -206,7 +208,7 @@ def main():
             soccabet_matches     = [],
             betpawa_matches      = [],
             supabet_matches      = [],
-            bangbet_matches      = [],
+            bangbet_matches      = fetched.get('Bangbet', []),
         )
 
         display_all(balanced, unbalanced, quasi, num_groups, total_stake)

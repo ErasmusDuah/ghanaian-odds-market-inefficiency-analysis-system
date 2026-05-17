@@ -667,7 +667,7 @@ def display_all(balanced_opps, unbalanced_opps, quasi_opps, num_groups, total_st
 
     print(f"\n{sep}")
     print(f"⚽ Events scanned  : {num_groups}")
-    print(f"🌐 Platforms       : 6 active (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport)")
+    print(f"🌐 Platforms       : 7 active (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)")
     print(f"⚖️  Balanced        : {len(balanced_opps)}")
     print(f"📊 Unbalanced      : {len(unbalanced_opps)}")
     print(f"🛡️  Quasi-Arb       : {len(quasi_opps)}")

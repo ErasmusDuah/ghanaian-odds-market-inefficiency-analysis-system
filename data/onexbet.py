@@ -17,8 +17,8 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
-DEFAULT_SITE = "https://1xbet.mobi"
-REFERRER = "https://1xbet.mobi/en/line/football"
+DEFAULT_SITE = "https://1xbet.com"
+REFERRER ="https://1xbet.com/en/line/football"
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -298,6 +298,19 @@ def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[d
         
         # Skip outrights / special markets that don't have both teams
         if not home_team or not away_team:
+            continue
+            
+        # Skip "fantasy" matches (e.g. Aston Villa/Crystal Palace)
+        if '/' in home_team or '/' in away_team:
+            continue
+            
+        # Skip Alternative Matches, Shots, Corners, etc.
+        league = (m.get("league") or "").strip()
+        lower_league = league.lower()
+        if any(x in lower_league for x in [
+            'alternative', 'matches of the day', 'player props', 
+            'special bets', 'shots', 'corners', 'cards', 'stats'
+        ]):
             continue
 
         odds_raw = m.get("odds") or {}

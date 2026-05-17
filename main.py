@@ -45,6 +45,7 @@ def clear_old_data():
         'data/footballcom_odds.json',
         'data/onexbet_odds.json',
         'data/twentytwobet_odds.json',
+        'engine/opportunities.json',
     ]
     for f in files:
         try:
@@ -147,24 +148,23 @@ def run_scan():
                 traceback.print_exc()
 
     # Save opportunities to file
-    if opportunities:
-        try:
-            filename  = "engine/opportunities.json"
-            os.makedirs('engine', exist_ok=True)
-            with open(filename, 'w') as f:
-                json.dump(opportunities, f, indent=2)
-            print(f"\nSAVED to {filename}")
+    try:
+        filename  = "engine/opportunities.json"
+        os.makedirs('engine', exist_ok=True)
+        with open(filename, 'w') as f:
+            json.dump(opportunities, f, indent=2)
+        print(f"\nSAVED {len(opportunities)} opportunities to {filename}")
 
-            # Save to Arbitrage Tracker and sync to GitHub
-            save_arbitrage_opportunities(opportunities, TOTAL_STAKE)
-        except Exception as e:
-            print(f"ERROR saving opportunities: {e}")
+        # Save to Arbitrage Tracker and sync to GitHub (always — logs 0s when no arbs found)
+        save_arbitrage_opportunities(opportunities, TOTAL_STAKE)
+    except Exception as e:
+        print(f"ERROR saving opportunities: {e}")
 
 
 def prevent_sleep():
     """Prevent Windows from going to sleep or turning off the display."""
     if os.name == 'nt':
-        try:
+        try: 
             ES_CONTINUOUS = 0x80000000
             ES_SYSTEM_REQUIRED = 0x00000001
             # We ONLY use ES_SYSTEM_REQUIRED so the PC stays awake, 
@@ -198,3 +198,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

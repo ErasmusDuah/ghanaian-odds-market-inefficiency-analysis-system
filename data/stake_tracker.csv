@@ -1,1 +1,7 @@
-Date ,Time,Match,Tournament,Kickoff,Market,Platform 1,Bet 1,Odds 1,Stake 1 (GHS),Platform 2,Bet 2,Odds 2,Stake 2 (GHS),Platform 3,Bet 3,Odds 3,Stake 3 (GHS),Total Stake (GHS),Total Profit (GHS),Total Profit %
+Date ,Time,Match,Tournament,Kickoff,Market,Platform 1,Bet 1,Odds 1,Stake 1 (GHS),Platform 2,Bet 2,Odds 2,Stake 2 (GHS),Platform 3,Bet 3,Odds 3,Stake 3 (GHS),Total Stake (GHS), Profit %, Profit(GHS),Accumulated Profit (GHS)
+5/7/2026,11:25:03,Freiburg vs Braga,International Clubs. UEFA Europa League,5/7/2026 19:00,Over/Under 2.5,1xBet,Over 2.5,2.061,248.11,Betway,Under 2.5,2.03,251.89,,,,,500,2.27,11.35,11.35
+5/9/2026,8:35:47,Kaohsiung Attackers vs Taichung Cherry Blossoms,"Chinese Taipei. Mulan Football League, Women",5/9/2026 10:30,GG/NG,Sportybet,GG Yes,2.45,212.21,Betway,GG No,1.74,298.79,,,,,511,1.74,8.9,20.25
+5/9/2026,12:59:31,Lazio vs Inter,Italy. Serie A,5/9/2026 16:00,Over/Under 2.5,1xBet,Over 2.5,1.892,282.47,Betway,Under 2.5,2.25,237.53,,,,,520,2.78,14.44,34.69
+5/10/2026,9:06:45,Hamburg vs Freiburg,Germany. Bundesliga,5/10/2026 13:30,Over/Under 2.5,1xBet,Over 2.5,1.717,319.72,13.96,Betway,Under 2.5,2.55,215.28,13.96,,,535,2.61,13.96,48.65
+5/10/2026,15:49:46,Mainz vs Union Berlin,Germany. Bundesliga,5/10/2026 17:30,Over/Under 2.5,1xBet,Over 2.5,1.701,331.88,15.53,Betway,Under 2.5,2.6,217.12,15.51,,,549,2.83,15.52,64.17
+5/11/2026,18:10:13,Tottenham vs Leeds United,England. Premier League,5/11/2026 19:00,Over/Under 2.5,1xBet,Over 2.5,1.867,312.14,12.77,Betway,Under 2.5,2.26,257.86,12.76,,,570,2.24,12.76,80

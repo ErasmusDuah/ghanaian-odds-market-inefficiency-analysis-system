@@ -51,16 +51,24 @@ def push_to_github():
 def save_arbitrage_opportunities(opportunities, total_stake):
     """
     Saves a list of arbitrage opportunities to the CSV tracker and syncs with GitHub.
+    Always logs a row — if no arbs found, writes a row of 0s for ML continuity.
     """
-    if not opportunities:
-        return
-
     ensure_tracker()
     
     rows = []
     now = datetime.now()
     date_str = now.strftime('%Y-%m-%d')
     time_str = now.strftime('%H:%M:%S')
+
+    if not opportunities:
+        rows.append({
+            'Date': date_str, 'Time': time_str,
+            'Match': 0, 'Tournament': 0, 'Kickoff': 0, 'Market': 0,
+            'Platform 1': 0, 'Bet 1': 0, 'Odds 1': 0, 'Stake 1 (GHS)': 0, 'Win 1 (GHS)': 0,
+            'Platform 2': 0, 'Bet 2': 0, 'Odds 2': 0, 'Stake 2 (GHS)': 0, 'Win 2 (GHS)': 0,
+            'Platform 3': 0, 'Bet 3': 0, 'Odds 3': 0, 'Stake 3 (GHS)': 0, 'Win 3 (GHS)': 0,
+            'Total Stake (GHS)': total_stake, 'Profit %': 0, 'Profit (GHS)': 0
+        })
 
     for opp in opportunities:
         bets = opp.get('bets', [])
@@ -101,7 +109,10 @@ def save_arbitrage_opportunities(opportunities, total_stake):
         writer = csv.DictWriter(f, fieldnames=HEADERS)
         writer.writerows(rows)
     
-    print(f"\n  💾 [Arb Tracker] Appended {len(rows)} opportunities to data/arbitrage_tracker.csv")
+    if not opportunities:
+        print(f"\n  💾 [Arb Tracker] 0 opportunities found — logged 0s row to data/arbitrage_tracker.csv")
+    else:
+        print(f"\n  💾 [Arb Tracker] Appended {len(rows)} opportunities to data/arbitrage_tracker.csv")
     
     # Push to Github
     push_to_github()
