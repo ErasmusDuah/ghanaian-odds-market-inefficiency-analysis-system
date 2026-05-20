@@ -91,72 +91,74 @@ def tournament_similar(a, b):
     return True
 
 
+def _matches_same_game(a, b):
+    """
+    Returns True if two match records from DIFFERENT platforms refer to the
+    same real-world fixture.
+    """
+    if a['source'] == b['source']:
+        return False
+    date_a = a.get('kickoff', '')[:10]
+    date_b = b.get('kickoff', '')[:10]
+    if date_a != date_b:
+        return False
+    tourn_a = a.get('tournament', '')
+    tourn_b = b.get('tournament', '')
+    if not tournament_similar(tourn_a, tourn_b):
+        return False
+    home_a, away_a = a.get('home_team', ''), a.get('away_team', '')
+    home_b, away_b = b.get('home_team', ''), b.get('away_team', '')
+    if not tournament_similar(home_a + away_a, home_b + away_b):
+        return False
+    if not similar(home_a, home_b) or not similar(away_a, away_b):
+        return False
+    if similar(home_a, away_b) and similar(away_a, home_b):
+        return False
+    return True
+
+
 def match_all_platforms(all_matches):
     """
-    Groups same match from different platforms.
-    Matches on: home team + away team + date + tournament modifier.
+    Groups the same match across different platforms using a union-find
+    (disjoint-set) approach so that grouping is TRANSITIVE.
 
-    CRITICAL: Both home AND away must match, AND tournament modifiers must match!
-    Prevents cross-matching different games (e.g. Senior vs U21).
+    If Sportybet<->MSport matches and MSport<->Bangbet matches, all three
+    end up in the same group even if Sportybet<->Bangbet fails directly.
     """
+    from collections import defaultdict
+    n = len(all_matches)
+
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(x, y):
+        rx, ry = find(x), find(y)
+        if rx != ry:
+            parent[rx] = ry
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            if _matches_same_game(all_matches[i], all_matches[j]):
+                union(i, j)
+
+    components = defaultdict(list)
+    for i in range(n):
+        components[find(i)].append(i)
+
     groups = []
-    used   = set()
-
-    for i, match_a in enumerate(all_matches):
-        if i in used:
+    for indices in components.values():
+        if len(indices) < 2:
             continue
-
-        group = {
-            'matches': [match_a],
-            'sources': [match_a['source']]
-        }
-        used.add(i)
-
-        for j, match_b in enumerate(all_matches):
-            if j in used or i == j:
-                continue
-            if match_a['source'] == match_b['source']:
-                continue
-
-            home_a = match_a.get('home_team', '')
-            away_a = match_a.get('away_team', '')
-            home_b = match_b.get('home_team', '')
-            away_b = match_b.get('away_team', '')
-            date_a = match_a.get('kickoff', '')[:10]
-            date_b = match_b.get('kickoff', '')[:10]
-
-            # CRITICAL: dates must match AND both teams must match
-            if date_a != date_b:
-                continue
-
-            # Prevent matching U21 with senior teams
-            tourn_a = match_a.get('tournament', '')
-            tourn_b = match_b.get('tournament', '')
-            if not tournament_similar(tourn_a, tourn_b):
-                continue
-                
-            # Prevent team name false matches if modifiers exist in team names
-            if not tournament_similar(home_a + away_a, home_b + away_b):
-                continue
-
-            home_match = similar(home_a, home_b)
-            away_match = similar(away_a, away_b)
-
-            if not home_match or not away_match:
-                continue
-
-            # EXTRA CHECK: prevent reversed team matching
-            # (home A should NOT match away B)
-            if similar(home_a, away_b) and \
-                    similar(away_a, home_b):
-                continue
-
-            group['matches'].append(match_b)
-            group['sources'].append(match_b['source'])
-            used.add(j)
-
-        if len(group['matches']) > 1:
-            groups.append(group)
+        sources = [all_matches[i]['source'] for i in indices]
+        if len(set(sources)) < 2:
+            continue
+        matches = [all_matches[i] for i in indices]
+        groups.append({'matches': matches, 'sources': sources})
 
     return groups
 
@@ -336,10 +338,10 @@ def scan_ou_arb(pair, total_stake):
     opportunities = []
 
     for line_str in all_lines:
-        sb_line = sb_ou.get(line_str, {})
-        bw_line = bw_ou.get(line_str, {})
-        fc_line = fc_ou.get(line_str, {})
-        ox_line = ox_ou.get(line_str, {})
+        sb_line  = sb_ou.get(line_str, {})
+        bw_line  = bw_ou.get(line_str, {})
+        fc_line  = fc_ou.get(line_str, {})
+        ox_line  = ox_ou.get(line_str, {})
         ttb_line = ttb_ou.get(line_str, {})
 
         best_over = get_best_odds('over', 'ou',

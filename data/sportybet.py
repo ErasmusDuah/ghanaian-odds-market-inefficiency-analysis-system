@@ -157,8 +157,9 @@ def parse_event(event, tournament_name='', now=None):
 
     home_team = event.get('homeTeamName', '')
     away_team = event.get('awayTeamName', '')
-    kickoff = event.get('estimateStartTime', '')
-    status = event.get('matchStatus', '')
+    kickoff   = event.get('estimateStartTime', '')
+    status    = event.get('matchStatus', '')
+    event_id  = str(event.get('eventId', '') or event.get('id', '') or '')
 
     if not home_team or not away_team:
         return None
@@ -185,6 +186,7 @@ def parse_event(event, tournament_name='', now=None):
         'tournament': tournament_name,
         'is_live': is_live,
         'status': status,
+        'event_id': event_id,
         'source': 'sportybet_gh',
         'odds_1x2': {},
         'odds_ou': {},
@@ -195,19 +197,25 @@ def parse_event(event, tournament_name='', now=None):
 
     for market in markets:
         market_id = str(market.get('id', ''))
-        market_status = market.get('status', '')
-        
-        # Skip suspended/deactivated/closed markets
-        if market_status in ['suspended', 'deactivated', 'closed',
-                              'Suspended', 'Deactivated', 'Closed']:
+        market_status = str(market.get('status', '') or '').lower()
+        is_market_locked = market.get('isLocked', False) or market.get('locked', False)
+
+        # Skip suspended / locked / closed / inactive markets
+        if is_market_locked or market_status in {
+            'suspended', 'deactivated', 'closed',
+            'locked', 'inactive', 'disabled',
+            'halted', 'stopped', 'unavailable',
+        }:
             continue
-        
+
         outcomes = market.get('outcomes', [])
-        
-        # Filter out suspended/inactive outcomes
+
+        # Filter out suspended/locked/inactive outcomes
         active_outcomes = [
             o for o in outcomes
             if o.get('isActive', 1) != 0
+            and not o.get('isLocked', False)
+            and not o.get('locked', False)
             and str(o.get('odds', 0) or 0) not in ('0', '', 'None')
         ]
 

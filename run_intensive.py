@@ -1,0 +1,204 @@
+"""
+INTENSIVE ENGINE RUNNER — Exhaustive pairwise arb scanner.
+
+Scrapes all 7 platforms in PARALLEL, then runs the intensive engine which
+tests every possible platform pairing combination per market:
+  - 1X2:   7^3 = 343 combinations
+  - O/U:   7^2 = 49  combinations per line
+  - GG/NG: 7^2 = 49  combinations
+
+Does NOT touch main.py, run_experimental.py, or their engines.
+
+Usage:
+    python run_intensive.py
+"""
+
+import sys
+import os
+import time
+import io
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
+from dotenv import dotenv_values
+
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# ── ALL 7 ACTIVE PLATFORMS ─────────────────────────────────────────────────────
+from data.sportybet    import run as fetch_sportybet
+from data.betway       import run as fetch_betway
+from data.footballcom  import run as fetch_footballcom
+from data.onexbet      import run as fetch_onexbet
+from data.twentytwobet import run as fetch_twentytwobet
+from data.msport       import run as fetch_msport
+from data.bangbet      import run as fetch_bangbet
+
+from engine.intensive_engine import run_intensive, display_all
+from engine.verifier       import verify_opportunities
+
+ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+
+ACTIVE_SCRAPERS = [
+    ('Sportybet',    fetch_sportybet),
+    ('Betway',       fetch_betway),
+    ('Football.com', fetch_footballcom),
+    ('1xBet',        fetch_onexbet),
+    ('22Bet',        fetch_twentytwobet),
+    ('MSport',       fetch_msport),
+    ('Bangbet',      fetch_bangbet),
+]
+
+
+# ── THREAD-SAFE PARALLEL OUTPUT ────────────────────────────────────────────────
+
+class _Tee:
+    def __init__(self, *files):
+        self.files = files
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush()
+    def flush(self):
+        for f in self.files:
+            f.flush()
+
+
+_print_lock   = threading.Lock()
+_thread_local = threading.local()
+
+
+class _ThreadLocalWriter:
+    def __init__(self, real):
+        self._real = real
+    def write(self, s):
+        buf = getattr(_thread_local, 'buf', None)
+        if buf is not None:
+            buf.write(s)
+        else:
+            self._real.write(s)
+    def flush(self):
+        if getattr(_thread_local, 'buf', None) is None:
+            self._real.flush()
+
+
+def _safe_fetch(name, fetch_fn):
+    _thread_local.buf = io.StringIO()
+    start  = time.time()
+    error  = None
+    result = []
+    try:
+        result = fetch_fn() or []
+        elapsed = time.time() - start
+    except Exception as e:
+        elapsed = time.time() - start
+        error   = e
+        import traceback as _tb
+        _thread_local.buf.write(_tb.format_exc())
+    finally:
+        captured = _thread_local.buf.getvalue()
+        _thread_local.buf = None
+
+    with _print_lock:
+        if captured.strip():
+            print(captured, end='')
+        if error:
+            print(f"  ❌ {name} failed after {elapsed:.1f}s: {error}")
+        else:
+            print(f"  ✅ {name}: {len(result)} matches ({elapsed:.1f}s)")
+        print()
+
+    return name, result, elapsed, error
+
+
+def fetch_all_parallel(scrapers):
+    results = {}
+    with ThreadPoolExecutor(max_workers=len(scrapers)) as executor:
+        futures = {executor.submit(_safe_fetch, name, fn): name
+                   for name, fn in scrapers}
+        for future in as_completed(futures):
+            name, data, elapsed, error = future.result()
+            results[name] = data
+    return results
+
+
+# ── MAIN ───────────────────────────────────────────────────────────────────────
+
+def main():
+    os.makedirs('data', exist_ok=True)
+    f = open('data/intensive_results.txt', 'w', encoding='utf-8')
+    original_stdout = sys.stdout
+    sys.stdout = _ThreadLocalWriter(_Tee(original_stdout, f))
+
+    try:
+        _env        = dotenv_values(ENV_PATH)
+        total_stake = int(_env.get('STARTING_CAPITAL', 500))
+
+        print("\n" + "🔬 " * 20)
+        print("   QUANT BET ALPHA — INTENSIVE ENGINE")
+        print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
+        print(f"   Stake: GHS {total_stake}")
+        print(f"   Platforms: {len(ACTIVE_SCRAPERS)} active — running in parallel")
+        print(f"   Scan mode: EXHAUSTIVE (all platform pairings per market)")
+        print("🔬 " * 20)
+
+        # ── PARALLEL SCRAPE ────────────────────────────────────────────────────
+        print(f"\n🔄 Fetching live odds from all {len(ACTIVE_SCRAPERS)} platforms simultaneously...\n")
+        scrape_start = time.time()
+
+        fetched = fetch_all_parallel(ACTIVE_SCRAPERS)
+
+        scrape_time  = time.time() - scrape_start
+        total_fetched = sum(len(v) for v in fetched.values())
+        print(f"\n⏱️  Scraping done in {scrape_time:.1f}s ({scrape_time/60:.2f} min)  |  Total matches: {total_fetched}")
+
+        if total_fetched == 0:
+            print("\n❌ No data fetched from any platform. Exiting.")
+            return
+
+        # ── INTENSIVE ENGINE ───────────────────────────────────────────────────
+        print(f"\n🔍 Running intensive exhaustive scan across {len(ACTIVE_SCRAPERS)} platforms...\n")
+        scan_start = time.time()
+
+        opportunities, num_groups = run_intensive(
+            total_stake          = total_stake,
+            sportybet_matches    = fetched.get('Sportybet',    []),
+            betway_matches       = fetched.get('Betway',       []),
+            footballcom_matches  = fetched.get('Football.com', []),
+            onexbet_matches      = fetched.get('1xBet',        []),
+            twentytwobet_matches = fetched.get('22Bet',        []),
+            msport_matches       = fetched.get('MSport',       []),
+            bangbet_matches      = fetched.get('Bangbet',      []),
+        )
+
+        scan_time  = time.time() - scan_start
+
+        # ── PLAYWRIGHT VERIFICATION ───────────────────────────────────────
+        # verify_start = time.time()
+        # opportunities, n_dropped = verify_opportunities(opportunities, fetched)
+        # verify_time = time.time() - verify_start
+        n_dropped = 0
+        verify_time = 0.0
+
+        total_time = scrape_time + scan_time + verify_time
+
+        print(f"\n{'─'*60}")
+        print(f"⏱️  TIMING BREAKDOWN")
+        print(f"{'─'*60}")
+        print(f"  🌐 Scraping    : {scrape_time:.2f}s  ({scrape_time/60:.3f} min)")
+        print(f"  🔍 Scanning    : {scan_time:.2f}s  ({scan_time/60:.3f} min)")
+        print(f"  🌐 Verifying   : {verify_time:.2f}s  ({verify_time/60:.3f} min)  [{n_dropped} dropped]")
+        print(f"  🕐 TOTAL       : {total_time:.2f}s  ({total_time/60:.3f} min)")
+        print(f"{'─'*60}\n")
+
+        display_all(opportunities, num_groups, total_stake)
+
+    finally:
+        sys.stdout = original_stdout
+        f.close()
+
+
+if __name__ == "__main__":
+    main()

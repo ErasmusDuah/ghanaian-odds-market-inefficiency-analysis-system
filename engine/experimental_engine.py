@@ -78,40 +78,89 @@ def tournament_similar(a, b):
     return True
 
 
+def _matches_same_game(a, b):
+    """
+    Returns True if two match records from DIFFERENT platforms refer to the
+    same real-world fixture.  Called for every pair during grouping.
+    """
+    if a['source'] == b['source']:
+        return False
+    date_a = a.get('kickoff', '')[:10]
+    date_b = b.get('kickoff', '')[:10]
+    if date_a != date_b:
+        return False
+    if not tournament_similar(a.get('tournament', ''), b.get('tournament', '')):
+        return False
+    home_a, away_a = a.get('home_team', ''), a.get('away_team', '')
+    home_b, away_b = b.get('home_team', ''), b.get('away_team', '')
+    if not tournament_similar(home_a + away_a, home_b + away_b):
+        return False
+    if not similar(home_a, home_b) or not similar(away_a, away_b):
+        return False
+    # Guard against reversed-fixture false positives
+    if similar(home_a, away_b) and similar(away_a, home_b):
+        return False
+    return True
+
+
 def match_all_platforms(all_matches):
+    """
+    Groups the same match across different platforms using a union-find
+    (disjoint-set) approach so that grouping is TRANSITIVE.
+
+    Old algorithm: compare every match against one anchor → if the anchor
+    name doesn't fuzzy-match platform C but another grouped match does,
+    platform C is silently excluded from the group.
+
+    New algorithm:
+      1. Build an edge for every pair (i, j) that refer to the same fixture.
+      2. Compute connected components — all platforms that can reach each
+         other through any chain of pairwise matches end up in one group.
+      3. Only keep groups that contain matches from at least 2 platforms.
+
+    This means: if Sportybet↔MSport and MSport↔Bangbet both match,
+    all three are grouped together even if Sportybet↔Bangbet would fail
+    on its own.
+    """
+    n = len(all_matches)
+
+    # Union-Find helpers
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]  # path compression
+            x = parent[x]
+        return x
+
+    def union(x, y):
+        rx, ry = find(x), find(y)
+        if rx != ry:
+            parent[rx] = ry
+
+    # Build edges — O(n²) but n is typically a few hundred
+    for i in range(n):
+        for j in range(i + 1, n):
+            if _matches_same_game(all_matches[i], all_matches[j]):
+                union(i, j)
+
+    # Collect components
+    from collections import defaultdict
+    components = defaultdict(list)
+    for i in range(n):
+        components[find(i)].append(i)
+
     groups = []
-    used   = set()
-    for i, match_a in enumerate(all_matches):
-        if i in used:
+    for indices in components.values():
+        if len(indices) < 2:
             continue
-        group = {'matches': [match_a], 'sources': [match_a['source']]}
-        used.add(i)
-        for j, match_b in enumerate(all_matches):
-            if j in used or i == j:
-                continue
-            if match_a['source'] == match_b['source']:
-                continue
-            home_a = match_a.get('home_team', '')
-            away_a = match_a.get('away_team', '')
-            home_b = match_b.get('home_team', '')
-            away_b = match_b.get('away_team', '')
-            date_a = match_a.get('kickoff', '')[:10]
-            date_b = match_b.get('kickoff', '')[:10]
-            if date_a != date_b:
-                continue
-            if not tournament_similar(match_a.get('tournament', ''), match_b.get('tournament', '')):
-                continue
-            if not tournament_similar(home_a + away_a, home_b + away_b):
-                continue
-            if not similar(home_a, home_b) or not similar(away_a, away_b):
-                continue
-            if similar(home_a, away_b) and similar(away_a, home_b):
-                continue
-            group['matches'].append(match_b)
-            group['sources'].append(match_b['source'])
-            used.add(j)
-        if len(group['matches']) > 1:
-            groups.append(group)
+        # Verify at least 2 different sources (same-source duplicates don't count)
+        sources = [all_matches[i]['source'] for i in indices]
+        if len(set(sources)) < 2:
+            continue
+        matches = [all_matches[i] for i in indices]
+        groups.append({'matches': matches, 'sources': sources})
+
     return groups
 
 
