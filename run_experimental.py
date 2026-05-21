@@ -20,6 +20,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from dotenv import dotenv_values
 
+from engine.arb_tracker import save_arbitrage_opportunities, push_to_github
+
 # Fix Windows console emoji printing
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
@@ -190,7 +192,7 @@ def main():
         print(f"\n⏱️  Scraping done in {scrape_time:.1f}s  |  Total matches: {total_fetched}")
 
         if total_fetched == 0:
-            print("\n❌ No data fetched from any platform. Exiting.")
+            print("\n❌ No data fetched from any platform.")
             return
 
         # ── EXPERIMENTAL ENGINE ────────────────────────────────────────────────
@@ -213,9 +215,32 @@ def main():
 
         display_all(balanced, unbalanced, quasi, num_groups, total_stake)
 
+        # Collect and combine opportunities
+        opportunities = balanced + unbalanced + quasi
+        
+        # Log opportunities to CSV (always logs a row for ML continuity)
+        try:
+            save_arbitrage_opportunities(opportunities, total_stake)
+        except Exception as e:
+            print(f"  ❌ ERROR saving experimental opportunities to CSV: {e}")
+
+    except Exception as e:
+        print(f"  ❌ ERROR inside experimental scan: {e}")
+        import traceback
+        traceback.print_exc()
+
     finally:
         sys.stdout = original_stdout
         f.close()
+
+    # Commit and push both experimental_results.txt and arbitrage_tracker.csv to GitHub
+    try:
+        push_to_github(
+            filepaths=["data/arbitrage_tracker.csv", "data/experimental_results.txt"],
+            message="Auto-update experimental arbitrage results"
+        )
+    except Exception as e:
+        print(f"  ❌ ERROR syncing experimental results to GitHub: {e}")
 
 
 if __name__ == "__main__":

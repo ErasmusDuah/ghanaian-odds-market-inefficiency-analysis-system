@@ -15,7 +15,7 @@ TRACKER_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 
 HEADERS = [
     'Date', 'Time',
     'Match', 'Tournament', 'Kickoff',
-    'Market',
+    'Market', 'Category',
     'Platform 1', 'Bet 1', 'Odds 1', 'Stake 1 (GHS)', 'Win 1 (GHS)',
     'Platform 2', 'Bet 2', 'Odds 2', 'Stake 2 (GHS)', 'Win 2 (GHS)',
     'Platform 3', 'Bet 3', 'Odds 3', 'Stake 3 (GHS)', 'Win 3 (GHS)',
@@ -27,26 +27,63 @@ def ensure_tracker():
         os.makedirs(os.path.dirname(TRACKER_FILE), exist_ok=True)
         with open(TRACKER_FILE, 'w', newline='', encoding='utf-8') as f:
             csv.writer(f).writerow(HEADERS)
+    else:
+        # Check if the header contains 'Category'
+        with open(TRACKER_FILE, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            header = next(reader, None)
+        if header and 'Category' not in header:
+            # We need to migrate the existing file
+            print("  🔄 [Migration] Migrating data/arbitrage_tracker.csv to include the 'Category' column...")
+            temp_file = TRACKER_FILE + '.tmp'
+            with open(TRACKER_FILE, 'r', encoding='utf-8') as f_in:
+                reader = csv.DictReader(f_in)
+                # Create a temp file with new headers
+                with open(temp_file, 'w', newline='', encoding='utf-8') as f_out:
+                    writer = csv.DictWriter(f_out, fieldnames=HEADERS)
+                    writer.writeheader()
+                    for row in reader:
+                        # Map old keys to new rows, setting default Category to 'balanced'
+                        new_row = {k: row.get(k, '') for k in HEADERS}
+                        new_row['Category'] = 'balanced'
+                        writer.writerow(new_row)
+            try:
+                os.replace(temp_file, TRACKER_FILE)
+                print("  ✅ [Migration] Migration completed successfully.")
+            except Exception as e:
+                print(f"  ⚠️ [Migration] Error renaming migrated file: {e}")
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
 
-def push_to_github():
-    """Automatically commit and push the updated tracker to GitHub."""
+def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update arbitrage tracker"):
+    """Automatically commit and push updated files to GitHub."""
+    if isinstance(filepaths, str):
+        filepaths = [filepaths]
     cwd = os.path.dirname(os.path.dirname(__file__))
     try:
-        # Add the specific file to git
-        subprocess.run(["git", "add", "data/arbitrage_tracker.csv"], cwd=cwd, check=True, capture_output=True)
+        # Add the specific files to git
+        for fp in filepaths:
+            subprocess.run(["git", "add", fp], cwd=cwd, check=True, capture_output=True)
         
         # Check if there are changes to commit
         status = subprocess.run(["git", "status", "--porcelain"], cwd=cwd, capture_output=True, text=True)
-        if "data/arbitrage_tracker.csv" in status.stdout:
-            subprocess.run(["git", "commit", "-m", "Auto-update arbitrage tracker"], cwd=cwd, check=True, capture_output=True)
+        
+        has_changes = False
+        for fp in filepaths:
+            if fp in status.stdout:
+                has_changes = True
+                break
+                
+        if has_changes:
+            subprocess.run(["git", "commit", "-m", message], cwd=cwd, check=True, capture_output=True)
             subprocess.run(["git", "push"], cwd=cwd, check=True, capture_output=True)
-            print("  ✅ [Arb Tracker] Tracker saved locally and synced to GitHub.")
+            print(f"  ✅ [Git Sync] Synced {', '.join(filepaths)} to GitHub.")
         else:
-            print("  ✅ [Arb Tracker] Tracker saved locally (no new changes for GitHub).")
+            print(f"  ✅ [Git Sync] Files are already up to date on GitHub (no new changes).")
     except subprocess.CalledProcessError as e:
-        print(f"  ⚠️ [Arb Tracker] Error syncing to GitHub: {e.stderr if e.stderr else e}")
+        print(f"  ⚠️ [Git Sync] Error syncing to GitHub: {e.stderr.decode('utf-8', errors='ignore') if e.stderr else e}")
     except Exception as e:
-        print(f"  ⚠️ [Arb Tracker] Error syncing to GitHub: {e}")
+        print(f"  ⚠️ [Git Sync] Error syncing to GitHub: {e}")
 
 def save_arbitrage_opportunities(opportunities, total_stake):
     """
@@ -63,7 +100,8 @@ def save_arbitrage_opportunities(opportunities, total_stake):
     if not opportunities:
         rows.append({
             'Date': date_str, 'Time': time_str,
-            'Match': 0, 'Tournament': 0, 'Kickoff': 0, 'Market': 0,
+            'Match': 0, 'Tournament': 0, 'Kickoff': 0,
+            'Market': 0, 'Category': 0,
             'Platform 1': 0, 'Bet 1': 0, 'Odds 1': 0, 'Stake 1 (GHS)': 0, 'Win 1 (GHS)': 0,
             'Platform 2': 0, 'Bet 2': 0, 'Odds 2': 0, 'Stake 2 (GHS)': 0, 'Win 2 (GHS)': 0,
             'Platform 3': 0, 'Bet 3': 0, 'Odds 3': 0, 'Stake 3 (GHS)': 0, 'Win 3 (GHS)': 0,
@@ -84,6 +122,7 @@ def save_arbitrage_opportunities(opportunities, total_stake):
             'Tournament': opp.get('tournament', ''),
             'Kickoff': opp.get('kickoff', ''),
             'Market': opp.get('market', ''),
+            'Category': opp.get('category', 'balanced'),
             'Platform 1': p1.get('platform', ''),
             'Bet 1': p1.get('outcome', ''),
             'Odds 1': p1.get('odds', ''),

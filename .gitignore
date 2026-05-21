@@ -9,6 +9,8 @@ __pycache__/
 # Generated odds data (rebuilt on every run)
 data/*.json
 data/*.txt
+!data/experimental_results.txt
+!data/intensive_results.txt
 
 # Ledger database (keep locally, not in git)
 data/ledger.db

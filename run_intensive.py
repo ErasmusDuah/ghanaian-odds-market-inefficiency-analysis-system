@@ -17,10 +17,13 @@ import sys
 import os
 import time
 import io
+import ctypes
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from dotenv import dotenv_values
+
+from engine.arb_tracker import save_arbitrage_opportunities, push_to_github
 
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
@@ -124,9 +127,31 @@ def fetch_all_parallel(scrapers):
     return results
 
 
-# ── MAIN ───────────────────────────────────────────────────────────────────────
+# ── MAIN SCHEDULED ENGINE ──────────────────────────────────────────────────────
 
-def main():
+scan_count = 0
+next_run_time = 0.0
+
+def prevent_sleep():
+    """Prevent Windows from going to sleep or turning off the display."""
+    if os.name == 'nt':
+        try:
+            ES_CONTINUOUS = 0x80000000
+            ES_SYSTEM_REQUIRED = 0x00000001
+            ctypes.windll.kernel32.SetThreadExecutionState(
+                ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+            )
+            print("[System] Sleep timeout disabled. (Screen is allowed to turn off)")
+        except Exception as e:
+            print(f"[System] Warning: Could not disable sleep: {e}")
+
+def run_scan():
+    global scan_count, next_run_time
+    scan_count += 1
+    
+    # Lock in next run time before scraping starts (2 minutes loop)
+    next_run_time = time.time() + 2 * 60
+    
     os.makedirs('data', exist_ok=True)
     f = open('data/intensive_results.txt', 'w', encoding='utf-8')
     original_stdout = sys.stdout
@@ -137,7 +162,7 @@ def main():
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
 
         print("\n" + "🔬 " * 20)
-        print("   QUANT BET ALPHA — INTENSIVE ENGINE")
+        print(f"   QUANT BET ALPHA — INTENSIVE ENGINE (SCAN #{scan_count})")
         print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
         print(f"   Stake: GHS {total_stake}")
         print(f"   Platforms: {len(ACTIVE_SCRAPERS)} active — running in parallel")
@@ -155,7 +180,7 @@ def main():
         print(f"\n⏱️  Scraping done in {scrape_time:.1f}s ({scrape_time/60:.2f} min)  |  Total matches: {total_fetched}")
 
         if total_fetched == 0:
-            print("\n❌ No data fetched from any platform. Exiting.")
+            print("\n❌ No data fetched from any platform.")
             return
 
         # ── INTENSIVE ENGINE ───────────────────────────────────────────────────
@@ -175,10 +200,6 @@ def main():
 
         scan_time  = time.time() - scan_start
 
-        # ── PLAYWRIGHT VERIFICATION ───────────────────────────────────────
-        # verify_start = time.time()
-        # opportunities, n_dropped = verify_opportunities(opportunities, fetched)
-        # verify_time = time.time() - verify_start
         n_dropped = 0
         verify_time = 0.0
 
@@ -195,10 +216,41 @@ def main():
 
         display_all(opportunities, num_groups, total_stake)
 
+        # Log opportunities to CSV (always logs a row for ML continuity)
+        try:
+            save_arbitrage_opportunities(opportunities, total_stake)
+        except Exception as e:
+            print(f"  ❌ ERROR saving intensive opportunities to CSV: {e}")
+
+    except Exception as e:
+        print(f"  ❌ ERROR inside intensive run_scan: {e}")
+        import traceback
+        traceback.print_exc()
+
     finally:
         sys.stdout = original_stdout
         f.close()
+        
+    # Commit and push both intensive_results.txt and arbitrage_tracker.csv to GitHub
+    try:
+        push_to_github(
+            filepaths=["data/arbitrage_tracker.csv", "data/intensive_results.txt"],
+            message=f"Auto-update intensive arbitrage results (Scan #{scan_count})"
+        )
+    except Exception as e:
+        print(f"  ❌ ERROR syncing intensive results to GitHub: {e}")
 
+def main():
+    prevent_sleep()
+    run_scan()
+    
+    print("\n[Scheduled] Scanning every 2 minutes (interval starts when scraping starts)")
+    print("STOP Press Ctrl+C to stop\n")
+    
+    while True:
+        if time.time() >= next_run_time:
+            run_scan()
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
