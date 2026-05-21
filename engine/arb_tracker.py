@@ -63,7 +63,10 @@ def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update 
     try:
         # Add the specific files to git
         for fp in filepaths:
-            subprocess.run(["git", "add", fp], cwd=cwd, check=True, capture_output=True)
+            # Check if file is ignored by git before adding to prevent ignore warnings
+            is_ignored = subprocess.run(["git", "check-ignore", "-q", fp], cwd=cwd).returncode == 0
+            if not is_ignored:
+                subprocess.run(["git", "add", fp], cwd=cwd, check=True, capture_output=True)
         
         # Check if there are changes to commit
         status = subprocess.run(["git", "status", "--porcelain"], cwd=cwd, capture_output=True, text=True)
@@ -81,7 +84,9 @@ def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update 
         else:
             print(f"  ✅ [Git Sync] Files are already up to date on GitHub (no new changes).")
     except subprocess.CalledProcessError as e:
-        print(f"  ⚠️ [Git Sync] Error syncing to GitHub: {e.stderr.decode('utf-8', errors='ignore') if e.stderr else e}")
+        stderr_msg = e.stderr.decode('utf-8', errors='ignore') if e.stderr else str(e)
+        if "ignored by one of your .gitignore files" not in stderr_msg:
+            print(f"  ⚠️ [Git Sync] Error syncing to GitHub: {stderr_msg}")
     except Exception as e:
         print(f"  ⚠️ [Git Sync] Error syncing to GitHub: {e}")
 
