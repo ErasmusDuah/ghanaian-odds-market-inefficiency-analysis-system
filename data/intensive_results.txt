@@ -1,7 +1,7 @@
 
 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 
-   QUANT BET ALPHA — INTENSIVE ENGINE (SCAN #1)
-   Thursday, 21 May 2026 07:42:25
+   QUANT BET ALPHA — INTENSIVE ENGINE (SCAN #2)
+   Thursday, 21 May 2026 07:44:25
    Stake: GHS 400
    Platforms: 7 active — running in parallel
    Scan mode: EXHAUSTIVE (all platform pairings per market)
@@ -11,7 +11,7 @@
 
 * * * * * * * * * * * * * * * * * * * * 
    MSPORT GHANA SCRAPER
-   Thursday, 21 May 2026 07:42:25
+   Thursday, 21 May 2026 07:44:25
 * * * * * * * * * * * * * * * * * * * * 
 
 
@@ -45,19 +45,19 @@ Sample (first 10 matches):
 Saved to C:/quant_bet_alpha/data/msport_odds.json
 Full list saved to C:/quant_bet_alpha/data/msport_matches.txt
    Open the .txt file to see all 126 matches!
-Scraping completed in 2.9s
-  ✅ MSport: 126 matches (2.9s)
+Scraping completed in 2.3s
+  ✅ MSport: 126 matches (2.3s)
 
 
 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 
    22BET GHANA SCRAPER (FAST API)
-   Thursday, 21 May 2026 07:42:25
+   Thursday, 21 May 2026 07:44:25
 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 
 
   ⚡ Fetching 22 pages asynchronously...
 
 📋 22BET GHANA (FAST API)
-⚽ Total matches: 170
+⚽ Total matches: 171
 ==================================================
 
 📝 Sample (first 10):
@@ -71,56 +71,18 @@ Scraping completed in 2.9s
    Ulaangom City vs Khovdyn Khuleguud | 2026-05-21 10:00 | Mongolia. National Premier League
    Giresun Sanayispor (Women) vs Besiktas (Women) | 2026-05-21 10:00 | Turkey. Turkish SuperLeague. Women
    Aktobe II vs Elimai II | 2026-05-21 11:00 | Kazakhstan. 1st Division
-  ... and 160 more
+  ... and 161 more
 ==================================================
 💾 Saved to data/twentytwobet_odds.json
 📄 Full list: data/twentytwobet_matches.txt
-   Open the .txt file to see all 170 matches!
-⏱️  Scraping completed in 3.0s
-  ✅ 22Bet: 170 matches (3.1s)
-
-* * * * * * * * * * * * * * * * * * * * 
-   BANGBET GHANA SCRAPER
-   Thursday, 21 May 2026 07:42:25
-* * * * * * * * * * * * * * * * * * * * 
-
-
-[INFO] Fetching today's matches...
-  [OK] 1X2 Page 1: 100 matches (Total API rows: 100)
-  [OK] O/U Page 1: 96 matches (Total API rows: 196)
-  [OK] GG/NG Page 1: 94 matches (Total API rows: 290)
-
-[INFO] Total matches fetched: 290
-
-BANGBET GHANA
-Total matches fetched: 78
-With 1X2 odds: 78
-==================================================
-
-Sample (first 10 matches):
-   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
-   Maccabi Petah Tikva vs Beitar Jerusalem | 2026-05-21 08:00 | Israel. U19 Premier League
-   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
-   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
-   Botyr Ekibastuz vs Akademia Ontustyk | 2026-05-21 10:00 | Kazakhstan. Pervaya Liga
-   Aktobe Reserve vs FC Yelimay Reserve | 2026-05-21 11:00 | Kazakhstan. Pervaya Liga
-   Adama City FC vs Welwalo Adigrat | 2026-05-21 12:00 | Ethiopia. Premier League
-   Arba Minch Ketema vs Sidama Bunna SC | 2026-05-21 12:00 | Ethiopia. Premier League
-   FC Shakhtar Donetsk vs Kolos Kovalivka | 2026-05-21 12:30 | Ukraine. Premier League
-   Cabrayil vs Simal | 2026-05-21 13:00 | Azerbaijan. First Division
-
-  ... and 68 more matches
-==================================================
-Saved to C:/quant_bet_alpha/data/bangbet_odds.json
-Full list saved to C:/quant_bet_alpha/data/bangbet_matches.txt
-   Open the .txt file to see all 78 matches!
-Scraping completed in 4.7s
-  ✅ Bangbet: 78 matches (4.7s)
+   Open the .txt file to see all 171 matches!
+⏱️  Scraping completed in 4.0s
+  ✅ 22Bet: 171 matches (4.0s)
 
 
 * * * * * * * * * * * * * * * * * * * * 
    SPORTYBET GHANA SCRAPER
-   Thursday, 21 May 2026 07:42:25
+   Thursday, 21 May 2026 07:44:25
 * * * * * * * * * * * * * * * * * * * * 
 
 [INFO] Fetching today's matches...
@@ -156,13 +118,83 @@ Sample (first 10 matches):
 Saved to data/sportybet_odds.json
 Full list saved to data/sportybet_matches.txt
    Open the .txt file to see all 164 matches!
-⏱️  Scraping completed in 5.2s
-  ✅ Sportybet: 164 matches (5.2s)
+⏱️  Scraping completed in 5.8s
+  ✅ Sportybet: 164 matches (5.8s)
+
+* * * * * * * * * * * * * * * * * * * * 
+   BANGBET GHANA SCRAPER
+   Thursday, 21 May 2026 07:44:25
+* * * * * * * * * * * * * * * * * * * * 
+
+
+[INFO] Fetching today's matches...
+  [OK] 1X2 Page 1: 100 matches (Total API rows: 100)
+  [OK] O/U Page 1: 96 matches (Total API rows: 196)
+  [OK] GG/NG Page 1: 94 matches (Total API rows: 290)
+
+[INFO] Total matches fetched: 290
+
+BANGBET GHANA
+Total matches fetched: 78
+With 1X2 odds: 78
+==================================================
+
+Sample (first 10 matches):
+   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
+   Maccabi Petah Tikva vs Beitar Jerusalem | 2026-05-21 08:00 | Israel. U19 Premier League
+   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
+   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
+   Botyr Ekibastuz vs Akademia Ontustyk | 2026-05-21 10:00 | Kazakhstan. Pervaya Liga
+   Aktobe Reserve vs FC Yelimay Reserve | 2026-05-21 11:00 | Kazakhstan. Pervaya Liga
+   Adama City FC vs Welwalo Adigrat | 2026-05-21 12:00 | Ethiopia. Premier League
+   Arba Minch Ketema vs Sidama Bunna SC | 2026-05-21 12:00 | Ethiopia. Premier League
+   FC Shakhtar Donetsk vs Kolos Kovalivka | 2026-05-21 12:30 | Ukraine. Premier League
+   Cabrayil vs Simal | 2026-05-21 13:00 | Azerbaijan. First Division
+
+  ... and 68 more matches
+==================================================
+Saved to C:/quant_bet_alpha/data/bangbet_odds.json
+Full list saved to C:/quant_bet_alpha/data/bangbet_matches.txt
+   Open the .txt file to see all 78 matches!
+Scraping completed in 6.1s
+  ✅ Bangbet: 78 matches (6.1s)
+
+
+🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
+   1XBET GHANA SCRAPER (ASYNC AIOHTTP)
+   Thursday, 21 May 2026 07:44:25
+🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
+
+  ⚡ Fetching games for 294 leagues...
+  ⚡ Fetching full odds lines for 235 matches...
+
+📋 1XBET GHANA
+⚽ Total matches: 235
+==================================================
+
+📝 Sample (first 10):
+   Heilongjiang Longyue Ice City vs Shenyang Mantianxing Aomei | 2026-05-21 08:00 | China. Champions League
+   Liaoning Shengjing Xinrui vs Zhangjiakou Aofeng | 2026-05-21 08:00 | China. Champions League
+   Maccabi Petah Tikva U19 vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel Championship U19
+   Metallist 1925 (Women) vs Shakhtar Donetsk (Women) | 2026-05-21 08:00 | Ukraine. Premier League. Women
+   Polissya Zhytomyr (Women) vs Podillya (Women) | 2026-05-21 08:00 | Ukraine. Premier League. Women
+   Vorskla Poltava (Women) vs Kolos Kovalivka (Women) | 2026-05-21 08:00 | Ukraine. Premier League. Women
+   Romania vs Denmark | 2026-05-21 08:00 | 6x6. Socca EuroCup
+   Belarus U19 vs Slovakia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
+   San Marino U19 vs Latvia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
+   Legia Warsaw II vs Widzew Lodz II | 2026-05-21 09:00 | Poland Championship. Liga 3
+  ... and 225 more
+==================================================
+💾 Saved to data\onexbet_odds.json
+📄 Full list: data\onexbet_matches.txt
+   Open the .txt file to see all 235 matches!
+⏱️  Scraping completed in 7.0s
+  ✅ 1xBet: 235 matches (7.0s)
 
 
 * * * * * * * * * * * * * * * * * * * * 
    BETWAY GHANA SCRAPER
-   Thursday, 21 May 2026 07:42:25
+   Thursday, 21 May 2026 07:44:25
 * * * * * * * * * * * * * * * * * * * * 
 
 [INFO] Getting Betway session...
@@ -194,45 +226,13 @@ Sample (first 10 matches):
 Saved to data/betway_odds.json
 Full list saved to data/betway_matches.txt
    Open the .txt file to see all 116 matches!
-⏱️  Scraping completed in 10.0s
-  ✅ Betway: 116 matches (10.0s)
-
-
-🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
-   1XBET GHANA SCRAPER (ASYNC AIOHTTP)
-   Thursday, 21 May 2026 07:42:25
-🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
-
-  ⚡ Fetching games for 294 leagues...
-  ⚡ Fetching full odds lines for 161 matches...
-
-📋 1XBET GHANA
-⚽ Total matches: 161
-==================================================
-
-📝 Sample (first 10):
-   Heilongjiang Longyue Ice City vs Shenyang Mantianxing Aomei | 2026-05-21 08:00 | China. Champions League
-   Liaoning Shengjing Xinrui vs Zhangjiakou Aofeng | 2026-05-21 08:00 | China. Champions League
-   Maccabi Petah Tikva U19 vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel Championship U19
-   Belarus U19 vs Slovakia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
-   San Marino U19 vs Latvia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
-   APIA Leichhardt (Women) vs University of New South Wales (Women) | 2026-05-21 10:00 | Australia. NSW Cup. Women
-   Batyr Ekibastuz vs Akademiya Ontustyk | 2026-05-21 10:00 | Kazakhstan. 1st Division
-   Aktobe II vs Elimai II | 2026-05-21 11:00 | Kazakhstan. 1st Division
-   Ararat Yerevan II vs Andranik | 2026-05-21 12:00 | Armenia. First League
-   Adama City vs Welwalo Adigrat | 2026-05-21 12:00 | Ethiopia. Premier League
-  ... and 151 more
-==================================================
-💾 Saved to data\onexbet_odds.json
-📄 Full list: data\onexbet_matches.txt
-   Open the .txt file to see all 161 matches!
-⏱️  Scraping completed in 10.1s
-  ✅ 1xBet: 161 matches (10.1s)
+⏱️  Scraping completed in 7.3s
+  ✅ Betway: 116 matches (7.3s)
 
 
 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 
    FOOTBALL.COM GHANA SCRAPER
-   Thursday, 21 May 2026 07:42:25
+   Thursday, 21 May 2026 07:44:25
 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 
 
 📅 Fetching today's matches...
@@ -263,11 +263,11 @@ Full list saved to data/betway_matches.txt
 💾 Saved to data/footballcom_odds.json
 📄 Full list saved to data/footballcom_matches.txt
    Open the .txt file to see all 132 matches!
-⏱️  Scraping completed in 11.0s
-  ✅ Football.com: 132 matches (11.0s)
+⏱️  Scraping completed in 8.4s
+  ✅ Football.com: 132 matches (8.4s)
 
 
-⏱️  Scraping done in 11.0s (0.18 min)  |  Total matches: 947
+⏱️  Scraping done in 8.4s (0.14 min)  |  Total matches: 1022
 
 🔍 Running intensive exhaustive scan across 7 platforms...
 
@@ -275,10 +275,10 @@ Full list saved to data/betway_matches.txt
 ────────────────────────────────────────────────────────────
 ⏱️  TIMING BREAKDOWN
 ────────────────────────────────────────────────────────────
-  🌐 Scraping    : 11.02s  (0.184 min)
-  🔍 Scanning    : 6.64s  (0.111 min)
+  🌐 Scraping    : 8.40s  (0.140 min)
+  🔍 Scanning    : 7.56s  (0.126 min)
   🌐 Verifying   : 0.00s  (0.000 min)  [0 dropped]
-  🕐 TOTAL       : 17.66s  (0.294 min)
+  🕐 TOTAL       : 15.96s  (0.266 min)
 ────────────────────────────────────────────────────────────
 
 
@@ -286,6 +286,35 @@ Full list saved to data/betway_matches.txt
 ⚖️   CATEGORY 1: BALANCED ARBITRAGE
     Guaranteed equal profit on ALL outcomes
 ============================================================
+
+  =======================================================
+  🏆 Qatar vs Sudan
+  📅 2026-05-21 15:30 | International. Int. Friendly Games
+  =======================================================
+  📊 Market:   1X2
+  ⚖️  Category: BALANCED
+  💰 Profit:   0.35% = GHS 1.40 (guaranteed on all outcomes)
+  💵 Stake:    GHS 400.00
+
+  📋 BETS TO PLACE:
+
+     🎯 Sportybet
+        Bet:   Home Win
+        Odds:  1.24
+        Stake: GHS 323.71
+        Win:   GHS 1.40
+
+     🎯 1xBet
+        Bet:   Draw
+        Odds:  7.14
+        Stake: GHS 56.22
+        Win:   GHS 1.41
+
+     🎯 1xBet
+        Bet:   Away Win
+        Odds:  20.0
+        Stake: GHS 20.07
+        Win:   GHS 1.40
 
   =======================================================
   🏆 Ntnui vs Ranheim 2
@@ -310,6 +339,35 @@ Full list saved to data/betway_matches.txt
         Stake: GHS 74.21
         Win:   GHS 0.73
 
+  =======================================================
+  🏆 Ajax Sarkkiranta vs Haukiputaan Pallo
+  📅 2026-05-21 15:30 | Finland. Kolmonen. Division 3
+  =======================================================
+  📊 Market:   1X2
+  ⚖️  Category: BALANCED
+  💰 Profit:   0.02% = GHS 0.08 (guaranteed on all outcomes)
+  💵 Stake:    GHS 400.00
+
+  📋 BETS TO PLACE:
+
+     🎯 Sportybet
+        Bet:   Home Win
+        Odds:  6.6
+        Stake: GHS 60.62
+        Win:   GHS 0.09
+
+     🎯 1xBet
+        Bet:   Draw
+        Odds:  6.5
+        Stake: GHS 61.55
+        Win:   GHS 0.07
+
+     🎯 Betway
+        Bet:   Away Win
+        Odds:  1.44
+        Stake: GHS 277.83
+        Win:   GHS 0.08
+
 ============================================================
 📊  CATEGORY 2: UNBALANCED ARBITRAGE
     All outcomes profitable — amounts differ
@@ -320,6 +378,36 @@ Full list saved to data/betway_matches.txt
 🛡️   CATEGORY 3: QUASI-ARB (No-Loss)
     Worst case: break even | Best case: profit
 ============================================================
+
+  =======================================================
+  🏆 Qatar vs Sudan
+  📅 2026-05-21 15:30 | International. Int. Friendly Games
+  =======================================================
+  📊 Market:   1X2
+  🛡️  Category: QUASI
+  🛡️  Break-Even: Home Win (get stake back)
+  💰 Best:       GHS 7.40 ← if Away Win wins
+  💵 Stake:    GHS 400.00
+
+  📋 BETS TO PLACE:
+
+     🎯 Sportybet
+        Bet:   Home Win
+        Odds:  1.24
+        Stake: GHS 322.58
+        Win:   GHS 0.00
+
+     🎯 1xBet
+        Bet:   Draw
+        Odds:  7.14
+        Stake: GHS 57.05
+        Win:   GHS 7.34
+
+     🎯 1xBet
+        Bet:   Away Win
+        Odds:  20.0
+        Stake: GHS 20.37
+        Win:   GHS 7.40
 
   =======================================================
   🏆 Ntnui vs Ranheim 2
@@ -346,14 +434,14 @@ Full list saved to data/betway_matches.txt
         Win:   GHS 3.92
 
 ============================================================
-⚽ Events scanned  : 206
+⚽ Events scanned  : 228
 🌐 Platforms       : 7 (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)
-⚖️  Balanced        : 1
+⚖️  Balanced        : 3
 📊 Unbalanced      : 0
-🛡️  Quasi-Arb       : 1
-💰 Total profit    : GHS 1.44
-📈 Best            : 0.18% on Ntnui vs Ranheim 2
+🛡️  Quasi-Arb       : 2
+💰 Total profit    : GHS 4.32
+📈 Best            : 0.35% on Qatar vs Sudan
 ============================================================
 
-  💾 [Arb Tracker] Appended 2 opportunities to data/arbitrage_tracker.csv
+  💾 [Arb Tracker] Appended 5 opportunities to data/arbitrage_tracker.csv
   ✅ [Git Sync] Synced data/arbitrage_tracker.csv to GitHub.
