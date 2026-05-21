@@ -1,7 +1,7 @@
 
 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 🔬 
-   QUANT BET ALPHA — INTENSIVE ENGINE (SCAN #2)
-   Thursday, 21 May 2026 07:33:18
+   QUANT BET ALPHA — INTENSIVE ENGINE (SCAN #1)
+   Thursday, 21 May 2026 07:42:25
    Stake: GHS 400
    Platforms: 7 active — running in parallel
    Scan mode: EXHAUSTIVE (all platform pairings per market)
@@ -11,7 +11,7 @@
 
 * * * * * * * * * * * * * * * * * * * * 
    MSPORT GHANA SCRAPER
-   Thursday, 21 May 2026 07:33:18
+   Thursday, 21 May 2026 07:42:25
 * * * * * * * * * * * * * * * * * * * * 
 
 
@@ -45,19 +45,19 @@ Sample (first 10 matches):
 Saved to C:/quant_bet_alpha/data/msport_odds.json
 Full list saved to C:/quant_bet_alpha/data/msport_matches.txt
    Open the .txt file to see all 126 matches!
-Scraping completed in 4.3s
-  ✅ MSport: 126 matches (4.3s)
+Scraping completed in 2.9s
+  ✅ MSport: 126 matches (2.9s)
 
 
 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 
    22BET GHANA SCRAPER (FAST API)
-   Thursday, 21 May 2026 07:33:18
+   Thursday, 21 May 2026 07:42:25
 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 🟣 
 
   ⚡ Fetching 22 pages asynchronously...
 
 📋 22BET GHANA (FAST API)
-⚽ Total matches: 171
+⚽ Total matches: 170
 ==================================================
 
 📝 Sample (first 10):
@@ -71,166 +71,17 @@ Scraping completed in 4.3s
    Ulaangom City vs Khovdyn Khuleguud | 2026-05-21 10:00 | Mongolia. National Premier League
    Giresun Sanayispor (Women) vs Besiktas (Women) | 2026-05-21 10:00 | Turkey. Turkish SuperLeague. Women
    Aktobe II vs Elimai II | 2026-05-21 11:00 | Kazakhstan. 1st Division
-  ... and 161 more
+  ... and 160 more
 ==================================================
 💾 Saved to data/twentytwobet_odds.json
 📄 Full list: data/twentytwobet_matches.txt
-   Open the .txt file to see all 171 matches!
-⏱️  Scraping completed in 5.7s
-  ✅ 22Bet: 171 matches (5.7s)
-
-
-🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
-   1XBET GHANA SCRAPER (ASYNC AIOHTTP)
-   Thursday, 21 May 2026 07:33:18
-🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
-
-  ⚡ Fetching games for 294 leagues...
-  ⚡ Fetching full odds lines for 235 matches...
-
-📋 1XBET GHANA
-⚽ Total matches: 235
-==================================================
-
-📝 Sample (first 10):
-   Heilongjiang Longyue Ice City vs Shenyang Mantianxing Aomei | 2026-05-21 08:00 | China. Champions League
-   Liaoning Shengjing Xinrui vs Zhangjiakou Aofeng | 2026-05-21 08:00 | China. Champions League
-   Maccabi Petah Tikva U19 vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel Championship U19
-   Metallist 1925 (Women) vs Shakhtar Donetsk (Women) | 2026-05-21 08:00 | Ukraine. Premier League. Women
-   Polissya Zhytomyr (Women) vs Podillya (Women) | 2026-05-21 08:00 | Ukraine. Premier League. Women
-   Vorskla Poltava (Women) vs Kolos Kovalivka (Women) | 2026-05-21 08:00 | Ukraine. Premier League. Women
-   Romania vs Denmark | 2026-05-21 08:00 | 6x6. Socca EuroCup
-   Belarus U19 vs Slovakia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
-   San Marino U19 vs Latvia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
-   Legia Warsaw II vs Widzew Lodz II | 2026-05-21 09:00 | Poland Championship. Liga 3
-  ... and 225 more
-==================================================
-💾 Saved to data\onexbet_odds.json
-📄 Full list: data\onexbet_matches.txt
-   Open the .txt file to see all 235 matches!
-⏱️  Scraping completed in 7.0s
-  ✅ 1xBet: 235 matches (7.0s)
-
-
-* * * * * * * * * * * * * * * * * * * * 
-   SPORTYBET GHANA SCRAPER
-   Thursday, 21 May 2026 07:33:18
-* * * * * * * * * * * * * * * * * * * * 
-
-[INFO] Fetching today's matches...
-  [OK] Page 1: 100 matches (Total available: 0)
-
-[INFO] Fetching more pages...
-  [OK] Page 2: 31 matches (Total: 131)
-
-[INFO] Fetching more pages...
-  [OK] Page 2: 31 matches (Total: 162)
-
-[INFO] Total matches fetched: 162
-
-SPORTYBET GHANA
-Total matches fetched: 162
-With 1X2 odds: 162
-==================================================
-
-Sample (first 10 matches):
-   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
-   Maccabi Petah Tikva vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel. U19 Premier League
-   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
-   Maccabi Petah Tikva vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel. U19 Premier League
-   Legia Warszawa II vs Widzew Lodz II | 2026-05-21 09:00 | Poland. III Liga, Group 1
-   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
-   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
-   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
-   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
-   FK Ekibastuz vs Akademia Ontustyk | 2026-05-21 10:00 | Kazakhstan. Pervaya Liga
-
-  ... and 152 more matches
-==================================================
-Saved to data/sportybet_odds.json
-Full list saved to data/sportybet_matches.txt
-   Open the .txt file to see all 162 matches!
-⏱️  Scraping completed in 7.2s
-  ✅ Sportybet: 162 matches (7.2s)
-
-
-* * * * * * * * * * * * * * * * * * * * 
-   BETWAY GHANA SCRAPER
-   Thursday, 21 May 2026 07:33:18
-* * * * * * * * * * * * * * * * * * * * 
-
-[INFO] Getting Betway session...
-📅 Fetching today's matches...
-  ✅ Skip 0: 100 matches (Total: 100)
-  ✅ Skip 100: 37 matches (Total: 137)
-
-✅ Total events fetched: 137
-  [INFO] Today's matches: 116
-
-BETWAY GHANA
-Total matches: 116
-==================================================
-
-Sample (first 10 matches):
-   Hapoel Ironi Kiryat Shmona U19 vs Hapoel Ako U19 | 2026-05-21 08:00 | U19 Premier League
-   Maccabi Petah Tikva U19 vs Beitar Jerusalem U19 | 2026-05-21 08:00 | U19 Premier League
-   Maccabi Netanya U19 vs Hapoel Petah Tikva Nahum U19 | 2026-05-21 09:00 | U19 Premier League
-   Legia Warszawa II vs Widzew Lodz II | 2026-05-21 09:00 | III Liga, Group 1
-   FK Crvena Zvezda U19 vs Usce Novi Beograd U19 U19 | 2026-05-21 09:00 | U19 League
-   Arba Minch Ketema vs Sidama Bunna SC | 2026-05-21 12:00 | Premier League
-   Adama City FC vs Welwalo Adigrat | 2026-05-21 12:00 | Premier League
-   FC Shakhtar Donetsk vs Kolos Kovalivka | 2026-05-21 12:30 | Premier League
-   Jkt Tanzania vs Fountain Gate FC | 2026-05-21 13:00 | Premier League
-   Moik Baku vs Difai Agsu | 2026-05-21 13:00 | First Division
-
-  ... and 106 more matches
-==================================================
-Saved to data/betway_odds.json
-Full list saved to data/betway_matches.txt
-   Open the .txt file to see all 116 matches!
-⏱️  Scraping completed in 8.5s
-  ✅ Betway: 116 matches (8.5s)
-
-
-🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 
-   FOOTBALL.COM GHANA SCRAPER
-   Thursday, 21 May 2026 07:33:18
-🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 
-
-📅 Fetching today's matches...
-  ✅ Page 1: 100 matches (Total: 0)
-  ✅ Page 2: 31 matches (Total: 131)
-
-✅ Total matches fetched: 131
-
-📋 FOOTBALL.COM GHANA
-⚽ Total matches fetched: 131
-📊 With 1X2 odds: 131
-==================================================
-
-📝 Sample (first 10 matches):
-   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
-   Maccabi Petah Tikva vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel. U19 Premier League
-   Legia Warszawa II vs Widzew Lodz II | 2026-05-21 09:00 | Poland. III Liga, Group 1
-   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
-   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
-   FK Ekibastuz vs Akademia Ontustyk | 2026-05-21 10:00 | Kazakhstan. Pervaya Liga
-   Aktobe Reserve vs Elimai M | 2026-05-21 11:00 | Kazakhstan. Pervaya Liga
-   Libertad Asuncion vs Sportivo Trinidense | 2026-05-21 11:30 | Paraguay. Primera Division Reserve, Apertura
-   Adama City FC vs Welwalo Adigrat | 2026-05-21 12:00 | Ethiopia. Premier League
-   Arba Minch Ketema vs Sidama Bunna SC | 2026-05-21 12:00 | Ethiopia. Premier League
-
-  ... and 121 more matches
-==================================================
-💾 Saved to data/footballcom_odds.json
-📄 Full list saved to data/footballcom_matches.txt
-   Open the .txt file to see all 131 matches!
-⏱️  Scraping completed in 9.9s
-  ✅ Football.com: 131 matches (9.9s)
+   Open the .txt file to see all 170 matches!
+⏱️  Scraping completed in 3.0s
+  ✅ 22Bet: 170 matches (3.1s)
 
 * * * * * * * * * * * * * * * * * * * * 
    BANGBET GHANA SCRAPER
-   Thursday, 21 May 2026 07:33:18
+   Thursday, 21 May 2026 07:42:25
 * * * * * * * * * * * * * * * * * * * * 
 
 
@@ -263,11 +114,160 @@ Sample (first 10 matches):
 Saved to C:/quant_bet_alpha/data/bangbet_odds.json
 Full list saved to C:/quant_bet_alpha/data/bangbet_matches.txt
    Open the .txt file to see all 78 matches!
-Scraping completed in 10.2s
-  ✅ Bangbet: 78 matches (10.2s)
+Scraping completed in 4.7s
+  ✅ Bangbet: 78 matches (4.7s)
 
 
-⏱️  Scraping done in 10.2s (0.17 min)  |  Total matches: 1019
+* * * * * * * * * * * * * * * * * * * * 
+   SPORTYBET GHANA SCRAPER
+   Thursday, 21 May 2026 07:42:25
+* * * * * * * * * * * * * * * * * * * * 
+
+[INFO] Fetching today's matches...
+  [OK] Page 1: 100 matches (Total available: 0)
+
+[INFO] Fetching more pages...
+  [OK] Page 2: 32 matches (Total: 132)
+
+[INFO] Fetching more pages...
+  [OK] Page 2: 32 matches (Total: 164)
+
+[INFO] Total matches fetched: 164
+
+SPORTYBET GHANA
+Total matches fetched: 164
+With 1X2 odds: 164
+==================================================
+
+Sample (first 10 matches):
+   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
+   Maccabi Petah Tikva vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel. U19 Premier League
+   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
+   Maccabi Petah Tikva vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel. U19 Premier League
+   Legia Warszawa II vs Widzew Lodz II | 2026-05-21 09:00 | Poland. III Liga, Group 1
+   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
+   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
+   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
+   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
+   FK Ekibastuz vs Akademia Ontustyk | 2026-05-21 10:00 | Kazakhstan. Pervaya Liga
+
+  ... and 154 more matches
+==================================================
+Saved to data/sportybet_odds.json
+Full list saved to data/sportybet_matches.txt
+   Open the .txt file to see all 164 matches!
+⏱️  Scraping completed in 5.2s
+  ✅ Sportybet: 164 matches (5.2s)
+
+
+* * * * * * * * * * * * * * * * * * * * 
+   BETWAY GHANA SCRAPER
+   Thursday, 21 May 2026 07:42:25
+* * * * * * * * * * * * * * * * * * * * 
+
+[INFO] Getting Betway session...
+📅 Fetching today's matches...
+  ✅ Skip 0: 100 matches (Total: 100)
+  ✅ Skip 100: 37 matches (Total: 137)
+
+✅ Total events fetched: 137
+  [INFO] Today's matches: 116
+
+BETWAY GHANA
+Total matches: 116
+==================================================
+
+Sample (first 10 matches):
+   Hapoel Ironi Kiryat Shmona U19 vs Hapoel Ako U19 | 2026-05-21 08:00 | U19 Premier League
+   Maccabi Petah Tikva U19 vs Beitar Jerusalem U19 | 2026-05-21 08:00 | U19 Premier League
+   Maccabi Netanya U19 vs Hapoel Petah Tikva Nahum U19 | 2026-05-21 09:00 | U19 Premier League
+   Legia Warszawa II vs Widzew Lodz II | 2026-05-21 09:00 | III Liga, Group 1
+   FK Crvena Zvezda U19 vs Usce Novi Beograd U19 U19 | 2026-05-21 09:00 | U19 League
+   Arba Minch Ketema vs Sidama Bunna SC | 2026-05-21 12:00 | Premier League
+   Adama City FC vs Welwalo Adigrat | 2026-05-21 12:00 | Premier League
+   FC Shakhtar Donetsk vs Kolos Kovalivka | 2026-05-21 12:30 | Premier League
+   Jkt Tanzania vs Fountain Gate FC | 2026-05-21 13:00 | Premier League
+   Moik Baku vs Difai Agsu | 2026-05-21 13:00 | First Division
+
+  ... and 106 more matches
+==================================================
+Saved to data/betway_odds.json
+Full list saved to data/betway_matches.txt
+   Open the .txt file to see all 116 matches!
+⏱️  Scraping completed in 10.0s
+  ✅ Betway: 116 matches (10.0s)
+
+
+🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
+   1XBET GHANA SCRAPER (ASYNC AIOHTTP)
+   Thursday, 21 May 2026 07:42:25
+🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 🔵 
+
+  ⚡ Fetching games for 294 leagues...
+  ⚡ Fetching full odds lines for 161 matches...
+
+📋 1XBET GHANA
+⚽ Total matches: 161
+==================================================
+
+📝 Sample (first 10):
+   Heilongjiang Longyue Ice City vs Shenyang Mantianxing Aomei | 2026-05-21 08:00 | China. Champions League
+   Liaoning Shengjing Xinrui vs Zhangjiakou Aofeng | 2026-05-21 08:00 | China. Champions League
+   Maccabi Petah Tikva U19 vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel Championship U19
+   Belarus U19 vs Slovakia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
+   San Marino U19 vs Latvia U19 | 2026-05-21 09:00 | UEFA European U19 Championship Qualification
+   APIA Leichhardt (Women) vs University of New South Wales (Women) | 2026-05-21 10:00 | Australia. NSW Cup. Women
+   Batyr Ekibastuz vs Akademiya Ontustyk | 2026-05-21 10:00 | Kazakhstan. 1st Division
+   Aktobe II vs Elimai II | 2026-05-21 11:00 | Kazakhstan. 1st Division
+   Ararat Yerevan II vs Andranik | 2026-05-21 12:00 | Armenia. First League
+   Adama City vs Welwalo Adigrat | 2026-05-21 12:00 | Ethiopia. Premier League
+  ... and 151 more
+==================================================
+💾 Saved to data\onexbet_odds.json
+📄 Full list: data\onexbet_matches.txt
+   Open the .txt file to see all 161 matches!
+⏱️  Scraping completed in 10.1s
+  ✅ 1xBet: 161 matches (10.1s)
+
+
+🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 
+   FOOTBALL.COM GHANA SCRAPER
+   Thursday, 21 May 2026 07:42:25
+🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 🟡 
+
+📅 Fetching today's matches...
+  ✅ Page 1: 100 matches (Total: 0)
+  ✅ Page 2: 32 matches (Total: 132)
+
+✅ Total matches fetched: 132
+
+📋 FOOTBALL.COM GHANA
+⚽ Total matches fetched: 132
+📊 With 1X2 odds: 132
+==================================================
+
+📝 Sample (first 10 matches):
+   Hapoel Ironi Kiryat Shmona vs Hapoel Ako | 2026-05-21 08:00 | Israel. U19 Premier League
+   Maccabi Petah Tikva vs Beitar Jerusalem U19 | 2026-05-21 08:00 | Israel. U19 Premier League
+   Legia Warszawa II vs Widzew Lodz II | 2026-05-21 09:00 | Poland. III Liga, Group 1
+   FK Crvena Zvezda vs Usce Novi Beograd U19 | 2026-05-21 09:00 | Serbia. U19 League
+   Maccabi Netanya vs Hapoel Petah Tikva Nahum | 2026-05-21 09:00 | Israel. U19 Premier League
+   FK Ekibastuz vs Akademia Ontustyk | 2026-05-21 10:00 | Kazakhstan. Pervaya Liga
+   Aktobe Reserve vs Elimai M | 2026-05-21 11:00 | Kazakhstan. Pervaya Liga
+   Libertad Asuncion vs Sportivo Trinidense | 2026-05-21 11:30 | Paraguay. Primera Division Reserve, Apertura
+   Adama City FC vs Welwalo Adigrat | 2026-05-21 12:00 | Ethiopia. Premier League
+   Arba Minch Ketema vs Sidama Bunna SC | 2026-05-21 12:00 | Ethiopia. Premier League
+
+  ... and 122 more matches
+==================================================
+💾 Saved to data/footballcom_odds.json
+📄 Full list saved to data/footballcom_matches.txt
+   Open the .txt file to see all 132 matches!
+⏱️  Scraping completed in 11.0s
+  ✅ Football.com: 132 matches (11.0s)
+
+
+⏱️  Scraping done in 11.0s (0.18 min)  |  Total matches: 947
 
 🔍 Running intensive exhaustive scan across 7 platforms...
 
@@ -275,10 +275,10 @@ Scraping completed in 10.2s
 ────────────────────────────────────────────────────────────
 ⏱️  TIMING BREAKDOWN
 ────────────────────────────────────────────────────────────
-  🌐 Scraping    : 10.24s  (0.171 min)
-  🔍 Scanning    : 7.28s  (0.121 min)
+  🌐 Scraping    : 11.02s  (0.184 min)
+  🔍 Scanning    : 6.64s  (0.111 min)
   🌐 Verifying   : 0.00s  (0.000 min)  [0 dropped]
-  🕐 TOTAL       : 17.52s  (0.292 min)
+  🕐 TOTAL       : 17.66s  (0.294 min)
 ────────────────────────────────────────────────────────────
 
 
@@ -309,35 +309,6 @@ Scraping completed in 10.2s
         Odds:  5.4
         Stake: GHS 74.21
         Win:   GHS 0.73
-
-  =======================================================
-  🏆 Ajax Sarkkiranta vs Haukiputaan Pallo
-  📅 2026-05-21 15:30 | Finland. Kolmonen. Division 3
-  =======================================================
-  📊 Market:   1X2
-  ⚖️  Category: BALANCED
-  💰 Profit:   0.02% = GHS 0.08 (guaranteed on all outcomes)
-  💵 Stake:    GHS 400.00
-
-  📋 BETS TO PLACE:
-
-     🎯 Sportybet
-        Bet:   Home Win
-        Odds:  6.6
-        Stake: GHS 60.62
-        Win:   GHS 0.09
-
-     🎯 1xBet
-        Bet:   Draw
-        Odds:  6.5
-        Stake: GHS 61.55
-        Win:   GHS 0.07
-
-     🎯 Betway
-        Bet:   Away Win
-        Odds:  1.44
-        Stake: GHS 277.83
-        Win:   GHS 0.08
 
 ============================================================
 📊  CATEGORY 2: UNBALANCED ARBITRAGE
@@ -375,14 +346,14 @@ Scraping completed in 10.2s
         Win:   GHS 3.92
 
 ============================================================
-⚽ Events scanned  : 227
+⚽ Events scanned  : 206
 🌐 Platforms       : 7 (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)
-⚖️  Balanced        : 2
+⚖️  Balanced        : 1
 📊 Unbalanced      : 0
 🛡️  Quasi-Arb       : 1
-💰 Total profit    : GHS 1.52
+💰 Total profit    : GHS 1.44
 📈 Best            : 0.18% on Ntnui vs Ranheim 2
 ============================================================
 
-  💾 [Arb Tracker] Appended 3 opportunities to data/arbitrage_tracker.csv
+  💾 [Arb Tracker] Appended 2 opportunities to data/arbitrage_tracker.csv
   ✅ [Git Sync] Synced data/arbitrage_tracker.csv to GitHub.
