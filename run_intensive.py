@@ -234,8 +234,11 @@ def main():
     prevent_sleep()
     
     if not has_internet():
-        print("\n❌ [System] No active internet connection detected! Stopping engine...")
-        sys.exit(1)
+        print("\n❌ [System] No active internet connection detected! Waiting for connection...")
+        while not has_internet():
+            print(f"\r[System] ⚠️ Offline at {datetime.now().strftime('%H:%M:%S')}. Waiting 10s for internet...", end="", flush=True)
+            time.sleep(10)
+        print(f"\n[System] ✅ Internet connection established! Starting engine...")
         
     run_scan()
     
@@ -245,8 +248,12 @@ def main():
     while True:
         if time.time() >= next_run_time:
             if not has_internet():
-                print(f"\n❌ [System] Internet connection lost at {datetime.now().strftime('%H:%M:%S')}! Stopping engine...")
-                sys.exit(1)
+                print(f"\n❌ [System] Internet connection lost at {datetime.now().strftime('%H:%M:%S')}! Pausing engine...")
+                while not has_internet():
+                    print(f"\r[System] ⚠️ Offline. Waiting 10s for internet...", end="", flush=True)
+                    time.sleep(10)
+                print(f"\n[System] ✅ Internet connection restored at {datetime.now().strftime('%H:%M:%S')}! Resuming scan...")
+                next_run_time = time.time()
             run_scan()
         time.sleep(1)
 
