@@ -22,6 +22,7 @@ Run via: python run_intensive.py
 """
 
 import os
+import re
 import json
 import numpy as np
 from difflib import SequenceMatcher
@@ -91,25 +92,51 @@ SOURCE_MAP = {
 
 # ── FUZZY MATCHING ─────────────────────────────────────────────────────────────
 
-def normalize_name(name):
-    name = name.lower().strip()
-    for suffix in [' fc', ' sc', ' cf', ' ac', ' bk', ' fk',
-                   ' sk', ' if', ' bfk', ' spor', ' sport',
-                   ' united', ' city', ' town']:
-        if name.endswith(suffix):
-            name = name[:-len(suffix)].strip()
-    return name
+STOPWORDS = {
+    'fk', 'fc', 'sc', 'cf', 'ac', 'bk', 'fk', 'sk', 'if', 'bfk', 'spor', 'sport',
+    'united', 'city', 'town', 'reserve', 'reserves', 'u19', 'u20', 'u21', 'u23',
+    'women', 'youth', 'under', 'club', 'team', 'real', 'atletico', 'atletico',
+    'depor', 'deportivo', 'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21'
+}
 
+def clean_tokens(name):
+    name = str(name).lower().strip()
+    name = re.sub(r'[^a-z0-9]', ' ', name)
+    words = name.split()
+    filtered = []
+    for w in words:
+        if w in STOPWORDS:
+            continue
+        if w.startswith('y') and len(w) > 4 and w[1] in 'aeiou':
+            w = w[1:]
+        filtered.append(w)
+    return filtered
 
-def similar(a, b):
-    a_n = normalize_name(a)
-    b_n = normalize_name(b)
-    if a_n == b_n:
+def smart_team_match(a, b):
+    tokens_a = clean_tokens(a)
+    tokens_b = clean_tokens(b)
+    
+    if not tokens_a or not tokens_b:
+        return False
+        
+    if tokens_a == tokens_b:
         return True
-    if a_n in b_n or b_n in a_n:
-        if min(len(a_n), len(b_n)) >= 5:
-            return True
-    return SequenceMatcher(None, a_n, b_n).ratio() >= 0.85
+        
+    str_a = ' '.join(tokens_a)
+    str_b = ' '.join(tokens_b)
+    if (len(str_a) >= 4 and str_a in str_b) or (len(str_b) >= 4 and str_b in str_a):
+        return True
+        
+    ratio = SequenceMatcher(None, str_a, str_b).ratio()
+    if ratio >= 0.72:
+        return True
+        
+    overlap = set(tokens_a).intersection(set(tokens_b))
+    long_overlap = [w for w in overlap if len(w) >= 5]
+    if long_overlap and ratio >= 0.50:
+        return True
+        
+    return False
 
 
 VIRTUAL_KEYWORDS = [
@@ -144,17 +171,27 @@ def _same_game(a, b):
         return False
     if a.get('kickoff', '')[:10] != b.get('kickoff', '')[:10]:
         return False
+        
+    t_a = a.get('kickoff', '').split()
+    t_b = b.get('kickoff', '').split()
+    times_match = (len(t_a) > 1 and len(t_b) > 1 and t_a[1][:5] == t_b[1][:5])
+        
     if not tournament_similar(a.get('tournament', ''), b.get('tournament', '')):
         return False
+        
     ha, aa = a.get('home_team', ''), a.get('away_team', '')
     hb, ab = b.get('home_team', ''), b.get('away_team', '')
+    
     if not tournament_similar(ha + aa, hb + ab):
         return False
-    if not similar(ha, hb) or not similar(aa, ab):
-        return False
-    if similar(ha, ab) and similar(aa, hb):
-        return False
-    return True
+        
+    if times_match:
+        home_ok = smart_team_match(ha, hb)
+        away_ok = smart_team_match(aa, ab)
+        if home_ok and away_ok:
+            return True
+            
+    return smart_team_match(ha, hb) and smart_team_match(aa, ab)
 
 
 def match_all_platforms(all_matches):
