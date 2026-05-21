@@ -152,12 +152,11 @@ def fetch_all_parallel(scrapers):
 
 
 def has_internet():
-    """Checks for active internet connectivity with a fallback."""
+    """Checks for active internet connectivity using OS DNS resolution."""
     import socket
-    for host in ["1.1.1.1", "8.8.8.8"]:
+    for host in ["google.com", "cloudflare.com", "microsoft.com"]:
         try:
-            socket.setdefaulttimeout(3)
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, 53))
+            socket.gethostbyname(host)
             return True
         except Exception:
             continue
