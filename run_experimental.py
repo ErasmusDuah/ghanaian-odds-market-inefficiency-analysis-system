@@ -61,18 +61,6 @@ ACTIVE_SCRAPERS = [
 ]
 
 
-class _Tee:
-    def __init__(self, *files):
-        self.files = files
-    def write(self, obj):
-        for f in self.files:
-            f.write(obj)
-            f.flush()
-    def flush(self):
-        for f in self.files:
-            f.flush()
-
-
 import io
 import threading
 
@@ -103,6 +91,8 @@ class _ThreadLocalWriter:
         buf = getattr(_thread_local, 'buf', None)
         if buf is None:
             self._real.flush()
+
+sys.stdout = _ThreadLocalWriter(sys.stdout)
 
 
 def _safe_fetch(name, fetch_fn):
@@ -162,14 +152,6 @@ def fetch_all_parallel(scrapers):
 
 
 def main():
-    os.makedirs('data', exist_ok=True)
-    f = open('data/experimental_results.txt', 'w', encoding='utf-8')
-    original_stdout = sys.stdout
-    tee = _Tee(sys.stdout, f)
-    # Wrap tee with the thread-local writer so parallel scrapers
-    # capture their own output without interleaving
-    sys.stdout = _ThreadLocalWriter(tee)
-
     try:
         _env        = dotenv_values(ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -229,14 +211,10 @@ def main():
         import traceback
         traceback.print_exc()
 
-    finally:
-        sys.stdout = original_stdout
-        f.close()
-
-    # Commit and push both experimental_results.txt and arbitrage_tracker.csv to GitHub
+    # Commit and push only arbitrage_tracker.csv to GitHub
     try:
         push_to_github(
-            filepaths=["data/arbitrage_tracker.csv", "data/experimental_results.txt"],
+            filepaths=["data/arbitrage_tracker.csv"],
             message="Auto-update experimental arbitrage results"
         )
     except Exception as e:

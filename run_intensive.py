@@ -58,18 +58,6 @@ ACTIVE_SCRAPERS = [
 
 # ── THREAD-SAFE PARALLEL OUTPUT ────────────────────────────────────────────────
 
-class _Tee:
-    def __init__(self, *files):
-        self.files = files
-    def write(self, obj):
-        for f in self.files:
-            f.write(obj)
-            f.flush()
-    def flush(self):
-        for f in self.files:
-            f.flush()
-
-
 _print_lock   = threading.Lock()
 _thread_local = threading.local()
 
@@ -86,6 +74,8 @@ class _ThreadLocalWriter:
     def flush(self):
         if getattr(_thread_local, 'buf', None) is None:
             self._real.flush()
+
+sys.stdout = _ThreadLocalWriter(sys.stdout)
 
 
 def _safe_fetch(name, fetch_fn):
@@ -153,11 +143,6 @@ def run_scan():
     # Lock in next run time before scraping starts (2 minutes loop)
     next_run_time = time.time() + 2 * 60
     
-    os.makedirs('data', exist_ok=True)
-    f = open('data/intensive_results.txt', 'w', encoding='utf-8')
-    original_stdout = sys.stdout
-    sys.stdout = _ThreadLocalWriter(_Tee(original_stdout, f))
-
     try:
         _env        = dotenv_values(ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -223,15 +208,11 @@ def run_scan():
         print(f"  ❌ ERROR inside intensive run_scan: {e}")
         import traceback
         traceback.print_exc()
-
-    finally:
-        sys.stdout = original_stdout
-        f.close()
         
-    # Commit and push both intensive_results.txt and arbitrage_tracker.csv to GitHub
+    # Commit and push only arbitrage_tracker.csv to GitHub
     try:
         push_to_github(
-            filepaths=["data/arbitrage_tracker.csv", "data/intensive_results.txt"],
+            filepaths=["data/arbitrage_tracker.csv"],
             message=f"Auto-update intensive arbitrage results (Scan #{scan_count})"
         )
     except Exception as e:
