@@ -17,6 +17,7 @@ import sys
 import os
 import time
 import io
+
 import ctypes
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -200,17 +201,13 @@ def run_scan():
 
         scan_time  = time.time() - scan_start
 
-        n_dropped = 0
-        verify_time = 0.0
-
-        total_time = scrape_time + scan_time + verify_time
+        total_time = scrape_time + scan_time
 
         print(f"\n{'─'*60}")
         print(f"⏱️  TIMING BREAKDOWN")
         print(f"{'─'*60}")
         print(f"  🌐 Scraping    : {scrape_time:.2f}s  ({scrape_time/60:.3f} min)")
         print(f"  🔍 Scanning    : {scan_time:.2f}s  ({scan_time/60:.3f} min)")
-        print(f"  🌐 Verifying   : {verify_time:.2f}s  ({verify_time/60:.3f} min)  [{n_dropped} dropped]")
         print(f"  🕐 TOTAL       : {total_time:.2f}s  ({total_time/60:.3f} min)")
         print(f"{'─'*60}\n")
 
