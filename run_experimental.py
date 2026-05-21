@@ -151,7 +151,24 @@ def fetch_all_parallel(scrapers):
     return results
 
 
+def has_internet():
+    """Checks for active internet connectivity with a fallback."""
+    import socket
+    for host in ["1.1.1.1", "8.8.8.8"]:
+        try:
+            socket.setdefaulttimeout(3)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, 53))
+            return True
+        except Exception:
+            continue
+    return False
+
+
 def main():
+    if not has_internet():
+        print("\n❌ [System] No active internet connection detected! Stopping engine...")
+        sys.exit(1)
+        
     try:
         _env        = dotenv_values(ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))

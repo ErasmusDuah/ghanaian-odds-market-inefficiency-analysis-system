@@ -218,8 +218,26 @@ def run_scan():
     except Exception as e:
         print(f"  ❌ ERROR syncing intensive results to GitHub: {e}")
 
+def has_internet():
+    """Checks for active internet connectivity with a fallback."""
+    import socket
+    for host in ["1.1.1.1", "8.8.8.8"]:
+        try:
+            socket.setdefaulttimeout(3)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, 53))
+            return True
+        except Exception:
+            continue
+    return False
+
+
 def main():
     prevent_sleep()
+    
+    if not has_internet():
+        print("\n❌ [System] No active internet connection detected! Stopping engine...")
+        sys.exit(1)
+        
     run_scan()
     
     print("\n[Scheduled] Scanning every 2 minutes (interval starts when scraping starts)")
@@ -227,6 +245,9 @@ def main():
     
     while True:
         if time.time() >= next_run_time:
+            if not has_internet():
+                print(f"\n❌ [System] Internet connection lost at {datetime.now().strftime('%H:%M:%S')}! Stopping engine...")
+                sys.exit(1)
             run_scan()
         time.sleep(1)
 
