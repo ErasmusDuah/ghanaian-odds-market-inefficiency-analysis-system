@@ -8410,3 +8410,124 @@ Date,Time,Match,Tournament,Kickoff,Market,Category,Platform 1,Bet 1,Odds 1,Stake
 2026-05-24,14:22:46,Manchester City vs Aston Villa,England. Premier League,2026-05-24 15:00,1X2,quasi,1xBet,Home Win,1.504,425.53,,Football.com,Draw,5.52,117.67,9.54,Football.com,Away Win,6.71,96.8,9.53,640,0.49,3.16
 2026-05-24,14:22:46,Manchester City vs Aston Villa,England. Premier League,2026-05-24 15:00,1X2,balanced,1xBet,Home Win,1.504,426.57,1.56,Football.com,Draw,5.52,116.22,1.53,22Bet,Away Win,6.6,97.21,1.59,640,0.24,1.56
 2026-05-24,14:22:46,Manchester City vs Aston Villa,England. Premier League,2026-05-24 15:00,1X2,quasi,1xBet,Home Win,1.504,425.53,,Football.com,Draw,5.52,116.79,4.68,22Bet,Away Win,6.6,97.68,4.69,640,0.24,1.56
+2026-05-24,14:26:20,Sunderland AFC vs Chelsea,England. Premier League,2026-05-24 15:00,1X2,balanced,1xBet,Home Win,3.78,169.38,0.27,MSport,Draw,3.83,167.17,0.27,MSport,Away Win,2.11,303.44,0.27,640,0.04,0.27
+2026-05-24,14:26:20,Sunderland AFC vs Chelsea,England. Premier League,2026-05-24 15:00,1X2,quasi,1xBet,Home Win,3.78,169.45,0.52,MSport,Draw,3.83,167.23,0.49,MSport,Away Win,2.11,303.32,0.01,640,0.04,0.27
+2026-05-24,14:26:20,Sunderland AFC vs Chelsea,England. Premier League,2026-05-24 15:00,Over/Under 2.5,balanced,1xBet,Over 2.5,1.806,357.12,4.96,Betway,Under 2.5,2.28,282.88,4.97,,,,,,640,0.78,4.96
+2026-05-24,14:26:20,Sunderland AFC vs Chelsea,England. Premier League,2026-05-24 15:00,Over/Under 2.5,quasi,1xBet,Over 2.5,1.806,354.37,-0.01,Betway,Under 2.5,2.28,285.63,11.24,,,,,,640,0.78,4.96
+2026-05-24,14:26:20,Sunderland AFC vs Chelsea,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,Sportybet,Over 3.5,2.9,221.04,1.02,Betway,Under 3.5,1.53,418.96,1.01,,,,,,640,0.16,1.01
+2026-05-24,14:26:20,Sunderland AFC vs Chelsea,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,Sportybet,Over 3.5,2.9,221.7,2.93,Betway,Under 3.5,1.53,418.3,,,,,,,640,0.16,1.01
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,balanced,Sportybet,Home Win,1.86,346.02,3.61,Betway,Draw,4.3,149.67,3.59,1xBet,Away Win,4.46,144.3,3.59,640,0.56,3.6
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,quasi,Sportybet,Home Win,1.86,344.09,0.01,Betway,Draw,4.3,150.66,7.84,1xBet,Away Win,4.46,145.25,7.81,640,0.56,3.6
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,balanced,Sportybet,Home Win,1.86,344.3,0.4,1xBet,Draw,4.21,152.11,0.38,1xBet,Away Win,4.46,143.59,0.41,640,0.06,0.4
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,quasi,Sportybet,Home Win,1.86,344.09,0.01,1xBet,Draw,4.21,152.22,0.85,1xBet,Away Win,4.46,143.69,0.86,640,0.06,0.4
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,balanced,MSport,Home Win,1.87,342.47,0.42,Sportybet,Draw,4.16,153.94,0.39,1xBet,Away Win,4.46,143.59,0.41,640,0.06,0.41
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,quasi,MSport,Home Win,1.87,342.25,0.01,Sportybet,Draw,4.16,154.06,0.89,1xBet,Away Win,4.46,143.69,0.86,640,0.06,0.41
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,balanced,MSport,Home Win,1.87,345.17,5.47,Betway,Draw,4.3,150.11,5.47,1xBet,Away Win,4.46,144.72,5.45,640,0.85,5.47
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,quasi,MSport,Home Win,1.87,342.25,0.01,Betway,Draw,4.3,151.59,11.84,1xBet,Away Win,4.46,146.16,11.87,640,0.85,5.47
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,balanced,MSport,Home Win,1.87,343.45,2.25,1xBet,Draw,4.21,152.55,2.24,1xBet,Away Win,4.46,144.0,2.24,640,0.35,2.25
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,quasi,MSport,Home Win,1.87,342.25,0.01,1xBet,Draw,4.21,153.17,4.85,1xBet,Away Win,4.46,144.58,4.83,640,0.35,2.25
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,balanced,MSport,Home Win,1.87,343.25,1.88,22Bet,Draw,4.2,152.83,1.89,1xBet,Away Win,4.46,143.92,1.88,640,0.29,1.88
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,1X2,quasi,MSport,Home Win,1.87,342.25,0.01,22Bet,Draw,4.2,153.34,4.03,1xBet,Away Win,4.46,144.41,4.07,640,0.29,1.88
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.34,273.84,0.79,Betway,Under 3.5,1.75,366.16,0.78,,,,,,640,0.12,0.78
+2026-05-24,14:26:20,Liverpool vs Brentford,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.34,274.29,1.84,Betway,Under 3.5,1.75,365.71,-0.01,,,,,,640,0.12,0.78
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 2.5,balanced,Sportybet,Over 2.5,1.63,393.38,1.21,Betway,Under 2.5,2.6,246.62,1.21,,,,,,640,0.19,1.21
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 2.5,quasi,Sportybet,Over 2.5,1.63,392.64,,Betway,Under 2.5,2.6,247.36,3.14,,,,,,640,0.19,1.21
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 2.5,balanced,1xBet,Over 2.5,1.66,390.61,8.41,Betway,Under 2.5,2.6,249.39,8.41,,,,,,640,1.31,8.41
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 2.5,quasi,1xBet,Over 2.5,1.66,385.54,,Betway,Under 2.5,2.6,254.46,21.6,,,,,,640,1.31,8.41
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,Sportybet,Over 3.5,2.55,254.18,8.16,Betway,Under 3.5,1.68,385.82,8.18,,,,,,640,1.28,8.17
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,Sportybet,Over 3.5,2.55,259.05,20.58,Betway,Under 3.5,1.68,380.95,,,,,,,640,1.28,8.17
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.54,254.79,7.17,Betway,Under 3.5,1.68,385.21,7.15,,,,,,640,1.12,7.16
+2026-05-24,14:26:20,West Ham vs Leeds United,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.54,259.05,17.99,Betway,Under 3.5,1.68,380.95,,,,,,,640,1.12,7.16
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 2.5,balanced,Sportybet,Over 2.5,1.99,325.53,7.8,Betway,Under 2.5,2.06,314.47,7.81,,,,,,640,1.22,7.81
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 2.5,quasi,Sportybet,Over 2.5,1.99,321.61,,Betway,Under 2.5,2.06,318.39,15.88,,,,,,640,1.22,7.81
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 2.5,balanced,1xBet,Over 2.5,2.05,320.78,17.6,Betway,Under 2.5,2.06,319.22,17.59,,,,,,640,2.75,17.6
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 2.5,unbalanced,1xBet,Over 2.5,2.05,320.0,16.0,Betway,Under 2.5,2.06,320.0,19.2,,,,,,640,2.75,17.6
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 2.5,quasi,1xBet,Over 2.5,2.05,312.2,0.01,Betway,Under 2.5,2.06,327.8,35.27,,,,,,640,2.75,17.6
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 2.5,balanced,Bangbet,Over 2.5,1.95,328.78,1.12,Betway,Under 2.5,2.06,311.22,1.11,,,,,,640,0.17,1.12
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 2.5,quasi,Bangbet,Over 2.5,1.95,328.21,0.01,Betway,Under 2.5,2.06,311.79,2.29,,,,,,640,0.17,1.12
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 1.5,balanced,Sportybet,Over 1.5,1.32,489.68,6.38,Betway,Under 1.5,4.3,150.32,6.38,,,,,,640,1.0,6.38
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 1.5,quasi,Sportybet,Over 1.5,1.32,484.85,,Betway,Under 1.5,4.3,155.15,27.14,,,,,,640,1.0,6.38
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 1.5,balanced,1xBet,Over 1.5,1.31,490.55,2.62,Betway,Under 1.5,4.3,149.45,2.63,,,,,,640,0.41,2.62
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 1.5,quasi,1xBet,Over 1.5,1.31,488.55,,Betway,Under 1.5,4.3,151.45,11.23,,,,,,640,0.41,2.62
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,Sportybet,Over 3.5,3.4,189.48,4.23,Betway,Under 3.5,1.43,450.52,4.24,,,,,,640,0.66,4.24
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,Sportybet,Over 3.5,3.4,192.45,14.33,Betway,Under 3.5,1.43,447.55,,,,,,,640,0.66,4.24
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,3.43,188.31,5.9,Betway,Under 3.5,1.43,451.69,5.92,,,,,,640,0.92,5.91
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,3.43,192.45,20.1,Betway,Under 3.5,1.43,447.55,,,,,,,640,0.92,5.91
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,Bangbet,Over 3.5,3.35,191.46,1.39,Betway,Under 3.5,1.43,448.54,1.41,,,,,,640,0.22,1.41
+2026-05-24,14:26:20,Tottenham vs Everton,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,Bangbet,Over 3.5,3.35,192.45,4.71,Betway,Under 3.5,1.43,447.55,,,,,,,640,0.22,1.41
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.92,222.86,10.75,Sportybet,Under 3.5,1.56,417.14,10.74,,,,,,640,1.68,10.74
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.92,229.74,30.84,Sportybet,Under 3.5,1.56,410.26,0.01,,,,,,640,1.68,10.74
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.92,221.92,8.01,Football.com,Under 3.5,1.55,418.08,8.02,,,,,,640,1.25,8.02
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.92,227.1,23.13,Football.com,Under 3.5,1.55,412.9,,,,,,,640,1.25,8.02
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.87,225.37,6.81,Sportybet,Under 3.5,1.56,414.63,6.82,,,,,,640,1.07,6.82
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.87,229.74,19.35,Sportybet,Under 3.5,1.56,410.26,0.01,,,,,,640,1.07,6.82
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.87,224.43,4.11,Football.com,Under 3.5,1.55,415.57,4.13,,,,,,640,0.64,4.13
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.87,227.1,11.78,Football.com,Under 3.5,1.55,412.9,,,,,,,640,0.64,4.13
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.8,228.99,1.17,Sportybet,Under 3.5,1.56,411.01,1.18,,,,,,640,0.18,1.17
+2026-05-24,14:26:20,Balatonlelle vs Ivancsa KSE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.8,229.74,3.27,Sportybet,Under 3.5,1.56,410.26,0.01,,,,,,640,0.18,1.17
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,Betway,Over 3.5,2.7,240.0,8.0,Sportybet,Under 3.5,1.62,400.0,8.0,,,,,,640,1.25,8.0
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,Betway,Over 3.5,2.7,244.94,21.34,Sportybet,Under 3.5,1.62,395.06,,,,,,,640,1.25,8.0
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,Betway,Over 3.5,2.7,239.07,5.49,Football.com,Under 3.5,1.61,400.93,5.5,,,,,,640,0.86,5.49
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,Betway,Over 3.5,2.7,242.48,14.7,Football.com,Under 3.5,1.61,397.52,0.01,,,,,,640,0.86,5.49
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.875,230.66,23.15,Sportybet,Under 3.5,1.62,409.34,23.13,,,,,,640,3.62,23.14
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.875,244.94,64.2,Sportybet,Under 3.5,1.62,395.06,,,,,,,640,3.62,23.14
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.875,229.74,20.5,Football.com,Under 3.5,1.61,410.26,20.52,,,,,,640,3.21,20.51
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.875,242.48,57.13,Football.com,Under 3.5,1.61,397.52,0.01,,,,,,640,3.21,20.51
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.82,233.51,18.5,Sportybet,Under 3.5,1.62,406.49,18.51,,,,,,640,2.89,18.51
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.82,244.94,50.73,Sportybet,Under 3.5,1.62,395.06,,,,,,,640,2.89,18.51
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.82,232.6,15.93,Football.com,Under 3.5,1.61,407.4,15.91,,,,,,640,2.49,15.92
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.82,242.48,43.79,Football.com,Under 3.5,1.61,397.52,0.01,,,,,,640,2.49,15.92
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.85,231.95,21.06,Sportybet,Under 3.5,1.62,408.05,21.04,,,,,,640,3.29,21.05
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.85,244.94,58.08,Sportybet,Under 3.5,1.62,395.06,,,,,,,640,3.29,21.05
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.85,231.03,18.44,Football.com,Under 3.5,1.61,408.97,18.44,,,,,,640,2.88,18.44
+2026-05-24,14:26:20,Tiszaujvaros vs Tarpa SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.85,242.48,51.07,Football.com,Under 3.5,1.61,397.52,0.01,,,,,,640,2.88,18.44
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.92,221.92,8.01,Sportybet,Under 3.5,1.55,418.08,8.02,,,,,,640,1.25,8.02
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.92,227.1,23.13,Sportybet,Under 3.5,1.55,412.9,,,,,,,640,1.25,8.02
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.92,220.99,5.29,Football.com,Under 3.5,1.54,419.01,5.28,,,,,,640,0.83,5.28
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.92,224.42,15.31,Football.com,Under 3.5,1.54,415.58,-0.01,,,,,,640,0.83,5.28
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.87,224.43,4.11,Sportybet,Under 3.5,1.55,415.57,4.13,,,,,,640,0.64,4.13
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.87,227.1,11.78,Sportybet,Under 3.5,1.55,412.9,,,,,,,640,0.64,4.13
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.87,223.49,1.42,Football.com,Under 3.5,1.54,416.51,1.43,,,,,,640,0.22,1.42
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.87,224.42,4.09,Football.com,Under 3.5,1.54,415.58,-0.01,,,,,,640,0.22,1.42
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.9,222.92,6.47,Sportybet,Under 3.5,1.55,417.08,6.47,,,,,,640,1.01,6.47
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.9,227.1,18.59,Sportybet,Under 3.5,1.55,412.9,,,,,,,640,1.01,6.47
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.9,221.98,3.74,Football.com,Under 3.5,1.54,418.02,3.75,,,,,,640,0.59,3.75
+2026-05-24,14:26:20,Budapest Honved MFA vs Csepel SC,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.9,224.42,10.82,Football.com,Under 3.5,1.54,415.58,-0.01,,,,,,640,0.59,3.75
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.875,226.05,9.89,Sportybet,Under 3.5,1.57,413.95,9.9,,,,,,640,1.55,9.9
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.875,232.36,28.04,Sportybet,Under 3.5,1.57,407.64,-0.01,,,,,,640,1.55,9.9
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.875,225.12,7.22,Football.com,Under 3.5,1.56,414.88,7.21,,,,,,640,1.13,7.22
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.875,229.74,20.5,Football.com,Under 3.5,1.56,410.26,0.01,,,,,,640,1.13,7.22
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.87,226.31,9.51,Sportybet,Under 3.5,1.57,413.69,9.49,,,,,,640,1.48,9.5
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.87,232.36,26.87,Sportybet,Under 3.5,1.57,407.64,-0.01,,,,,,640,1.48,9.5
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.87,225.37,6.81,Football.com,Under 3.5,1.56,414.63,6.82,,,,,,640,1.07,6.82
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.87,229.74,19.35,Football.com,Under 3.5,1.56,410.26,0.01,,,,,,640,1.07,6.82
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.85,227.33,7.89,Sportybet,Under 3.5,1.57,412.67,7.89,,,,,,640,1.23,7.89
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.85,232.36,22.23,Sportybet,Under 3.5,1.57,407.64,-0.01,,,,,,640,1.23,7.89
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,2.85,226.39,5.21,Football.com,Under 3.5,1.56,413.61,5.23,,,,,,640,0.82,5.22
+2026-05-24,14:26:20,BKV Elore vs Monori SE,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,2.85,229.74,14.76,Football.com,Under 3.5,1.56,410.26,0.01,,,,,,640,0.82,5.22
+2026-05-24,14:26:20,Nottingham Forest vs Bournemouth,England. Premier League,2026-05-24 15:00,Over/Under 2.5,balanced,1xBet,Over 2.5,1.681,385.72,8.4,Betway,Under 2.5,2.55,254.28,8.41,,,,,,640,1.31,8.4
+2026-05-24,14:26:20,Nottingham Forest vs Bournemouth,England. Premier League,2026-05-24 15:00,Over/Under 2.5,quasi,1xBet,Over 2.5,1.681,380.73,0.01,Betway,Under 2.5,2.55,259.27,21.14,,,,,,640,1.31,8.4
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,Betway,Over 3.5,2.85,227.33,7.89,Sportybet,Under 3.5,1.57,412.67,7.89,,,,,,640,1.23,7.89
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,Betway,Over 3.5,2.85,232.36,22.23,Sportybet,Under 3.5,1.57,407.64,-0.01,,,,,,640,1.23,7.89
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,Betway,Over 3.5,2.85,226.39,5.21,Football.com,Under 3.5,1.56,413.61,5.23,,,,,,640,0.82,5.22
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,Betway,Over 3.5,2.85,229.74,14.76,Football.com,Under 3.5,1.56,410.26,0.01,,,,,,640,0.82,5.22
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,3.04,217.96,22.6,Sportybet,Under 3.5,1.57,422.04,22.6,,,,,,640,3.53,22.6
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,3.04,232.36,66.37,Sportybet,Under 3.5,1.57,407.64,-0.01,,,,,,640,3.53,22.6
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,3.04,217.04,19.8,Football.com,Under 3.5,1.56,422.96,19.82,,,,,,640,3.1,19.81
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,3.04,229.74,58.41,Football.com,Under 3.5,1.56,410.26,0.01,,,,,,640,3.1,19.81
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.99,220.35,18.85,Sportybet,Under 3.5,1.57,419.65,18.85,,,,,,640,2.95,18.85
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.99,232.36,54.76,Sportybet,Under 3.5,1.57,407.64,-0.01,,,,,,640,2.95,18.85
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,22Bet,Over 3.5,2.99,219.43,16.1,Football.com,Under 3.5,1.56,420.57,16.09,,,,,,640,2.51,16.09
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,22Bet,Over 3.5,2.99,229.74,46.92,Football.com,Under 3.5,1.56,410.26,0.01,,,,,,640,2.51,16.09
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,3.05,217.49,23.34,Sportybet,Under 3.5,1.57,422.51,23.34,,,,,,640,3.65,23.34
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,3.05,232.36,68.7,Sportybet,Under 3.5,1.57,407.64,-0.01,,,,,,640,3.65,23.34
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,balanced,MSport,Over 3.5,3.05,216.57,20.54,Football.com,Under 3.5,1.56,423.43,20.55,,,,,,640,3.21,20.55
+2026-05-24,14:26:20,Godolloi SK vs Kisvarda FC II,Hungary. NB III,2026-05-24 15:00,Over/Under 3.5,quasi,MSport,Over 3.5,3.05,229.74,60.71,Football.com,Under 3.5,1.56,410.26,0.01,,,,,,640,3.21,20.55
+2026-05-24,14:26:20,CD Tecnico Universitario vs Club Leones Del Norte,Ecuador. LigaPro Primera A,2026-05-24 18:00,Over/Under 4.5,balanced,1xBet,Over 4.5,18.0,35.59,0.62,Sportybet,Under 4.5,1.06,604.41,0.67,,,,,,640,0.1,0.67
+2026-05-24,14:26:20,CD Tecnico Universitario vs Club Leones Del Norte,Ecuador. LigaPro Primera A,2026-05-24 18:00,Over/Under 4.5,quasi,1xBet,Over 4.5,18.0,36.23,12.14,Sportybet,Under 4.5,1.06,603.77,,,,,,,640,0.1,0.67
+2026-05-24,14:26:20,CD Tecnico Universitario vs Club Leones Del Norte,Ecuador. LigaPro Primera A,2026-05-24 18:00,Over/Under 0.5,balanced,MSport,Over 0.5,1.09,589.04,2.05,22Bet,Under 0.5,12.6,50.96,2.1,,,,,,640,0.32,2.06
+2026-05-24,14:26:20,CD Tecnico Universitario vs Club Leones Del Norte,Ecuador. LigaPro Primera A,2026-05-24 18:00,Over/Under 0.5,quasi,MSport,Over 0.5,1.09,587.16,,22Bet,Under 0.5,12.6,52.84,25.78,,,,,,640,0.32,2.06
+2026-05-24,14:26:20,AC Milan vs Cagliari,Italy. Serie A,2026-05-24 18:45,1X2,balanced,Sportybet,Home Win,1.35,474.84,1.03,Sportybet,Draw,5.65,113.46,1.05,1xBet,Away Win,12.4,51.7,1.08,640,0.16,1.04
+2026-05-24,14:26:20,AC Milan vs Cagliari,Italy. Serie A,2026-05-24 18:45,1X2,quasi,Sportybet,Home Win,1.35,474.07,-0.01,Sportybet,Draw,5.65,113.99,4.04,1xBet,Away Win,12.4,51.94,4.06,640,0.16,1.04
+2026-05-24,14:26:20,Brighton vs Manchester United,England. Premier League,2026-05-24 15:00,Over/Under 3.5,balanced,1xBet,Over 3.5,2.205,291.12,1.92,Betway,Under 3.5,1.84,348.88,1.94,,,,,,640,0.3,1.93
+2026-05-24,14:26:20,Brighton vs Manchester United,England. Premier League,2026-05-24 15:00,Over/Under 3.5,quasi,1xBet,Over 3.5,2.205,292.17,4.23,Betway,Under 3.5,1.84,347.83,0.01,,,,,,640,0.3,1.93
