@@ -177,6 +177,9 @@ def prevent_sleep():
             print(f"[System] Warning: Could not disable sleep: {e}")
 
 def main():
+    global next_run_time, scan_count  # ← fix: declare globals so Python doesn't
+                                      #         treat them as unassigned locals
+
     prevent_sleep()
     print("\n" + "* " * 20)
     print("   QUANT BET ALPHA - LIVE SYSTEM")
@@ -198,4 +201,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

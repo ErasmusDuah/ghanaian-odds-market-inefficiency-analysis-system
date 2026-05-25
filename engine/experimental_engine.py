@@ -51,6 +51,9 @@ def clean_tokens(name):
         filtered.append(w)
     return filtered
 
+ASSOCIATIONS = {'hapoel', 'maccabi', 'beitar', 'ironi'}
+GENERIC_WORDS = {'kfar', 'fc', 'sc', 'united', 'city', 'town', 'club', 'team'}
+
 def smart_team_match(a, b):
     tokens_a = clean_tokens(a)
     tokens_b = clean_tokens(b)
@@ -58,6 +61,24 @@ def smart_team_match(a, b):
     if not tokens_a or not tokens_b:
         return False
         
+    # --- LAYER 1: STRICT ASSOCIATION GUARD ---
+    # If one is Hapoel and the other is Maccabi/Beitar/etc., they can NEVER match
+    assoc_a = set(tokens_a).intersection(ASSOCIATIONS)
+    assoc_b = set(tokens_b).intersection(ASSOCIATIONS)
+    if assoc_a and assoc_b and assoc_a != assoc_b:
+        return False
+
+    # --- LAYER 2: CORE IDENTIFIER CHECK ---
+    # Strip out both associations and generic words to find the "core" names
+    core_a = [w for w in tokens_a if w not in ASSOCIATIONS and w not in GENERIC_WORDS]
+    core_b = [w for w in tokens_b if w not in ASSOCIATIONS and w not in GENERIC_WORDS]
+    
+    # If we have core words, at least one core word MUST overlap
+    if core_a and core_b:
+        core_overlap = set(core_a).intersection(set(core_b))
+        if not core_overlap:
+            return False  # e.g., "Saba" vs "Shalem" -> no core overlap -> NO MATCH
+
     if tokens_a == tokens_b:
         return True
         
@@ -76,6 +97,7 @@ def smart_team_match(a, b):
         return True
         
     return False
+
 
 
 VIRTUAL_KEYWORDS = [

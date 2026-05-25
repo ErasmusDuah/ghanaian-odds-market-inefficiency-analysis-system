@@ -140,9 +140,6 @@ def run_scan():
     global scan_count, next_run_time
     scan_count += 1
     
-    # Lock in next run time before scraping starts (2 minutes loop)
-    next_run_time = time.time() + 2 * 60
-    
     try:
         _env        = dotenv_values(ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -184,19 +181,21 @@ def run_scan():
             bangbet_matches      = fetched.get('Bangbet',      []),
         )
 
+        # Lock in next run time exactly 2 minutes after calculations complete
+        calc_end_time = datetime.now()
+        next_run_time = time.time() + 2 * 60
+        next_run_dt = datetime.fromtimestamp(next_run_time)
+
+        calc_end_str = calc_end_time.strftime('%I:%M:%S %p').lstrip('0').lower()
+        next_run_str = next_run_dt.strftime('%I:%M:%S %p').lstrip('0').lower()
+
         scan_time  = time.time() - scan_start
 
         total_time = scrape_time + scan_time
 
-        print(f"\n{'─'*60}")
-        print(f"⏱️  TIMING BREAKDOWN")
-        print(f"{'─'*60}")
-        print(f"  🌐 Scraping    : {scrape_time:.2f}s  ({scrape_time/60:.3f} min)")
-        print(f"  🔍 Scanning    : {scan_time:.2f}s  ({scan_time/60:.3f} min)")
-        print(f"  🕐 TOTAL       : {total_time:.2f}s  ({total_time/60:.3f} min)")
-        print(f"{'─'*60}\n")
-
-        display_all(opportunities, num_groups, total_stake)
+        display_all(opportunities, num_groups, total_stake,
+                    scrape_time, scan_time, total_time,
+                    calc_end_str=calc_end_str, next_run_str=next_run_str)
 
         # Log opportunities to CSV (always logs a row for ML continuity)
         try:
@@ -231,6 +230,9 @@ def has_internet():
 
 
 def main():
+    global next_run_time, scan_count  # ← fix: declare globals so Python doesn't
+                                      #         treat them as unassigned locals
+
     prevent_sleep()
     
     if not has_internet():
@@ -242,7 +244,7 @@ def main():
         
     run_scan()
     
-    print("\n[Scheduled] Scanning every 2 minutes (interval starts when scraping starts)")
+    print("\n[Scheduled] Scanning every 2 minutes (interval starts after calculations complete)")
     print("STOP Press Ctrl+C to stop\n")
     
     while True:

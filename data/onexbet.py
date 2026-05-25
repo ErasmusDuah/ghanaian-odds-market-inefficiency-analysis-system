@@ -204,7 +204,7 @@ async def collect_today_games_async(
 ) -> List[dict]:
     # Lower limits significantly to avoid 1xbet rate-limiting/blocking connections
     async with aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=50),
+        connector=aiohttp.TCPConnector(limit=20),
         headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
     ) as session:
         # 1. Fetch all champs (leagues)
@@ -214,7 +214,7 @@ async def collect_today_games_async(
             return []
 
         # 2. Concurrently fetch all games within those leagues
-        sem_champ = asyncio.Semaphore(50)
+        sem_champ = asyncio.Semaphore(20)
         
         async def get_champ_games(li: int) -> List[Tuple[int, dict, str]]:
             async with sem_champ:
@@ -256,7 +256,7 @@ async def collect_today_games_async(
             return []
 
         # 3. Concurrently fetch full odds (GetGameZip) for matching games
-        sem_game = asyncio.Semaphore(50)
+        sem_game = asyncio.Semaphore(12)
         
         async def load_odds(item: Tuple[int, dict, str]) -> dict:
             gid, stub, league_fallback = item
@@ -268,8 +268,14 @@ async def collect_today_games_async(
                 # Base odds from ChampZip
                 odds = build_odds_block(iter_linefeed_outcomes(stub))
                 
-                # Detailed odds from GameZip
-                detail = await fetch_game_zip_async(session, site, gid, referer)
+                # Detailed odds from GameZip (retry up to 3 times if it fails)
+                detail = None
+                for attempt in range(3):
+                    detail = await fetch_game_zip_async(session, site, gid, referer)
+                    if detail:
+                        break
+                    await asyncio.sleep(0.5 * (attempt + 1))
+                
                 if detail:
                     odds = {**odds, **build_odds_block(iter_linefeed_outcomes(detail))}
                     

@@ -112,6 +112,9 @@ def clean_tokens(name):
         filtered.append(w)
     return filtered
 
+ASSOCIATIONS = {'hapoel', 'maccabi', 'beitar', 'ironi'}
+GENERIC_WORDS = {'kfar', 'fc', 'sc', 'united', 'city', 'town', 'club', 'team'}
+
 def smart_team_match(a, b):
     tokens_a = clean_tokens(a)
     tokens_b = clean_tokens(b)
@@ -119,6 +122,24 @@ def smart_team_match(a, b):
     if not tokens_a or not tokens_b:
         return False
         
+    # --- LAYER 1: STRICT ASSOCIATION GUARD ---
+    # If one is Hapoel and the other is Maccabi/Beitar/etc., they can NEVER match
+    assoc_a = set(tokens_a).intersection(ASSOCIATIONS)
+    assoc_b = set(tokens_b).intersection(ASSOCIATIONS)
+    if assoc_a and assoc_b and assoc_a != assoc_b:
+        return False
+
+    # --- LAYER 2: CORE IDENTIFIER CHECK ---
+    # Strip out both associations and generic words to find the "core" names
+    core_a = [w for w in tokens_a if w not in ASSOCIATIONS and w not in GENERIC_WORDS]
+    core_b = [w for w in tokens_b if w not in ASSOCIATIONS and w not in GENERIC_WORDS]
+    
+    # If we have core words, at least one core word MUST overlap
+    if core_a and core_b:
+        core_overlap = set(core_a).intersection(set(core_b))
+        if not core_overlap:
+            return False  # e.g., "Saba" vs "Shalem" -> no core overlap -> NO MATCH
+
     if tokens_a == tokens_b:
         return True
         
@@ -137,6 +158,7 @@ def smart_team_match(a, b):
         return True
         
     return False
+
 
 
 VIRTUAL_KEYWORDS = [
@@ -608,83 +630,102 @@ def run_intensive(total_stake=None,
 
 # ── DISPLAY ────────────────────────────────────────────────────────────────────
 
-def display_opportunity(opp):
+_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+
+
+def _write_opportunity_to_file(f, opp):
+    """Write a single opportunity's full details to a file handle."""
     cat = opp.get('category', 'balanced')
     cat_icons = {'balanced': '⚖️ ', 'unbalanced': '📊', 'quasi': '🛡️ '}
-    print(f"\n  {'='*55}")
-    print(f"  🏆 {opp['match']}")
-    print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
-    print(f"  {'='*55}")
-    print(f"  📊 Market:   {opp['market']}")
-    print(f"  {cat_icons.get(cat, '')} Category: {cat.upper()}")
+    f.write(f"\n  {'='*55}\n")
+    f.write(f"  🏆 {opp['match']}\n")
+    f.write(f"  📅 {opp['kickoff']} | {opp['tournament']}\n")
+    f.write(f"  {'='*55}\n")
+    f.write(f"  📊 Market:   {opp['market']}\n")
+    f.write(f"  {cat_icons.get(cat, '')} Category: {cat.upper()}\n")
 
     if cat == 'balanced':
-        print(f"  💰 Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f} (guaranteed on all outcomes)")
+        f.write(f"  💰 Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f} (guaranteed on all outcomes)\n")
     elif cat == 'unbalanced':
-        print(f"  📉 Min:      GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)")
-        print(f"  📈 Max:      GHS {opp['max_profit_ghs']:.2f}  ← if {opp['max_outcome']} wins")
+        f.write(f"  📉 Min:      GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)\n")
+        f.write(f"  📈 Max:      GHS {opp['max_profit_ghs']:.2f}  ← if {opp['max_outcome']} wins\n")
     elif cat == 'quasi':
-        print(f"  🛡️  Break-Even: {opp['break_even_outcome']} (get stake back)")
-        print(f"  💰 Best:       GHS {opp['best_profit_ghs']:.2f} ← if {opp['best_outcome']} wins")
+        f.write(f"  🛡️  Break-Even: {opp['break_even_outcome']} (get stake back)\n")
+        f.write(f"  💰 Best:       GHS {opp['best_profit_ghs']:.2f} ← if {opp['best_outcome']} wins\n")
 
-    print(f"  💵 Stake:    GHS {sum(b['stake'] for b in opp['bets']):.2f}")
-    print(f"\n  📋 BETS TO PLACE:")
+    f.write(f"  💵 Stake:    GHS {sum(b['stake'] for b in opp['bets']):.2f}\n")
+    f.write(f"\n  📋 BETS TO PLACE:\n")
     for bet in opp['bets']:
         profit = bet['profit_if_wins']
         if abs(profit) < 0.02:
             profit = 0.0
-        print(f"\n     🎯 {bet['platform']}")
-        print(f"        Bet:   {bet['outcome']}")
-        print(f"        Odds:  {bet['odds']}")
-        print(f"        Stake: GHS {bet['stake']:.2f}")
-        print(f"        Win:   GHS {profit:.2f}")
+        f.write(f"\n     🎯 {bet['platform']}\n")
+        f.write(f"        Bet:   {bet['outcome']}\n")
+        f.write(f"        Odds:  {bet['odds']}\n")
+        f.write(f"        Stake: GHS {bet['stake']:.2f}\n")
+        f.write(f"        Win:   GHS {profit:.2f}\n")
 
 
-def display_all(opportunities, num_groups, total_stake):
+def display_all(opportunities, num_groups, total_stake,
+                scrape_time=None, scan_time=None, total_time=None,
+                calc_end_str=None, next_run_str=None):
     sep = '=' * 60
 
     balanced   = [o for o in opportunities if o.get('category') == 'balanced']
     unbalanced = [o for o in opportunities if o.get('category') == 'unbalanced']
     quasi      = [o for o in opportunities if o.get('category') == 'quasi']
 
-    print(f"\n{sep}")
-    print("⚖️   CATEGORY 1: BALANCED ARBITRAGE")
-    print("    Guaranteed equal profit on ALL outcomes")
-    print(sep)
-    if balanced:
-        for opp in sorted(balanced, key=lambda x: x['profit_pct'], reverse=True):
-            display_opportunity(opp)
-    else:
-        print("  💡 No balanced arb opportunities right now")
+    # ── Write each category to its own .txt file (overwrite) ──────────────
+    bal_path = os.path.join(_DATA_DIR, 'intensive_balanced.txt')
+    with open(bal_path, 'w', encoding='utf-8') as f:
+        f.write(f"⚖️  BALANCED ARBITRAGE — {len(balanced)} opportunities\n")
+        f.write(f"Guaranteed equal profit on ALL outcomes\n")
+        f.write(f"{sep}\n")
+        if balanced:
+            for opp in sorted(balanced, key=lambda x: x['profit_pct'], reverse=True):
+                _write_opportunity_to_file(f, opp)
+        else:
+            f.write("  💡 No balanced arb opportunities right now\n")
 
-    print(f"\n{sep}")
-    print("📊  CATEGORY 2: UNBALANCED ARBITRAGE")
-    print("    All outcomes profitable — amounts differ")
-    print(sep)
-    if unbalanced:
-        for opp in sorted(unbalanced, key=lambda x: x['max_profit_ghs'], reverse=True):
-            display_opportunity(opp)
-    else:
-        print("  💡 No unbalanced arb opportunities right now")
+    unb_path = os.path.join(_DATA_DIR, 'intensive_unbalanced.txt')
+    with open(unb_path, 'w', encoding='utf-8') as f:
+        f.write(f"📊 UNBALANCED ARBITRAGE — {len(unbalanced)} opportunities\n")
+        f.write(f"All outcomes profitable — amounts differ\n")
+        f.write(f"{sep}\n")
+        if unbalanced:
+            for opp in sorted(unbalanced, key=lambda x: x['max_profit_ghs'], reverse=True):
+                _write_opportunity_to_file(f, opp)
+        else:
+            f.write("  💡 No unbalanced arb opportunities right now\n")
 
-    print(f"\n{sep}")
-    print("🛡️   CATEGORY 3: QUASI-ARB (No-Loss)")
-    print("    Worst case: break even | Best case: profit")
-    print(sep)
-    if quasi:
-        for opp in sorted(quasi, key=lambda x: x['best_profit_ghs'], reverse=True):
-            display_opportunity(opp)
-    else:
-        print("  💡 No quasi-arb opportunities right now")
+    qua_path = os.path.join(_DATA_DIR, 'intensive_quasi.txt')
+    with open(qua_path, 'w', encoding='utf-8') as f:
+        f.write(f"🛡️  QUASI-ARB (No-Loss) — {len(quasi)} opportunities\n")
+        f.write(f"Worst case: break even | Best case: profit\n")
+        f.write(f"{sep}\n")
+        if quasi:
+            for opp in sorted(quasi, key=lambda x: x['best_profit_ghs'], reverse=True):
+                _write_opportunity_to_file(f, opp)
+        else:
+            f.write("  💡 No quasi-arb opportunities right now\n")
 
+    # ── Compact terminal summary ──────────────────────────────────────────
     print(f"\n{sep}")
     print(f"⚽ Events scanned  : {num_groups}")
     print(f"🌐 Platforms       : 7 (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)")
-    print(f"⚖️  Balanced        : {len(balanced)}")
-    print(f"📊 Unbalanced      : {len(unbalanced)}")
-    print(f"🛡️  Quasi-Arb       : {len(quasi)}")
+    print(f"⚖️  Balanced        : {len(balanced)} → {bal_path}")
+    print(f"📊 Unbalanced      : {len(unbalanced)} → {unb_path}")
+    print(f"🛡️  Quasi-Arb       : {len(quasi)} → {qua_path}")
     if opportunities:
         best = max(opportunities, key=lambda x: x['profit_pct'])
+        best_cat = best.get('category', 'balanced').capitalize()
         print(f"💰 Total profit    : GHS {sum(o['profit_ghs'] for o in opportunities):.2f}")
-        print(f"📈 Best            : {best['profit_pct']:.2f}% on {best['match']}")
+        print(f"📈 Best            : {best['profit_pct']:.2f}% on {best['match']} ({best_cat})")
+    if scrape_time is not None and scan_time is not None and total_time is not None:
+        print(f"🌐 Scraping        : {scrape_time:.2f}s  ({scrape_time/60:.3f} min)")
+        calc_suffix = f"  (Finished calculations at {calc_end_str})" if calc_end_str else ""
+        print(f"🔍 Scanning        : {scan_time:.2f}s  ({scan_time/60:.3f} min){calc_suffix}")
+        print(f"🕐 TOTAL           : {total_time:.2f}s  ({total_time/60:.3f} min)")
+        if next_run_str:
+            print(f"\n[Scheduled] Next run is at {next_run_str}")
     print(sep)
