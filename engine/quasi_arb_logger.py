@@ -5,9 +5,9 @@ Parallel ML logging system for quasi-arbitrage opportunities.
 Writes to data/quasi_arb_ml.xlsx — a clean dataset for model training.
 
 Deduplication rules (scanner runs every 2-5 mins, same opp can repeat):
-  - First time a match + market + profit side + line appears  → LOG
-  - Profit margin shifts by ≥ 0.10% from last logged value   → LOG (new row)
-  - Same key, same side, margin within 0.10% threshold       → SKIP
+  - First time a match + market + profit side + line appears → LOG
+  - Profit (GHS) changed since last log for that key         → LOG (new row)
+  - Same key AND same profit (GHS, rounded to 2dp)           → SKIP
 
 Old rows are NEVER overwritten. New rows are always appended so the
 time-evolution of a signal before kickoff is preserved for the ML model.
@@ -28,7 +28,7 @@ import pandas as pd
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QUASI_ML_FILE = os.path.join(_ROOT, 'data', 'quasi_arb_ml.xlsx')
 
-MARGIN_THRESHOLD = 0.10   # % — profit margin shifts smaller than this are noise
+# Profit is compared at 2 decimal places (GHS). Re-log only if it changes.
 
 COLUMNS = [
     'Timestamp',
@@ -51,7 +51,7 @@ COLUMNS = [
 ]
 
 # ── IN-MEMORY DEDUP INDEX ──────────────────────────────────────────────────────
-# key → (profit_side, profit_margin_pct) — most recently logged values per key
+# key → profit_ghs (float, 2dp) — most recently logged profit for that key
 _seen: dict = {}
 _index_loaded = False
 
@@ -74,28 +74,34 @@ def _load_index():
         df = pd.read_excel(QUASI_ML_FILE, engine='openpyxl', dtype=str)
         for _, row in df.iterrows():
             key = _make_key(
-                str(row.get('Home Team',    '') or ''),
-                str(row.get('Away Team',    '') or ''),
-                str(row.get('Match Date',   '') or ''),
-                str(row.get('Market',       '') or ''),
-                str(row.get('Profit Side',  '') or ''),
-                str(row.get('Line',         '') or ''),
+                str(row.get('Home Team',          '') or ''),
+                str(row.get('Away Team',          '') or ''),
+                str(row.get('Match Date',         '') or ''),
+                str(row.get('Market',             '') or ''),
+                str(row.get('Profit Side',        '') or ''),
+                str(row.get('Line',               '') or ''),
+                str(row.get('Bookmakers Involved', '') or ''),
             )
             try:
-                margin = float(row.get('Profit Margin (%)', 0) or 0)
+                profit = round(float(row.get('Profit (GHS)', 0) or 0), 2)
             except (ValueError, TypeError):
-                margin = 0.0
-            _seen[key] = (str(row.get('Profit Side', '') or ''), margin)
+                profit = 0.0
+            _seen[key] = profit
     except Exception as e:
-        # If the file is unreadable, start fresh — don't crash the engine
         print(f"  [Quasi ML] WARNING: Could not load existing index (starting fresh): {e}")
 
 
 # ── KEY BUILDER ────────────────────────────────────────────────────────────────
 
 def _make_key(home: str, away: str, match_date: str,
-              market: str, profit_side: str, line: str) -> str:
-    """Lowercase, pipe-separated dedup key."""
+              market: str, profit_side: str, line: str,
+              bookmakers: str = '') -> str:
+    """
+    Lowercase, pipe-separated dedup key.
+    Bookmakers are sorted alphabetically so platform order doesn't matter
+    (e.g. '22Bet, Sportybet' == 'Sportybet, 22Bet').
+    """
+    sorted_books = '+'.join(sorted(b.strip().lower() for b in bookmakers.split(',') if b.strip()))
     return '|'.join([
         home.strip().lower(),
         away.strip().lower(),
@@ -103,6 +109,7 @@ def _make_key(home: str, away: str, match_date: str,
         market.strip().lower(),
         profit_side.strip().lower(),
         str(line).strip(),
+        sorted_books,
     ])
 
 
@@ -199,7 +206,7 @@ def _hours_before_kickoff(kickoff_str: str):
 
 # ── MAIN PUBLIC FUNCTION ───────────────────────────────────────────────────────
 
-def log_quasi_opportunities(quasi_opps: list, total_stake: int | float):
+def log_quasi_opportunities(quasi_opps: list, total_stake: int | float, quiet=False):
     """
     Log quasi-arbitrage opportunities to data/quasi_arb_ml.xlsx.
 
@@ -210,12 +217,15 @@ def log_quasi_opportunities(quasi_opps: list, total_stake: int | float):
     ----------
     quasi_opps  : list of opportunity dicts with category == 'quasi'
     total_stake : total capital being staked (int/float, from .env)
+    quiet       : if True, suppress automatic console printing
     """
     _load_index()
 
     if not quasi_opps:
-        print("  ✅ [Quasi ML] 0 quasi opportunities — nothing to log.")
-        return
+        msg = "  📊 [Quasi ML] No new Quasi-Arb opportunities found at this time of the scan"
+        if not quiet:
+            print(msg)
+        return msg
 
     now_str     = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     new_rows    = []
@@ -251,14 +261,12 @@ def log_quasi_opportunities(quasi_opps: list, total_stake: int | float):
                                 )
 
         # ── Dedup check ───────────────────────────────────────────────────────
-        key = _make_key(home, away, match_date, market_type, profit_side, line)
+        key = _make_key(home, away, match_date, market_type, profit_side, line, bookmakers)
+        profit_rounded = round(best_ghs, 2)
 
-        if key in _seen:
-            _last_side, last_margin = _seen[key]
-            margin_delta = abs(profit_margin_pct - last_margin)
-            if margin_delta < MARGIN_THRESHOLD:
-                skipped += 1
-                continue   # same opp, margin unchanged — skip
+        if key in _seen and _seen[key] == profit_rounded:
+            skipped += 1
+            continue   # same opp, same profit — skip
 
         # ── Build row ─────────────────────────────────────────────────────────
         row = {
@@ -281,13 +289,14 @@ def log_quasi_opportunities(quasi_opps: list, total_stake: int | float):
             'Profit Side Hit':      '',
         }
         new_rows.append(row)
-        _seen[key] = (profit_side, profit_margin_pct)   # update live index
+        _seen[key] = profit_rounded   # update live index
 
     # ── Write to Excel ────────────────────────────────────────────────────────
     if not new_rows:
-        print(f"  [Quasi ML] All {skipped} opportunity/ies unchanged -- dedup skipped. "
-              f"(quasi_arb_ml.xlsx untouched)")
-        return
+        msg = "  📊 [Quasi ML] No new Quasi-Arb opportunities found at this time of the scan"
+        if not quiet:
+            print(msg)
+        return msg
 
     new_df = pd.DataFrame(new_rows, columns=COLUMNS)
 
@@ -302,5 +311,7 @@ def log_quasi_opportunities(quasi_opps: list, total_stake: int | float):
 
     combined_df.to_excel(QUASI_ML_FILE, index=False, engine='openpyxl')
 
-    skipped_msg = f"  ({skipped} skipped by dedup)" if skipped else ""
-    print(f"  [Quasi ML] Logged {len(new_rows)} new row(s) -> {QUASI_ML_FILE}{skipped_msg}")
+    msg = f"  📊 [Quasi ML] {len(new_rows)} new rows added to quasi_arb_ml.xlsx"
+    if not quiet:
+        print(msg)
+    return msg

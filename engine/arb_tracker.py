@@ -55,7 +55,7 @@ def ensure_tracker():
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
 
-def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update arbitrage tracker"):
+def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update arbitrage tracker", quiet=False):
     """Automatically commit and push updated files to GitHub."""
     if isinstance(filepaths, str):
         filepaths = [filepaths]
@@ -80,17 +80,27 @@ def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update 
         if has_changes:
             subprocess.run(["git", "commit", "-m", message], cwd=cwd, check=True, capture_output=True)
             subprocess.run(["git", "push"], cwd=cwd, check=True, capture_output=True)
-            print(f"  ✅ [Git Sync] Synced {', '.join(filepaths)} to GitHub.")
+            msg = f"  ✅ [Git Sync] Synced {', '.join(filepaths)} to GitHub."
         else:
-            print(f"  ✅ [Git Sync] Files are already up to date on GitHub (no new changes).")
+            msg = f"  ✅ [Git Sync] Files are already up to date on GitHub (no new changes)."
+        
+        if not quiet:
+            print(msg)
+        return msg
     except subprocess.CalledProcessError as e:
         stderr_msg = e.stderr.decode('utf-8', errors='ignore') if e.stderr else str(e)
         if "ignored by one of your .gitignore files" not in stderr_msg:
-            print(f"  ⚠️ [Git Sync] Error syncing to GitHub: {stderr_msg}")
+            msg = f"  ⚠️ [Git Sync] Error syncing to GitHub: {stderr_msg}"
+            if not quiet:
+                print(msg)
+            return msg
     except Exception as e:
-        print(f"  ⚠️ [Git Sync] Error syncing to GitHub: {e}")
+        msg = f"  ⚠️ [Git Sync] Error syncing to GitHub: {e}"
+        if not quiet:
+            print(msg)
+        return msg
 
-def save_arbitrage_opportunities(opportunities, total_stake):
+def save_arbitrage_opportunities(opportunities, total_stake, quiet=False):
     """
     Saves a list of arbitrage opportunities to the CSV tracker and syncs with GitHub.
     Always logs a row — if no arbs found, writes a row of 0s for ML continuity.
@@ -154,9 +164,10 @@ def save_arbitrage_opportunities(opportunities, total_stake):
         writer.writerows(rows)
     
     if not opportunities:
-        print(f"\n  💾 [Arb Tracker] 0 opportunities found — logged 0s row to data/arbitrage_tracker.csv")
+        msg = f"💾 [Arb Tracker] 0 opportunities found — logged 0s row to data/arbitrage_tracker.csv"
     else:
-        print(f"\n  💾 [Arb Tracker] Appended {len(rows)} opportunities to data/arbitrage_tracker.csv")
+        msg = f"💾 [Arb Tracker] Appended {len(rows)} opportunities to data/arbitrage_tracker.csv"
     
-    # Push to Github
-    push_to_github()
+    if not quiet:
+        print(f"\n  {msg}")
+    return msg

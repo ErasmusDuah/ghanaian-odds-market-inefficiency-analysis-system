@@ -193,29 +193,39 @@ def run_scan():
 
         total_time = scrape_time + scan_time
 
-        display_all(opportunities, num_groups, total_stake,
-                    scrape_time, scan_time, total_time,
-                    calc_end_str=calc_end_str, next_run_str=next_run_str)
+        quasi_summary = display_all(opportunities, num_groups, total_stake,
+                                    scrape_time, scan_time, total_time,
+                                    calc_end_str=calc_end_str, next_run_str=next_run_str)
 
         # Log opportunities to CSV (always logs a row for ML continuity)
+        arb_msg = ""
         try:
-            save_arbitrage_opportunities(opportunities, total_stake)
+            arb_msg = save_arbitrage_opportunities(opportunities, total_stake, quiet=True)
         except Exception as e:
             print(f"  ❌ ERROR saving intensive opportunities to CSV: {e}")
+
+        # Commit and push updated files to GitHub
+        git_msg = ""
+        try:
+            git_msg = push_to_github(
+                filepaths=["data/arbitrage_tracker.csv", "data/quasi_arb_ml.xlsx"],
+                message=f"Auto-update intensive arbitrage results (Scan #{scan_count})",
+                quiet=True
+            )
+        except Exception as e:
+            git_msg = f"  ⚠️ [Git Sync] Error syncing to GitHub: {e}"
+
+        # Print the beautiful consolidated summary at the very bottom
+        print()
+        print(arb_msg.strip())
+        print(quasi_summary.strip())
+        print(git_msg.strip())
+        print()
 
     except Exception as e:
         print(f"  ❌ ERROR inside intensive run_scan: {e}")
         import traceback
         traceback.print_exc()
-        
-    # Commit and push only arbitrage_tracker.csv to GitHub
-    try:
-        push_to_github(
-            filepaths=["data/arbitrage_tracker.csv", "data/quasi_arb_ml.xlsx"],
-            message=f"Auto-update intensive arbitrage results (Scan #{scan_count})"
-        )
-    except Exception as e:
-        print(f"  ❌ ERROR syncing intensive results to GitHub: {e}")
 
 def has_internet():
     """Checks for active internet connectivity using OS DNS resolution."""
