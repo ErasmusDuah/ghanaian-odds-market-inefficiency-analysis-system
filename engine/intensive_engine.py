@@ -709,6 +709,13 @@ def display_all(opportunities, num_groups, total_stake,
         else:
             f.write("  💡 No quasi-arb opportunities right now\n")
 
+    # ── Quasi-Arb ML Logger (parallel logging for ML training data) ────────────
+    try:
+        from engine.quasi_arb_logger import log_quasi_opportunities
+        log_quasi_opportunities(quasi, total_stake)
+    except Exception as _qml_err:
+        print(f"  ⚠️  [Quasi ML] Logger error (non-fatal): {_qml_err}")
+
     # ── Compact terminal summary ──────────────────────────────────────────
     print(f"\n{sep}")
     print(f"⚽ Events scanned  : {num_groups}")

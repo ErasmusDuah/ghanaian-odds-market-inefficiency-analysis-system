@@ -211,7 +211,7 @@ def run_scan():
     # Commit and push only arbitrage_tracker.csv to GitHub
     try:
         push_to_github(
-            filepaths=["data/arbitrage_tracker.csv"],
+            filepaths=["data/arbitrage_tracker.csv", "data/quasi_arb_ml.xlsx"],
             message=f"Auto-update intensive arbitrage results (Scan #{scan_count})"
         )
     except Exception as e:
