@@ -35,11 +35,20 @@ _seen = {}
 _index_loaded = False
 
 
+def ensure_logger():
+    if not os.path.exists(QUASI_ML_FILE):
+        os.makedirs(os.path.dirname(QUASI_ML_FILE), exist_ok=True)
+        df = pd.DataFrame(columns=COLUMNS)
+        df.to_excel(QUASI_ML_FILE, index=False, engine='openpyxl')
+
+
 def _load_index():
     global _seen, _index_loaded
     if _index_loaded:
         return
     _index_loaded = True
+
+    ensure_logger()
 
     if not os.path.exists(QUASI_ML_FILE):
         return
