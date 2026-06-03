@@ -1,23 +1,35 @@
-# Environment & secrets — NEVER commit these
+# ── Environment & Secrets — NEVER commit these ──
 .env
+football/.env
+table_tennis/.env
+basketball/.env
 
-# Python cache
+# ── Python cache ──
 __pycache__/
 *.pyc
 *.pyo
 
-# Generated odds data (rebuilt on every run)
+# ── Generated odds data (per sport, rebuilt on every run) ──
+football/data/*.json
+football/data/*.txt
+table_tennis/data/*.json
+table_tennis/data/*.txt
+basketball/data/*.json
+basketball/data/*.txt
+
+# ── Legacy root data (no longer used) ──
 data/*.json
 data/*.txt
 
-# Ledger database (keep locally, not in git)
+# ── Ledger databases ──
 data/ledger.db
 
-# Saved arb snapshots
+# ── Engine artifacts ──
+football/engine/opportunities.json
 engine/arb_*.json
 engine/opportunities.json
 
-# Debug & scratch files
+# ── Debug & scratch files ──
 *.html
 1x_debug.html
 captured_*.json
@@ -28,3 +40,7 @@ scratch_*.py
 tempCodeRunnerFile.py
 matches_*.json
 matches_*.txt
+scratch/
+
+# ── Virtual environment ──
+.venv/

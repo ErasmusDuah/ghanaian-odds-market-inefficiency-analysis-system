@@ -56,12 +56,12 @@ def run_scan_background():
     start = time.time()
 
     try:
-        from data.sportybet    import run as fetch_sportybet
-        from data.betway       import run as fetch_betway
-        from data.footballcom  import run as fetch_footballcom
-        from data.onexbet      import run as fetch_onexbet
-        from data.twentytwobet import run as fetch_twentytwobet
-        from engine.arbitrage_engine import scan_all
+        from football.scrapers.fb_sportybet    import run as fetch_sportybet
+        from football.scrapers.fb_betway       import run as fetch_betway
+        from football.scrapers.fb_footballcom  import run as fetch_footballcom
+        from football.scrapers.fb_onexbet      import run as fetch_onexbet
+        from football.scrapers.fb_twentytwobet import run as fetch_twentytwobet
+        from football.engine.fb_arbitrage_engine import scan_all
 
         total_stake = int(os.getenv('STARTING_CAPITAL', 500))
 
