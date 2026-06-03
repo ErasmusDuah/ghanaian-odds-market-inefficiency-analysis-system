@@ -259,7 +259,7 @@ def run():
     matches = asyncio.run(scrape())
 
     if matches:
-        with open(os.path.join(output_dir, 'soccabet_odds.json', 'w') as f:
+        with open(os.path.join(output_dir, 'soccabet_odds.json'), 'w') as f:
             json.dump(matches, f, indent=2)
 
         with open(os.path.join(output_dir, 'soccabet_matches.txt'), 'w', encoding='utf-8') as f:

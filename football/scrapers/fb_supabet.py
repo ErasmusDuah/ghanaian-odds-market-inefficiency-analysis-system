@@ -152,7 +152,7 @@ def run():
     if matches:
         display_matches(matches)
 
-        with open(os.path.join(output_dir, 'supabet_odds.json', 'w') as f:
+        with open(os.path.join(output_dir, 'supabet_odds.json'), 'w') as f:
             json.dump(matches, f, indent=2)
 
         with open(os.path.join(output_dir, 'supabet_matches.txt'), 'w', encoding='utf-8') as f:

@@ -360,10 +360,10 @@ def run():
     if matches:
         display_matches(matches)
 
-        with open(os.path.join(output_dir, 'betway_odds.json', 'w') as f:
+        with open(os.path.join(output_dir, 'betway_odds.json'), 'w') as f:
             json.dump(matches, f, indent=2)
 
-        with open(os.path.join(output_dir, 'betway_matches.txt', 'w',
+        with open(os.path.join(output_dir, 'betway_matches.txt'), 'w',
                   encoding='utf-8') as f:
             f.write(f"BETWAY GHANA - ALL MATCHES\n")
             f.write(f"Generated: "

@@ -161,7 +161,7 @@ def run_scan():
 
         print("============================================================")
         print("MATCHES FETCHED PER PLATFORM:")
-        for name in ['Sportybet', 'Betway', 'Football.com', '1xBet', '22Bet', 'MSport', 'Bangbet']:
+        for name in ['Sportybet', 'Betway', 'Football.com', '1xBet', '22Bet', 'MSport']:
             count = len(fetched.get(name, []))
             print(f"  {name:<12}: {count}")
         print("============================================================\n")
@@ -182,7 +182,6 @@ def run_scan():
             onexbet_matches      = fetched.get('1xBet',        []),
             twentytwobet_matches = fetched.get('22Bet',        []),
             msport_matches       = fetched.get('MSport',       []),
-            bangbet_matches      = fetched.get('Bangbet',      []),
         )
 
         # Lock in next run time exactly 2 minutes after calculations complete
@@ -256,22 +255,25 @@ def main():
             time.sleep(10)
         print(f"\n[System] ✅ Internet connection established! Starting engine...")
         
-    run_scan()
-    
-    print("\n[Scheduled] Scanning every 2 minutes (interval starts after calculations complete)")
-    print("STOP Press Ctrl+C to stop\n")
-    
-    while True:
-        if time.time() >= next_run_time:
-            if not has_internet():
-                print(f"\n❌ [System] Internet connection lost at {datetime.now().strftime('%H:%M:%S')}! Pausing engine...")
-                while not has_internet():
-                    print(f"\r[System] ⚠️ Offline. Waiting 10s for internet...", end="", flush=True)
-                    time.sleep(10)
-                print(f"\n[System] ✅ Internet connection restored at {datetime.now().strftime('%H:%M:%S')}! Resuming scan...")
-                next_run_time = time.time()
-            run_scan()
-        time.sleep(1)
+    try:
+        run_scan()
+        
+        print("\n[Scheduled] Scanning every 2 minutes (interval starts after calculations complete)")
+        print("Press Ctrl+C to stop\n")
+        
+        while True:
+            if time.time() >= next_run_time:
+                if not has_internet():
+                    print(f"\n❌ [System] Internet connection lost at {datetime.now().strftime('%H:%M:%S')}! Pausing engine...")
+                    while not has_internet():
+                        print(f"\r[System] ⚠️ Offline. Waiting 10s for internet...", end="", flush=True)
+                        time.sleep(10)
+                    print(f"\n[System] ✅ Internet connection restored at {datetime.now().strftime('%H:%M:%S')}! Resuming scan...")
+                    next_run_time = time.time()
+                run_scan()
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n\n🛑 Stopped by user.")
 
 if __name__ == "__main__":
     main()

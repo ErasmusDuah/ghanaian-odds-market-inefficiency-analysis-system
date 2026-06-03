@@ -66,7 +66,7 @@ _EXCLUDED = _load_exclusions()
 # ── PLATFORM REGISTRY ──────────────────────────────────────────────────────────
 PLATFORMS = [
     'sportybet', 'betway', 'footballcom',
-    'onexbet', 'twentytwobet', 'msport', 'bangbet',
+    'onexbet', 'twentytwobet', 'msport',
 ]
 
 PLATFORM_DISPLAY = {
@@ -76,7 +76,6 @@ PLATFORM_DISPLAY = {
     'onexbet':      '1xBet',
     'twentytwobet': '22Bet',
     'msport':       'MSport',
-    'bangbet':      'Bangbet',
 }
 
 SOURCE_MAP = {
@@ -86,7 +85,6 @@ SOURCE_MAP = {
     'onexbet':      '1xbet_gh',
     'twentytwobet': 'twentytwobet_gh',
     'msport':       'msport_gh',
-    'bangbet':      'bangbet_gh',
 }
 
 
@@ -720,7 +718,7 @@ def display_all(opportunities, num_groups, total_stake,
     # ── Compact terminal summary ──────────────────────────────────────────
     print(f"\n{sep}")
     print(f"⚽ Events scanned  : {num_groups}")
-    print(f"🌐 Platforms       : 7 (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)")
+    print(f"🌐 Platforms       : 6 (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport)")
     print(f"⚖️  Balanced        : {len(balanced)} → {bal_path}")
     print(f"📊 Unbalanced      : {len(unbalanced)} → {unb_path}")
     print(f"🛡️  Quasi-Arb       : {len(quasi)} → {qua_path}")
