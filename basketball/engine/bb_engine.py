@@ -214,10 +214,7 @@ def scan_2way_arb(group, total_stake):
     opportunities = []
 
     for i in range(len(matches)):
-        for j in range(len(matches)):
-            if i == j:
-                continue
-            
+        for j in range(i + 1, len(matches)):
             m1 = matches[i]
             m2 = matches[j]
             
