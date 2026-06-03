@@ -854,7 +854,6 @@ def scan_all(sportybet_matches,
         if next_run_str:
             print(f"\n[Scheduled] Next run is at {next_run_str}")
     print(sep)
-
     # Display balanced and unbalanced opportunities
     if balanced_opps:
         for opp in balanced_opps:

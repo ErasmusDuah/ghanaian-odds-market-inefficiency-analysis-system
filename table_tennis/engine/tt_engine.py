@@ -89,13 +89,28 @@ def player_names_match(a: str, b: str) -> bool:
     return False
 
 
+def parse_kickoff(ko_str):
+    if not ko_str:
+        return None
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%dT%H:%M:%S'):
+        try:
+            return datetime.strptime(ko_str.strip(), fmt)
+        except ValueError:
+            continue
+    return None
+
+
 def _matches_same_game(a, b):
     if a['source'] == b['source']:
         return False, False
         
-    date_a = a.get('kickoff', '')[:10]
-    date_b = b.get('kickoff', '')[:10]
-    if date_a != date_b:
+    ko_a = parse_kickoff(a.get('kickoff', ''))
+    ko_b = parse_kickoff(b.get('kickoff', ''))
+    if not ko_a or not ko_b:
+        return False, False
+        
+    # Must be within 1.5 hours (5400 seconds)
+    if abs((ko_a - ko_b).total_seconds()) > 5400:
         return False, False
 
     home_a, away_a = a.get('home_team', ''), a.get('away_team', '')
@@ -655,7 +670,6 @@ def scan_all(sportybet_matches,
         if next_run_str:
             print(f"\n[Scheduled] Next run is at {next_run_str}")
     print(sep)
-
     # Display balanced and unbalanced opportunities
     if balanced_opps:
         for opp in balanced_opps:
