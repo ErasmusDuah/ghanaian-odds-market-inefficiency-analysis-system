@@ -216,13 +216,7 @@ def run_scan():
         try:
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             existing_files = []
-            for fp in [
-                "basketball/data/bb_arbitrage_tracker.csv",
-                "basketball/data/bb_quasi_ml.xlsx",
-                "basketball/data/bb_balanced.txt",
-                "basketball/data/bb_unbalanced.txt",
-                "basketball/data/bb_quasi.txt"
-            ]:
+            for fp in ["basketball/data/bb_arbitrage_tracker.csv", "basketball/data/bb_quasi_ml.xlsx"]:
                 if os.path.exists(os.path.join(project_root, fp)):
                     existing_files.append(fp)
             if existing_files:
