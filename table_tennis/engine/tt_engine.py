@@ -128,53 +128,53 @@ def _matches_same_game(a, b):
 
 
 def match_all_platforms(all_matches):
-    from collections import defaultdict
+    from collections import defaultdict, deque
     n = len(all_matches)
-    parent = list(range(n))
-    inverted_map = {} # (i, j) -> True/False
-
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    def union(x, y):
-        rx, ry = find(x), find(y)
-        if rx != ry:
-            parent[rx] = ry
-
+    adj = defaultdict(list)
+    
+    # Build direct match relationships
     for i in range(n):
         for j in range(i + 1, n):
             same, inverted = _matches_same_game(all_matches[i], all_matches[j])
             if same:
-                union(i, j)
-                inverted_map[(i, j)] = inverted
+                adj[i].append((j, inverted))
+                adj[j].append((i, inverted))
 
-    components = defaultdict(list)
-    for i in range(n):
-        components[find(i)].append(i)
-
+    visited = [False] * n
     groups = []
-    for root, indices in components.items():
-        if len(indices) < 2:
+    
+    for i in range(n):
+        if visited[i]:
             continue
-        sources = [all_matches[i]['source'] for i in indices]
+            
+        component_indices = []
+        inversion_map = {i: False}
+        
+        queue = deque([i])
+        visited[i] = True
+        
+        while queue:
+            curr = queue.popleft()
+            component_indices.append(curr)
+            curr_inv = inversion_map[curr]
+            
+            for neighbor, edge_inverted in adj[curr]:
+                if not visited[neighbor]:
+                    visited[neighbor] = True
+                    inversion_map[neighbor] = curr_inv ^ edge_inverted
+                    queue.append(neighbor)
+                    
+        if len(component_indices) < 2:
+            continue
+            
+        sources = [all_matches[idx]['source'] for idx in component_indices]
         if len(set(sources)) < 2:
             continue
-        
-        # Resolve team inversion relative to the root match
+            
         normalized_matches = []
-        root_idx = indices[0]
-        root_match = all_matches[root_idx]
-        
-        normalized_matches.append({**root_match, 'is_inverted': False})
-        
-        for idx in indices[1:]:
+        for idx in component_indices:
             m = all_matches[idx]
-            # Check relation to root
-            same, inverted = _matches_same_game(root_match, m)
-            normalized_matches.append({**m, 'is_inverted': inverted})
+            normalized_matches.append({**m, 'is_inverted': inversion_map[idx]})
             
         groups.append({'matches': normalized_matches, 'sources': sources})
 
@@ -670,12 +670,5 @@ def scan_all(sportybet_matches,
         if next_run_str:
             print(f"\n[Scheduled] Next run is at {next_run_str}")
     print(sep)
-    # Display balanced and unbalanced opportunities
-    if balanced_opps:
-        for opp in balanced_opps:
-            display_opportunity(opp)
-    if unbalanced_opps:
-        for opp in unbalanced_opps:
-            display_opportunity(opp)
 
     return opportunities, len(groups)

@@ -69,9 +69,9 @@ class _ThreadLocalWriter:
             buf.write(s)
         else:
             self._real.write(s)
-    def flush(self):
-        if getattr(_thread_local, 'buf', None) is None:
             self._real.flush()
+    def flush(self):
+        self._real.flush()
 
 sys.stdout = _ThreadLocalWriter(sys.stdout)
 
