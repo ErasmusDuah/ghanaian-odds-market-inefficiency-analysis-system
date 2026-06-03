@@ -10,6 +10,7 @@ _ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env
 MIN_ARB_PROFIT_PCT        = 0.01
 MAX_ARB_PROFIT_PCT        = 15.0
 MIN_QUASI_PROFIT_GHS      = 0.50
+MIN_UNBALANCED_PROFIT_GHS = 0.10
 
 
 def _quasi_stakes(odds_list, total_stake):
@@ -230,11 +231,10 @@ def scan_2way_arb(group, total_stake):
             arb_sum_b = 1 / a1 + 1 / h2_actual
             profit_pct_b = ((1 - arb_sum_b) / arb_sum_b) * 100
 
-            # --- CALCULATE STAKES AND PROFIT FOR SCENARIO A ---
+            # --- BALANCED ARB: SCENARIO A ---
             if MIN_ARB_PROFIT_PCT <= profit_pct_a <= MAX_ARB_PROFIT_PCT:
                 stake1 = round((1 / h1) / arb_sum_a * total_stake, 2)
                 stake2 = round((1 / a2_actual) / arb_sum_a * total_stake, 2)
-                
                 win1 = round(h1 * stake1 - (stake1 + stake2), 2)
                 win2 = round(a2_actual * stake2 - (stake1 + stake2), 2)
                 
@@ -264,7 +264,47 @@ def scan_2way_arb(group, total_stake):
                     ]
                 })
 
-                # Quasi-arb staking (no-loss)
+            # --- UNBALANCED ARB: SCENARIO A ---
+            fl_stake = round(total_stake / 2, 2)
+            fl_stk = [fl_stake, fl_stake]
+            fl_prf = [
+                round(h1 * fl_stake - sum(fl_stk), 2),
+                round(a2_actual * fl_stake - sum(fl_stk), 2)
+            ]
+            if all(p > MIN_UNBALANCED_PROFIT_GHS for p in fl_prf):
+                min_p = min(fl_prf)
+                max_p = max(fl_prf)
+                max_out = f"Home Win ({m1['home_team']})" if fl_prf[0] == max_p else m2_outcome_a
+                
+                opportunities.append({
+                    'category': 'unbalanced',
+                    'market': 'Winner',
+                    'arb_sum': round(arb_sum_a, 4),
+                    'profit_pct': round(profit_pct_a, 2),
+                    'profit_ghs': round(total_stake * profit_pct_a / 100, 2),
+                    'min_profit_ghs': min_p,
+                    'max_profit_ghs': max_p,
+                    'max_outcome': max_out,
+                    'bets': [
+                        {
+                            'outcome': f"Home Win ({m1['home_team']})",
+                            'platform': PLATFORM_DISPLAY[m1['source'].replace('_gh', '')],
+                            'odds': h1,
+                            'stake': fl_stk[0],
+                            'profit_if_wins': fl_prf[0]
+                        },
+                        {
+                            'outcome': m2_outcome_a,
+                            'platform': PLATFORM_DISPLAY[m2['source'].replace('_gh', '')],
+                            'odds': a2_actual,
+                            'stake': fl_stk[1],
+                            'profit_if_wins': fl_prf[1]
+                        }
+                    ]
+                })
+
+            # --- QUASI-ARB: SCENARIO A ---
+            if profit_pct_a < MIN_ARB_PROFIT_PCT:
                 odds_list = [h1, a2_actual]
                 q_stk = _quasi_stakes(odds_list, total_stake)
                 if q_stk:
@@ -306,11 +346,10 @@ def scan_2way_arb(group, total_stake):
                                 ]
                             })
             
-            # --- CALCULATE STAKES AND PROFIT FOR SCENARIO B ---
+            # --- BALANCED ARB: SCENARIO B ---
             if MIN_ARB_PROFIT_PCT <= profit_pct_b <= MAX_ARB_PROFIT_PCT:
                 stake1 = round((1 / a1) / arb_sum_b * total_stake, 2)
                 stake2 = round((1 / h2_actual) / arb_sum_b * total_stake, 2)
-                
                 win1 = round(a1 * stake1 - (stake1 + stake2), 2)
                 win2 = round(h2_actual * stake2 - (stake1 + stake2), 2)
                 
@@ -340,7 +379,47 @@ def scan_2way_arb(group, total_stake):
                     ]
                 })
 
-                # Quasi-arb staking (no-loss)
+            # --- UNBALANCED ARB: SCENARIO B ---
+            fl_stake = round(total_stake / 2, 2)
+            fl_stk = [fl_stake, fl_stake]
+            fl_prf = [
+                round(a1 * fl_stake - sum(fl_stk), 2),
+                round(h2_actual * fl_stake - sum(fl_stk), 2)
+            ]
+            if all(p > MIN_UNBALANCED_PROFIT_GHS for p in fl_prf):
+                min_p = min(fl_prf)
+                max_p = max(fl_prf)
+                max_out = f"Away Win ({m1['away_team']})" if fl_prf[0] == max_p else m2_outcome_h
+                
+                opportunities.append({
+                    'category': 'unbalanced',
+                    'market': 'Winner',
+                    'arb_sum': round(arb_sum_b, 4),
+                    'profit_pct': round(profit_pct_b, 2),
+                    'profit_ghs': round(total_stake * profit_pct_b / 100, 2),
+                    'min_profit_ghs': min_p,
+                    'max_profit_ghs': max_p,
+                    'max_outcome': max_out,
+                    'bets': [
+                        {
+                            'outcome': f"Away Win ({m1['away_team']})",
+                            'platform': PLATFORM_DISPLAY[m1['source'].replace('_gh', '')],
+                            'odds': a1,
+                            'stake': fl_stk[0],
+                            'profit_if_wins': fl_prf[0]
+                        },
+                        {
+                            'outcome': m2_outcome_h,
+                            'platform': PLATFORM_DISPLAY[m2['source'].replace('_gh', '')],
+                            'odds': h2_actual,
+                            'stake': fl_stk[1],
+                            'profit_if_wins': fl_prf[1]
+                        }
+                    ]
+                })
+
+            # --- QUASI-ARB: SCENARIO B ---
+            if profit_pct_b < MIN_ARB_PROFIT_PCT:
                 odds_list = [a1, h2_actual]
                 q_stk = _quasi_stakes(odds_list, total_stake)
                 if q_stk:
@@ -391,16 +470,22 @@ _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data
 def _write_opportunity_to_file(f, opp):
     """Write a single opportunity's full details to a file handle."""
     cat = opp.get('category', 'balanced')
+    cat_icons = {'balanced': '⚖️ ', 'unbalanced': '📊', 'quasi': '🛡️ '}
     f.write(f"\n  {'='*55}\n")
     f.write(f"  🏆 {opp['match']}\n")
     f.write(f"  📅 {opp['kickoff']} | {opp['tournament']}\n")
     f.write(f"  {'='*55}\n")
-    f.write(f"  📊 Market:   {opp['market']} ({cat.upper()})\n")
+    f.write(f"  📊 Market:   {opp['market']}\n")
+    f.write(f"  {cat_icons.get(cat, '')} Category: {cat.upper()}\n")
 
     if cat == 'balanced':
-        f.write(f"  💰 Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f}\n")
+        f.write(f"  💰 Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f} (guaranteed on all outcomes)\n")
+    elif cat == 'unbalanced':
+        f.write(f"  📉 Min:      GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)\n")
+        f.write(f"  📈 Max:      GHS {opp['max_profit_ghs']:.2f}  ← if {opp['max_outcome']} wins\n")
     elif cat == 'quasi':
-        f.write(f"  💰 Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f}\n")
+        f.write(f"  🛡️  Break-Even: {opp['break_even_outcome']} (get stake back)\n")
+        f.write(f"  💰 Best:       GHS {opp['best_profit_ghs']:.2f} ← if {opp['best_outcome']} wins\n")
 
     f.write(f"  💵 Stake:    GHS {sum(b['stake'] for b in opp['bets']):.2f}\n")
     f.write(f"\n  📋 BETS TO PLACE:\n")
@@ -416,21 +501,36 @@ def _write_opportunity_to_file(f, opp):
 
 
 def display_opportunity(opp):
+    cat = opp.get('category', 'balanced')
+    cat_icons = {'balanced': '⚖️ ', 'unbalanced': '📊', 'quasi': '🛡️ '}
     print(f"\n  {'='*55}")
     print(f"  🏆 {opp['match']}")
     print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
     print(f"  {'='*55}")
-    print(f"  📊 Market: {opp['market']} ({opp['category'].upper()})")
-    print(f"  💰 Profit: {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f}")
+    print(f"  📊 Market:   {opp['market']}")
+    print(f"  {cat_icons.get(cat, '')} Category: {cat.upper()}")
+
+    if cat == 'balanced':
+        print(f"  💰 Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f} (guaranteed on all outcomes)")
+    elif cat == 'unbalanced':
+        print(f"  📉 Min:      GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)")
+        print(f"  📈 Max:      GHS {opp['max_profit_ghs']:.2f}  ← if {opp['max_outcome']} wins")
+    elif cat == 'quasi':
+        print(f"  🛡️  Break-Even: {opp['break_even_outcome']} (get stake back)")
+        print(f"  💰 Best:       GHS {opp['best_profit_ghs']:.2f} ← if {opp['best_outcome']} wins")
+
     total_stake_used = sum(bet.get('stake', 0) for bet in opp['bets'])
     print(f"  💵 Total Stake: GHS {total_stake_used:.2f}")
     print(f"\n  📋 BETS TO PLACE:")
     for bet in opp['bets']:
+        profit = bet['profit_if_wins']
+        if abs(profit) < 0.02:
+            profit = 0.0
         print(f"\n     🎯 {bet['platform']}")
         print(f"        Bet:   {bet['outcome']}")
         print(f"        Odds:  {bet['odds']}")
         print(f"        Stake: GHS {bet['stake']:.2f}")
-        print(f"        Win:   GHS {bet['profit_if_wins']:.2f}")
+        print(f"        Win:   GHS {profit:.2f}")
 
 
 def scan_all(sportybet_matches,
@@ -439,9 +539,12 @@ def scan_all(sportybet_matches,
              onexbet_matches,
              twentytwobet_matches,
              msport_matches,
-             bangbet_matches,
              total_stake=None,
-             cycle_start_time=None):
+             scrape_time=None,
+             scan_time=None,
+             total_time=None,
+             calc_end_str=None,
+             next_run_str=None):
 
     if total_stake is None:
         _env = dotenv_values(_ENV_PATH)
@@ -452,8 +555,7 @@ def scan_all(sportybet_matches,
                    footballcom_matches +
                    onexbet_matches     +
                    twentytwobet_matches +
-                   msport_matches      +
-                   bangbet_matches)
+                   msport_matches)
 
     groups = match_all_platforms(all_matches)
 
@@ -487,8 +589,9 @@ def scan_all(sportybet_matches,
             })
 
     # ── Split by category ─────────────────────────────────────────────────
-    balanced_opps = [o for o in opportunities if o['category'] == 'balanced']
-    quasi_opps    = [o for o in opportunities if o['category'] == 'quasi']
+    balanced_opps   = [o for o in opportunities if o['category'] == 'balanced']
+    unbalanced_opps = [o for o in opportunities if o['category'] == 'unbalanced']
+    quasi_opps      = [o for o in opportunities if o['category'] == 'quasi']
 
     # ── Write to .txt files ───────────────────────────────────────────────
     sep = '=' * 60
@@ -505,6 +608,17 @@ def scan_all(sportybet_matches,
         else:
             f.write("  💡 No balanced arb opportunities right now\n")
 
+    unb_path = os.path.join(_DATA_DIR, 'tt_unbalanced.txt')
+    with open(unb_path, 'w', encoding='utf-8') as f:
+        f.write(f"📊 UNBALANCED ARBITRAGE (TABLE TENNIS) — {len(unbalanced_opps)} opportunities\n")
+        f.write(f"All outcomes profitable — amounts differ\n")
+        f.write(f"{sep}\n")
+        if unbalanced_opps:
+            for opp in sorted(unbalanced_opps, key=lambda x: x['max_profit_ghs'], reverse=True):
+                _write_opportunity_to_file(f, opp)
+        else:
+            f.write("  💡 No unbalanced arb opportunities right now\n")
+
     qua_path = os.path.join(_DATA_DIR, 'tt_quasi.txt')
     with open(qua_path, 'w', encoding='utf-8') as f:
         f.write(f"🛡️  QUASI-ARB (TABLE TENNIS) — {len(quasi_opps)} opportunities\n")
@@ -516,41 +630,38 @@ def scan_all(sportybet_matches,
         else:
             f.write("  💡 No quasi-arb opportunities right now\n")
 
-    # ── Terminal summary ──────────────────────────────────────────────────
+    # ── Compact terminal summary (matches football/basketball format) ─────────────
     print(f"\n{sep}")
-    print("SCAN COMPLETE (TABLE TENNIS)!")
-    print(f"🏓 Events scanned    : {len(groups)}")
+    print(f"🏓 Events scanned  : {len(groups)}")
+    print(f"🌐 Platforms       : 6 (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport)")
+    print(f"⚖️  Balanced        : {len(balanced_opps)} → {bal_path}")
+    print(f"📊 Unbalanced      : {len(unbalanced_opps)} → {unb_path}")
+    print(f"🛡️  Quasi-Arbs      : {len(quasi_opps)} → {qua_path}")
     
-    import time as _time
-    if cycle_start_time:
-        total_seconds = _time.time() - cycle_start_time
-        total_minutes = total_seconds / 60
-        print(f"⏱️ Total cycle time: {total_seconds:.1f} seconds ({total_minutes:.1f} minutes)")
-
-    print(f"🎯 Balanced Arbs     : {len(balanced_opps)} → {bal_path}")
-    print(f"📊 Quasi-Arbs        : {len(quasi_opps)} → {qua_path}")
-
-    if balanced_opps:
-        total_profit = sum(o['profit_ghs'] for o in balanced_opps)
-        best = max(balanced_opps, key=lambda x: x['profit_pct'])
-        print(f"💰 Total potential profit: GHS {total_profit:.2f}")
-        print(f"📈 Best: {best['profit_pct']:.2f}% on {best['match']}")
+    all_arbs = balanced_opps + unbalanced_opps
+    if all_arbs:
+        best = max(all_arbs, key=lambda x: x['profit_pct'])
+        best_cat = best.get('category', 'balanced').capitalize()
+        print(f"💰 Total profit    : GHS {sum(o['profit_ghs'] for o in all_arbs):.2f}")
+        print(f"📈 Best            : {best['profit_pct']:.2f}% on {best['match']} ({best_cat})")
+    else:
+        print(f"💡 No balanced arb opportunities right now")
         
-        # Display balanced opportunities
+    if scrape_time is not None and scan_time is not None and total_time is not None:
+        print(f"🌐 Scraping        : {scrape_time:.2f}s  ({scrape_time/60:.3f} min)")
+        calc_suffix = f"  (Finished calculations at {calc_end_str})" if calc_end_str else ""
+        print(f"🔍 Scanning        : {scan_time:.2f}s  ({scan_time/60:.3f} min){calc_suffix}")
+        print(f"🕐 TOTAL           : {total_time:.2f}s  ({total_time/60:.3f} min)")
+        if next_run_str:
+            print(f"\n[Scheduled] Next run is at {next_run_str}")
+    print(sep)
+
+    # Display balanced and unbalanced opportunities
+    if balanced_opps:
         for opp in balanced_opps:
             display_opportunity(opp)
-    else:
-        print("💡 No balanced arb opportunities right now")
+    if unbalanced_opps:
+        for opp in unbalanced_opps:
+            display_opportunity(opp)
 
-    print(f"\n{sep}")
-    print("MATCHES FETCHED PER PLATFORM:")
-    print(f"  Sportybet   : {len(sportybet_matches)}")
-    print(f"  Betway      : {len(betway_matches)}")
-    print(f"  Football.com: {len(footballcom_matches)}")
-    print(f"  1xBet       : {len(onexbet_matches)}")
-    print(f"  22Bet       : {len(twentytwobet_matches)}")
-    print(f"  MSport      : {len(msport_matches)}")
-    print(f"  Bangbet     : {len(bangbet_matches)}")
-    print(f"{sep}")
-    
     return opportunities, len(groups)

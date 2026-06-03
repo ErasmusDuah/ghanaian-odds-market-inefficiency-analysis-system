@@ -123,8 +123,10 @@ def prevent_sleep():
             print(f"[System] Warning: Could not disable sleep: {e}")
 
 
+next_run_time = 0.0
+
 def run_scan():
-    global scan_count
+    global scan_count, next_run_time
     scan_count += 1
     
     try:
@@ -147,6 +149,13 @@ def run_scan():
         total_fetched = sum(len(v) for v in fetched.values())
         print(f"\n⏱️  Scraping done in {scrape_time:.1f}s | Total matches: {total_fetched}")
 
+        print("============================================================")
+        print("MATCHES FETCHED PER PLATFORM:")
+        for name in ['Sportybet', 'Betway', 'Football.com', '1xBet', '22Bet', 'MSport']:
+            count = len(fetched.get(name, []))
+            print(f"  {name:<12}: {count}")
+        print("============================================================\n")
+
         if total_fetched == 0:
             print("\n❌ No data fetched from any platform.")
             return
@@ -155,6 +164,13 @@ def run_scan():
         print(f"\n🔍 Running 2-way Winner intensive scan...\n")
         scan_start = time.time()
 
+        # Compute timing info for engine display
+        calc_end_time = datetime.now()
+        next_run_time = time.time() + 2 * 60
+        next_run_dt = datetime.fromtimestamp(next_run_time)
+        calc_end_str = calc_end_time.strftime('%I:%M:%S %p').lstrip('0').lower()
+        next_run_str = next_run_dt.strftime('%I:%M:%S %p').lstrip('0').lower()
+
         opportunities, num_groups = scan_all(
             sportybet_matches    = fetched.get('Sportybet',    []),
             betway_matches       = fetched.get('Betway',       []),
@@ -162,22 +178,23 @@ def run_scan():
             onexbet_matches      = fetched.get('1xBet',        []),
             twentytwobet_matches = fetched.get('22Bet',        []),
             msport_matches       = fetched.get('MSport',       []),
-            bangbet_matches      = fetched.get('Bangbet',      []),
             total_stake          = total_stake,
-            cycle_start_time     = scrape_start
+            scrape_time          = scrape_time,
+            scan_time            = time.time() - scan_start,
+            total_time           = scrape_time + (time.time() - scan_start),
+            calc_end_str         = calc_end_str,
+            next_run_str         = next_run_str
         )
 
-        calc_end_time = datetime.now()
-        calc_end_str = calc_end_time.strftime('%I:%M:%S %p').lstrip('0').lower()
+        # Split opportunities into standard, unbalanced, and quasi arbs
+        balanced_opps   = [o for o in opportunities if o.get('category') == 'balanced']
+        unbalanced_opps = [o for o in opportunities if o.get('category') == 'unbalanced']
+        quasi_opps      = [o for o in opportunities if o.get('category') == 'quasi']
 
-        # Split opportunities into standard arbs and quasi arbs
-        balanced_opps = [o for o in opportunities if o.get('category') == 'balanced']
-        quasi_opps    = [o for o in opportunities if o.get('category') == 'quasi']
-
-        # Log balanced arbs to CSV
+        # Log balanced & unbalanced arbs to CSV
         arb_msg = ""
         try:
-            arb_msg = save_arbitrage_opportunities(balanced_opps, total_stake, quiet=True)
+            arb_msg = save_arbitrage_opportunities(balanced_opps + unbalanced_opps, total_stake, quiet=True)
         except Exception as e:
             print(f"  ❌ ERROR saving TT opportunities to CSV: {e}")
 
@@ -211,7 +228,6 @@ def run_scan():
             print(arb_msg.strip())
         if ml_msg:
             print(ml_msg.strip())
-        print(f"  ⏱️  Completed at {calc_end_str}")
         if git_msg:
             print(git_msg.strip())
         print()
@@ -234,16 +250,35 @@ def has_internet():
 
 
 def main():
+    global next_run_time, scan_count
     prevent_sleep()
     
     if not has_internet():
         print("\n❌ [System] No active internet connection detected! Waiting for connection...")
         while not has_internet():
-            print(f"\r[System] ⚠️ Offline. Waiting 10s...", end="", flush=True)
+            print(f"\r[System] ⚠️ Offline at {datetime.now().strftime('%H:%M:%S')}. Waiting 10s for internet...", end="", flush=True)
             time.sleep(10)
-        print(f"\n[System] ✅ Internet connection established!")
+        print(f"\n[System] ✅ Internet connection established! Starting engine...")
         
-    run_scan()
+    try:
+        run_scan()
+        
+        print("\n[Scheduled] Scanning every 2 minutes (interval starts after calculations complete)")
+        print("Press Ctrl+C to stop\n")
+        
+        while True:
+            if time.time() >= next_run_time:
+                if not has_internet():
+                    print(f"\n❌ [System] Internet connection lost at {datetime.now().strftime('%H:%M:%S')}! Pausing engine...")
+                    while not has_internet():
+                        print(f"\r[System] ⚠️ Offline. Waiting 10s for internet...", end="", flush=True)
+                        time.sleep(10)
+                    print(f"\n[System] ✅ Internet connection restored at {datetime.now().strftime('%H:%M:%S')}! Resuming scan...")
+                    next_run_time = time.time()
+                run_scan()
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n\n🛑 Stopped by user.")
 
 
 if __name__ == "__main__":
