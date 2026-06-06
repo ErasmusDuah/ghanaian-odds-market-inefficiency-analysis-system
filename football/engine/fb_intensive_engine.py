@@ -94,7 +94,8 @@ STOPWORDS = {
     'fk', 'fc', 'sc', 'cf', 'ac', 'bk', 'fk', 'sk', 'if', 'bfk', 'spor', 'sport',
     'united', 'city', 'town', 'reserve', 'reserves', 'u19', 'u20', 'u21', 'u23',
     'women', 'youth', 'under', 'club', 'team', 'real', 'atletico', 'atletico',
-    'depor', 'deportivo', 'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21'
+    'depor', 'deportivo', 'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21',
+    'citizen', 'citizens'
 }
 
 def clean_tokens(name):
@@ -111,7 +112,7 @@ def clean_tokens(name):
     return filtered
 
 ASSOCIATIONS = {'hapoel', 'maccabi', 'beitar', 'ironi'}
-GENERIC_WORDS = {'kfar', 'fc', 'sc', 'united', 'city', 'town', 'club', 'team'}
+GENERIC_WORDS = {'kfar', 'fc', 'sc', 'united', 'city', 'town', 'club', 'team', 'citizen', 'citizens'}
 
 def smart_team_match(a, b):
     tokens_a = clean_tokens(a)
@@ -633,9 +634,24 @@ _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data
 
 def _write_opportunity_to_file(f, opp):
     """Write a single opportunity's full details to a file handle."""
+    try:
+        from engine.fb_stake_tracker_helper import get_opp_id, load_staked_history
+    except ImportError:
+        from fb_stake_tracker_helper import get_opp_id, load_staked_history
+
     cat = opp.get('category', 'balanced')
     cat_icons = {'balanced': '⚖️ ', 'unbalanced': '📊', 'quasi': '🛡️ '}
+    
+    # Generate stable ID and check if already staked
+    opp_id = get_opp_id(opp)
+    staked_history = load_staked_history()
+    if opp_id in staked_history:
+        status_line = f"  ✅ [x] STAKED (ID: {opp_id})"
+    else:
+        status_line = f"  🚨 [ ] STAKE THIS OPP (ID: {opp_id})"
+
     f.write(f"\n  {'='*55}\n")
+    f.write(f"{status_line}\n")
     f.write(f"  🏆 {opp['match']}\n")
     f.write(f"  📅 {opp['kickoff']} | {opp['tournament']}\n")
     f.write(f"  {'='*55}\n")
@@ -668,6 +684,18 @@ def display_all(opportunities, num_groups, total_stake,
                 scrape_time=None, scan_time=None, total_time=None,
                 calc_end_str=None, next_run_str=None):
     sep = '=' * 60
+
+    try:
+        from engine.fb_stake_tracker_helper import get_opp_id, save_active_opportunities
+    except ImportError:
+        from fb_stake_tracker_helper import get_opp_id, save_active_opportunities
+
+    # Build active opportunities mapping and save cache
+    opp_cache = {}
+    for opp in opportunities:
+        opp_id = get_opp_id(opp)
+        opp_cache[opp_id] = opp
+    save_active_opportunities(opp_cache)
 
     balanced   = [o for o in opportunities if o.get('category') == 'balanced']
     unbalanced = [o for o in opportunities if o.get('category') == 'unbalanced']

@@ -196,9 +196,16 @@ def run_scan():
 
         total_time = scrape_time + scan_time
 
-        quasi_summary = display_all(opportunities, num_groups, total_stake,
-                                    scrape_time, scan_time, total_time,
-                                    calc_end_str=calc_end_str, next_run_str=next_run_str)
+        from engine.fb_stake_tracker_helper import _file_lock, check_and_log_ticked_bets
+        with _file_lock:
+            try:
+                check_and_log_ticked_bets()
+            except Exception as log_err:
+                print(f"  ⚠️ Error checking ticked bets before overwrite: {log_err}")
+
+            quasi_summary = display_all(opportunities, num_groups, total_stake,
+                                        scrape_time, scan_time, total_time,
+                                        calc_end_str=calc_end_str, next_run_str=next_run_str)
 
         # Log opportunities to CSV (always logs a row for ML continuity)
         arb_msg = ""
@@ -211,7 +218,7 @@ def run_scan():
         git_msg = ""
         try:
             git_msg = push_to_github(
-                filepaths=["football/data/arbitrage_tracker.csv", "football/data/quasi_arb_ml.xlsx"],
+                filepaths=["football/data/arbitrage_tracker.csv", "football/data/quasi_arb_ml.xlsx", "football/data/stake_tracker.xlsx"],
                 message=f"Auto-update intensive arbitrage results (Scan #{scan_count})",
                 quiet=True
             )
@@ -242,11 +249,66 @@ def has_internet():
     return False
 
 
+def start_stake_watcher():
+    """Starts a background thread to watch for manual stakes checked in the text files."""
+    import threading
+    from engine.fb_stake_tracker_helper import check_and_log_ticked_bets
+    
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    files = [
+        os.path.join(data_dir, 'intensive_balanced.txt'),
+        os.path.join(data_dir, 'intensive_unbalanced.txt'),
+        os.path.join(data_dir, 'intensive_quasi.txt')
+    ]
+    
+    last_mtimes = {}
+    for f in files:
+        if os.path.exists(f):
+            last_mtimes[f] = os.path.getmtime(f)
+        else:
+            last_mtimes[f] = 0.0
+
+    def watch_loop():
+        while True:
+            try:
+                changed = False
+                for f in files:
+                    if os.path.exists(f):
+                        current_mtime = os.path.getmtime(f)
+                        if current_mtime > last_mtimes.get(f, 0.0):
+                            last_mtimes[f] = current_mtime
+                            changed = True
+                    else:
+                        if last_mtimes.get(f, 0.0) > 0.0:
+                            last_mtimes[f] = 0.0
+                            changed = True
+                
+                if changed:
+                    check_and_log_ticked_bets()
+            except Exception as watch_err:
+                print(f"  ⚠️ [Stake Watcher Thread Error] {watch_err}")
+                
+            time.sleep(2)  # check every 2 seconds
+
+    t = threading.Thread(target=watch_loop, name="fb_stake_watcher", daemon=True)
+    t.start()
+    print("[Stake Watcher] Background watcher thread started successfully.")
+
+
 def main():
     global next_run_time, scan_count  # ← fix: declare globals so Python doesn't
                                       #         treat them as unassigned locals
 
     prevent_sleep()
+    
+    # Initialize and migrate Excel stake tracker on startup
+    try:
+        from engine.fb_stake_tracker_helper import ensure_stake_tracker
+        ensure_stake_tracker()
+    except Exception as e:
+        print(f"  ⚠️ [Stake Watcher Startup Error] Could not initialize Excel stake tracker: {e}")
+        
+    start_stake_watcher()
     
     if not has_internet():
         print("\n❌ [System] No active internet connection detected! Waiting for connection...")

@@ -121,10 +121,19 @@ def _matches_same_game(a, b):
     if a['source'] == b['source']:
         return False, False
         
-    date_a = a.get('kickoff', '')[:10]
-    date_b = b.get('kickoff', '')[:10]
-    if date_a != date_b:
-        return False, False
+    kickoff_a = a.get('kickoff', '')
+    kickoff_b = b.get('kickoff', '')
+    
+    # Verify kickoff times are within 15 minutes of each other
+    try:
+        dt_a = datetime.strptime(kickoff_a, "%Y-%m-%d %H:%M")
+        dt_b = datetime.strptime(kickoff_b, "%Y-%m-%d %H:%M")
+        if abs((dt_a - dt_b).total_seconds()) > 900:  # 15 minutes
+            return False, False
+    except Exception:
+        # Fallback to exact string match if parsing fails
+        if kickoff_a != kickoff_b:
+            return False, False
 
     home_a, away_a = a.get('home_team', ''), a.get('away_team', '')
     home_b, away_b = b.get('home_team', ''), b.get('away_team', '')

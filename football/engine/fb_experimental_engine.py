@@ -35,7 +35,8 @@ STOPWORDS = {
     'fk', 'fc', 'sc', 'cf', 'ac', 'bk', 'fk', 'sk', 'if', 'bfk', 'spor', 'sport',
     'united', 'city', 'town', 'reserve', 'reserves', 'u19', 'u20', 'u21', 'u23',
     'women', 'youth', 'under', 'club', 'team', 'real', 'atletico', 'atletico',
-    'depor', 'deportivo', 'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21'
+    'depor', 'deportivo', 'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21',
+    'citizen', 'citizens'
 }
 
 def clean_tokens(name):
@@ -52,7 +53,7 @@ def clean_tokens(name):
     return filtered
 
 ASSOCIATIONS = {'hapoel', 'maccabi', 'beitar', 'ironi'}
-GENERIC_WORDS = {'kfar', 'fc', 'sc', 'united', 'city', 'town', 'club', 'team'}
+GENERIC_WORDS = {'kfar', 'fc', 'sc', 'united', 'city', 'town', 'club', 'team', 'citizen', 'citizens'}
 
 def smart_team_match(a, b):
     tokens_a = clean_tokens(a)
