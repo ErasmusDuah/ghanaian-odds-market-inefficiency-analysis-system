@@ -94,22 +94,46 @@ async def scrape():
     today_str = today.strftime('%Y-%m-%d')
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-setuid-sandbox',
+                '--no-sandbox',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+            ]
+        )
         ctx = await browser.new_context(
             user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         )
         page = await ctx.new_page()
+
+        # Block images, fonts, media, and third-party trackers (keep stylesheets for rendering measurements)
+        def should_abort(url, resource_type):
+            if resource_type in ["image", "font", "media"]:
+                return True
+            url_lower = url.lower()
+            trackers = ["google", "facebook", "clarity", "doubleclick", "mixpanel", "bing"]
+            if any(t in url_lower for t in trackers):
+                return True
+            return False
+
+        await page.route("**/*", lambda route: route.abort() if should_abort(route.request.url, route.request.resource_type) else route.continue_())
         
         url = f'https://www.soccabet.com/sports?tr={today_str}&s=77'
         try:
             print(f"  [Soccabet] Navigating to sportsbook...")
-            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            await page.goto(url, wait_until='domcontentloaded', timeout=15000)
             try:
-                # Short wait for event items to start appearing from WebSocket push
-                await page.wait_for_selector('app-event-item', timeout=3000)
+                # Wait for the event items to start appearing
+                await page.wait_for_selector('app-event-item', timeout=4000)
             except Exception:
                 pass
-            await page.wait_for_timeout(1000)
+            # Short wait for WebSocket data to finish rendering
+            await page.wait_for_timeout(200)
         except Exception as e:
             print(f"  [Soccabet] Navigation error: {e}")
             await browser.close()
@@ -117,9 +141,9 @@ async def scrape():
 
         print(f"  [Soccabet] Fast scrolling to trigger rendering...")
         await page.evaluate("""async () => {
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < 4; i++) {
                 window.scrollTo(0, document.body.scrollHeight);
-                await new Promise(r => setTimeout(r, 250));
+                await new Promise(r => setTimeout(r, 150));
             }
         }""")
 
