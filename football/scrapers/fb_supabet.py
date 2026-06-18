@@ -1,66 +1,310 @@
-import os
+"""
+Supabet Ghana football prematch odds (async API version).
+
+Uses the adv.bet distributor API behind Supabet's sportsbook iframe
+(sportsbook-eu01-backend.advbet.com), not browser scraping.
+
+Fast path:
+  1) List today's football matches with filter.closesAt (partial view)
+  2) Fetch full odds for upcoming fixtures in parallel UUID batches
+"""
+from __future__ import annotations
+
 import asyncio
-import sys
 import json
-import tempfile
-import time as _time
-from datetime import datetime, timedelta
-from playwright.async_api import async_playwright
-import re
-from typing import Any
+import os
+import sys
+import time
+import urllib.parse
+from datetime import date, datetime, time as dt_time, timezone
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+from zoneinfo import ZoneInfo
 
-sys.stdout.reconfigure(encoding='utf-8')
+import aiohttp
 
-SOURCE = 'supabet_gh'
-VIRTUAL_KEYWORDS = ['srl', 'simulated', 'esport', 'e-soccer', 'esoccer',
-                    'cyber', 'virtual', 'efootball', 'e-football']
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (OSError, ValueError):
+        pass
 
-def is_virtual(home, away):
-    text = f'{home} {away}'.lower()
+SOURCE = "supabet_gh"
+ORG_UUID = "17e5b1b7-bb38-d332-4e2f-f1fde542b6b9"
+API_BASE = "https://sportsbook-eu01-backend.advbet.com/distributor/api/organizations"
+REFERER = f"https://eu01.sportsbook.adv.bet/?orgUuid={ORG_UUID}"
+TIMEZONE = "Africa/Accra"
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=90, connect=8, sock_read=75)
+CHUNK_SIZE = 8
+MAX_CONCURRENT_CHUNKS = 12
+
+VIRTUAL_KEYWORDS = (
+    "srl",
+    "simulated",
+    "esport",
+    "e-soccer",
+    "esoccer",
+    "cyber",
+    "virtual",
+    "efootball",
+    "e-football",
+)
+
+DC_KEY_MAP = {
+    "home_or_draw": "1x",
+    "home_or_away": "12",
+    "draw_or_away": "x2",
+}
+
+
+def is_virtual(home: str, away: str) -> bool:
+    text = f"{home} {away}".lower()
     return any(kw in text for kw in VIRTUAL_KEYWORDS)
 
-def parse_supabet_date(time_text: str) -> datetime | None:
-    now = datetime.now()
-    text = time_text.strip().lower()
-    
-    if not text:
-        return None
-        
-    if "live" in text or "in " in text:
-        return now
-        
-    if "today" in text:
-        t = re.search(r'(\d{2}:\d{2})', text)
-        if t:
-            hour, minute = map(int, t.group(1).split(":"))
-            return now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-        return now
-        
-    if "tomorrow" in text:
-        t = re.search(r'(\d{2}:\d{2})', text)
-        if t:
-            hour, minute = map(int, t.group(1).split(":"))
-            return (now + timedelta(days=1)).replace(hour=hour, minute=minute, second=0, microsecond=0)
-        return now + timedelta(days=1)
-        
-    # check for DD/MM or DD.MM
-    m = re.search(r'(\d{2})[/\.](\d{2})\s+(\d{2}):(\d{2})', text)
-    if m:
-        day = int(m.group(1))
-        month = int(m.group(2))
-        hour = int(m.group(3))
-        minute = int(m.group(4))
-        return datetime(now.year, month, day, hour, minute)
-        
-    return None
 
-def base_match(home: str, away: str, kickoff: str, tournament: str, is_live: bool) -> dict[str, Any]:
+def _headers() -> Dict[str, str]:
+    return {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+        "Origin": "https://eu01.sportsbook.adv.bet",
+        "Referer": REFERER,
+    }
+
+
+def day_bounds_utc(target: date, tz: ZoneInfo) -> Tuple[str, str]:
+    start_local = datetime.combine(target, dt_time.min, tzinfo=tz)
+    end_local = datetime.combine(target, dt_time.max, tzinfo=tz)
+    start_utc = start_local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    end_utc = end_local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    return start_utc, end_utc
+
+
+async def _get_json(session: aiohttp.ClientSession, params: Dict[str, Any]) -> dict:
+    url = f"{API_BASE}/{ORG_UUID}/events?" + urllib.parse.urlencode(params, doseq=True)
+    for attempt in range(3):
+        try:
+            async with session.get(url, headers=_headers(), timeout=REQUEST_TIMEOUT) as resp:
+                resp.raise_for_status()
+                return await resp.json(content_type=None)
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            if attempt == 2:
+                raise
+            await asyncio.sleep(0.2 * (attempt + 1))
+    return {}
+
+
+async def fetch_today_stubs(
+    session: aiohttp.ClientSession,
+    target: date,
+    tz: ZoneInfo,
+    now_utc: datetime,
+) -> List[dict]:
+    start_utc, end_utc = day_bounds_utc(target, tz)
+    stubs: List[dict] = []
+    marker: Optional[str] = None
+
+    while True:
+        params: Dict[str, Any] = {
+            "sortBy": ["closes_at", "tournament"],
+            "cursor.limit": "100",
+            "filter.sports": "football",
+            "filter.types": "match",
+            "filter.closesAt.from": start_utc,
+            "filter.closesAt.to": end_utc,
+            "view": "partial",
+        }
+        if marker:
+            params["cursor.marker"] = marker
+
+        data = await _get_json(session, params)
+        batch = data.get("result") or []
+        if not batch:
+            break
+
+        for stub in batch:
+            if not isinstance(stub, dict):
+                continue
+            closes = stub.get("closesAt")
+            if not closes:
+                continue
+            kick = datetime.fromisoformat(str(closes).replace("Z", "+00:00"))
+            if kick <= now_utc:
+                continue
+            stubs.append(stub)
+
+        marker = batch[-1].get("uuid")
+        if len(batch) < 100 or not marker:
+            break
+
+    return stubs
+
+
+async def fetch_full_chunk(session: aiohttp.ClientSession, uuids: List[str]) -> List[dict]:
+    if not uuids:
+        return []
+    params = {
+        "filter.uuids": uuids,
+        "view": "full",
+        "cursor.limit": str(len(uuids)),
+    }
+    data = await _get_json(session, params)
+    return list(data.get("result") or [])
+
+
+def _translation_map(fixture: dict) -> Dict[str, Any]:
+    translations = ((fixture.get("translations") or {}).get("en") or [])
+    out: Dict[str, Any] = {}
+    for block in translations:
+        if not isinstance(block, dict):
+            continue
+        out[str(block.get("type") or "")] = block.get("value") or block.get("values")
+    return out
+
+
+def _teams_from_fixture(fixture: dict) -> Tuple[str, str]:
+    trans = _translation_map(fixture)
+    teams = trans.get("team")
+    if isinstance(teams, dict):
+        home = str(teams.get("home") or "").strip()
+        away = str(teams.get("away") or "").strip()
+        if home and away:
+            return home, away
+
+    competitors = trans.get("competitor")
+    if isinstance(competitors, dict):
+        vals = list(competitors.values())
+        if len(vals) >= 2:
+            return str(vals[0]).strip(), str(vals[1]).strip()
+    return "", ""
+
+
+def _tournament_from_fixture(fixture: dict) -> str:
+    trans = _translation_map(fixture)
+    season = trans.get("season")
+    if isinstance(season, str) and season.strip():
+        return season.strip()
+    return "Football"
+
+
+def _active_option_odds(market: Optional[dict]) -> Dict[str, float]:
+    if not market or market.get("hidden") or not market.get("open"):
+        return {}
+    out: Dict[str, float] = {}
+    for key, opt in (market.get("options") or {}).items():
+        if not isinstance(opt, dict):
+            continue
+        if opt.get("state") != "active":
+            continue
+        odd = opt.get("odds")
+        if odd is None:
+            continue
+        try:
+            out[str(key)] = float(odd)
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _pick_3way(raw: Dict[str, float]) -> Dict[str, float]:
+    need = ("home", "draw", "away")
+    if all(k in raw for k in need):
+        return {k: raw[k] for k in need}
+    return {}
+
+
+def _pick_dc(raw: Dict[str, float]) -> Dict[str, float]:
+    out: Dict[str, float] = {}
+    for src, dst in DC_KEY_MAP.items():
+        if src in raw:
+            out[dst] = raw[src]
+    return out if len(out) == 3 else {}
+
+
+def _pick_gg(raw: Dict[str, float]) -> Dict[str, float]:
+    if "yes" in raw and "no" in raw:
+        return {"yes": raw["yes"], "no": raw["no"]}
+    return {}
+
+
+def _pick_ou(markets: Dict[str, dict], prefix: str) -> Dict[str, Dict[str, float]]:
+    out: Dict[str, Dict[str, float]] = {}
+    for key, market in markets.items():
+        if not key.startswith(prefix):
+            continue
+        line = key[len(prefix) :]
+        odds = _active_option_odds(market)
+        if "over" in odds and "under" in odds:
+            out[line] = {"over": odds["over"], "under": odds["under"]}
+    return out
+
+
+def _partition_ou(all_ou: Dict[str, Dict[str, float]]) -> Tuple[Dict[str, Dict[str, float]], Dict[str, Dict[str, float]]]:
+    standard: Dict[str, Dict[str, float]] = {}
+    asian: Dict[str, Dict[str, float]] = {}
+    for line, row in all_ou.items():
+        try:
+            val = float(line)
+        except ValueError:
+            standard[line] = row
+            continue
+        if val % 1.0 == 0.5:
+            standard[line] = row
+        else:
+            asian[line] = row
+    return standard, asian
+
+
+def parse_markets(markets: Dict[str, dict]) -> Dict[str, Any]:
+    odds_1x2 = _pick_3way(_active_option_odds(markets.get("winner3")))
+    odds_dc = _pick_dc(_active_option_odds(markets.get("double-chance")))
+    odds_gg = _pick_gg(_active_option_odds(markets.get("both-teams-score")))
+    odds_1x2_one_up = _pick_3way(_active_option_odds(markets.get("winner3-x-up;1")))
+    odds_1x2_two_up = _pick_3way(_active_option_odds(markets.get("winner3-x-up;2")))
+    odds_fh_1x2 = _pick_3way(_active_option_odds(markets.get("half-winner;1")))
+    odds_sh_1x2 = _pick_3way(_active_option_odds(markets.get("half-winner;2")))
+    odds_fh_dc = _pick_dc(_active_option_odds(markets.get("half-double-chance;1")))
+    odds_sh_dc = _pick_dc(_active_option_odds(markets.get("half-double-chance;2")))
+    odds_corners_1x2 = _pick_3way(_active_option_odds(markets.get("corner-winner")))
+    odds_bookings_1x2 = _pick_3way(_active_option_odds(markets.get("booking-winner")))
+
+    all_ou = _pick_ou(markets, "score-over-under;")
+    odds_ou, odds_asian_ou = _partition_ou(all_ou)
+    odds_fh_ou = _pick_ou(markets, "half-score-over-under;1;")
+    odds_sh_ou = _pick_ou(markets, "half-score-over-under;2;")
+    odds_bookings_ou = _pick_ou(markets, "booking-over-under;")
+
+    return {
+        "odds_1x2": odds_1x2,
+        "odds_ou": odds_ou,
+        "odds_asian_ou": odds_asian_ou,
+        "odds_dc": odds_dc,
+        "odds_gg": odds_gg,
+        "odds_1x2_one_up": odds_1x2_one_up,
+        "odds_1x2_two_up": odds_1x2_two_up,
+        "odds_fh_1x2": odds_fh_1x2,
+        "odds_sh_1x2": odds_sh_1x2,
+        "odds_fh_ou": odds_fh_ou,
+        "odds_sh_ou": odds_sh_ou,
+        "odds_fh_dc": odds_fh_dc,
+        "odds_sh_dc": odds_sh_dc,
+        "odds_corners_1x2": odds_corners_1x2,
+        "odds_bookings_1x2": odds_bookings_1x2,
+        "odds_bookings_ou": odds_bookings_ou,
+        "odds_gg_2plus": {},
+    }
+
+
+def base_match(home: str, away: str, kickoff: str, tournament: str) -> dict[str, Any]:
     return {
         "home_team": home,
         "away_team": away,
         "kickoff": kickoff,
         "tournament": tournament,
-        "is_live": is_live,
+        "is_live": False,
         "status": "Not start",
         "source": SOURCE,
         "odds_1x2": {},
@@ -82,110 +326,61 @@ def base_match(home: str, away: str, kickoff: str, tournament: str, is_live: boo
         "odds_gg_2plus": {},
     }
 
-async def scrape():
-    start = _time.time()
-    print("\n" + "🟡 " * 20)
-    print("   SUPABET GHANA SCRAPER")
-    print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🟡 " * 20 + "\n")
 
-    all_matches = []
+def convert_event(item: dict, tz: ZoneInfo) -> Optional[dict]:
+    fixture = item.get("fixture") if isinstance(item.get("fixture"), dict) else {}
+    betting = item.get("betting") if isinstance(item.get("betting"), dict) else {}
+    if fixture.get("state") not in (None, "active"):
+        return None
+    if betting.get("hidden") or betting.get("suspended"):
+        return None
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        # Add headers to bypass simple bot checks
-        ctx = await browser.new_context(
-            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        )
-        page = await ctx.new_page()
-        
-        # Load the raw Boltbet iframe directly
-        iframe_url = 'https://eu01.sportsbook.adv.bet/?orgUuid=17e5b1b7-bb38-d332-4e2f-f1fde542b6b9#/match/football'
-        try:
-            print(f"  [Supabet] Navigating to sportsbook...")
-            await page.goto(iframe_url, wait_until='networkidle', timeout=30000)
-            await page.wait_for_timeout(5000)
-        except Exception as e:
-            print(f"  [Supabet] Navigation error: {e}")
-            await browser.close()
+    home, away = _teams_from_fixture(fixture)
+    if not home or not away or is_virtual(home, away):
+        return None
+
+    closes = fixture.get("closesAt") or fixture.get("metadata", {}).get("startedAt")
+    if not closes:
+        return None
+    kick_utc = datetime.fromisoformat(str(closes).replace("Z", "+00:00"))
+    kick_local = kick_utc.astimezone(tz)
+
+    markets = betting.get("markets") if isinstance(betting.get("markets"), dict) else {}
+    row = base_match(home, away, kick_local.strftime("%Y-%m-%d %H:%M"), _tournament_from_fixture(fixture))
+    row.update(parse_markets(markets))
+
+    if not row.get("odds_1x2"):
+        return None
+    return row
+
+
+async def scrape_today_async(target: date, tz: ZoneInfo, now_utc: datetime) -> List[dict]:
+    async with aiohttp.ClientSession() as session:
+        stubs = await fetch_today_stubs(session, target, tz, now_utc)
+        uuids = [str(s["uuid"]) for s in stubs if s.get("uuid")]
+        if not uuids:
             return []
 
-        print(f"  [Supabet] Scrolling to load matches...")
-        for i in range(10): # Scroll up to 10 times to load more matches
-            await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-            await page.wait_for_timeout(1000)
+        chunks = [uuids[i : i + CHUNK_SIZE] for i in range(0, len(uuids), CHUNK_SIZE)]
+        sem = asyncio.Semaphore(MAX_CONCURRENT_CHUNKS)
 
-        # Query all match anchor tags
-        matches = await page.query_selector_all('a[href*="#/match/football/"]')
-        print(f"  [Supabet] Found {len(matches)} potential match cards")
+        async def work(chunk: List[str]) -> List[dict]:
+            async with sem:
+                return await fetch_full_chunk(session, chunk)
 
-        today = datetime.now().date()
-        skipped_dates = {}
+        batches = await asyncio.gather(*(work(chunk) for chunk in chunks))
 
-        for m in matches:
-            try:
-                teams_spans = await m.query_selector_all('.event-info__teams span')
-                if len(teams_spans) < 2: continue
-                
-                home = (await teams_spans[0].inner_text()).strip()
-                away = (await teams_spans[1].inner_text()).strip()
-                
-                if not home or not away or is_virtual(home, away): continue
-
-                # Get tournament/date from the UI if possible
-                time_el = await m.query_selector('.event-info__time')
-                time_text = (await time_el.inner_text()).strip() if time_el else ""
-                
-                # Boltbet formats time like '11/05 19:00' or 'Live'
-                is_live = 'live' in time_text.lower() or "'" in time_text
-
-                # Parse kickoff date
-                dt = parse_supabet_date(time_text)
-                if not dt:
-                    dt = datetime.now()
-                
-                # Filter to today's matches only
-                if dt.date() != today:
-                    date_key = dt.strftime('%Y-%m-%d')
-                    skipped_dates[date_key] = skipped_dates.get(date_key, 0) + 1
-                    continue
-
-                dt_str = dt.strftime('%Y-%m-%d %H:%M')
-
-                odds_btns = await m.query_selector_all('.bid-option')
-                if len(odds_btns) < 3: continue
-
-                try:
-                    h_odd = float((await odds_btns[0].inner_text()).strip() or 0)
-                    d_odd = float((await odds_btns[1].inner_text()).strip() or 0)
-                    a_odd = float((await odds_btns[2].inner_text()).strip() or 0)
-                except ValueError:
-                    continue
-
-                if h_odd <= 1.01 or d_odd <= 1.01 or a_odd <= 1.01: continue
-
-                match_obj = base_match(home, away, dt_str, 'Football', is_live)
-                match_obj['odds_1x2'] = {'home': h_odd, 'draw': d_odd, 'away': a_odd}
-                all_matches.append(match_obj)
-            except Exception as e:
+    matches: List[dict] = []
+    for batch in batches:
+        for item in batch:
+            if not isinstance(item, dict):
                 continue
+            row = convert_event(item, tz)
+            if row:
+                matches.append(row)
 
-        await browser.close()
-        
-        if skipped_dates:
-            print(f"  [Supabet] Skipped matches on future dates: {skipped_dates}")
-    
-    # Remove duplicates based on home + away names
-    unique_matches = []
-    seen = set()
-    for m in all_matches:
-        key = f"{m['home_team']}_{m['away_team']}"
-        if key not in seen:
-            seen.add(key)
-            unique_matches.append(m)
-
-    unique_matches.sort(key=lambda x: x['kickoff'])
-    return unique_matches
+    matches.sort(key=lambda x: (x["kickoff"], x["tournament"], x["home_team"], x["away_team"]))
+    return matches
 
 
 # ── FORMATTING HELPERS ─────────────────────────────────────────────────────────
@@ -195,36 +390,34 @@ def fmt_row(label, val):
     val_width = 80 - len(prefix) - 2
     return f"{prefix}{val:<{val_width}} │"
 
+
 def fmt_box_top(title):
     prefix = f"┌── {title} "
     dash_count = 80 - len(prefix) - 1
     return prefix + "─" * dash_count + "┐"
 
+
 def fmt_box_bottom():
     return "└" + "─" * 78 + "┘"
 
-def fmt_box_subheading(sub_title):
-    content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
-
-def fmt_box_divider():
-    line = "─" * 76
-    return f"│ {line} │"
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
     return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
 
+
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
     return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
 
+
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
     return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+
 
 def fmt_ou_section(ou_dict):
     if not ou_dict:
@@ -244,12 +437,11 @@ def fmt_ou_section(ou_dict):
         over = ou.get("over")
         under = ou.get("under")
         if over is not None and under is not None:
-            line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
-            rows.append(fmt_row(line_label, line_val))
+            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} │ Under: {under:<8}"))
     if not rows:
         return fmt_row("", "(No Over/Under lines available)")
     return "\n".join(rows)
+
 
 def fmt_asian_ou_section(ou_dict):
     if not ou_dict:
@@ -264,87 +456,104 @@ def fmt_asian_ou_section(ou_dict):
         over = ou.get("over")
         under = ou.get("under")
         if over is not None and under is not None:
-            line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
-            rows.append(fmt_row(line_label, line_val))
+            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} │ Under: {under:<8}"))
     if not rows:
         return fmt_row("", "(No Asian Over/Under lines available)")
     return "\n".join(rows)
 
+
 def format_match_text_block(m):
-    # Header
     title = f"⚽ {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
         title += " (🔴 LIVE)"
     meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
-
-    # Border width
     w = 80
 
-    # Formatting markets
-    m_1x2 = fmt_3way(m.get("odds_1x2"))
-    m_dc = fmt_dc(m.get("odds_dc"))
-    m_gg = fmt_gg(m.get("odds_gg"))
-    m_2up = fmt_3way(m.get("odds_1x2_two_up"))
-    m_1up = fmt_3way(m.get("odds_1x2_one_up"))
-
-    # Construct the block
-    lines = []
-    lines.append("═" * w)
-    lines.append(f"{title}")
-    lines.append(f"{meta}")
-    lines.append("═" * w)
-
-    # Main Markets
-    lines.append(fmt_box_top("MAIN MARKETS"))
-    lines.append(fmt_row("1X2 (Result)", m_1x2))
-    lines.append(fmt_row("Double Chance", m_dc))
-    lines.append(fmt_row("GG/NG", m_gg))
-    lines.append(fmt_row("1X2 Two Up", m_2up))
-    lines.append(fmt_row("1X2 One Up", m_1up))
-    lines.append(fmt_box_bottom())
-
-    # Over/Under Lines
-    lines.append(fmt_box_top("OVER/UNDER LINES"))
-    lines.append(fmt_ou_section(m.get("odds_ou")))
-    lines.append(fmt_box_bottom())
-
-    # Asian Over/Under Lines
-    lines.append(fmt_box_top("ASIAN OVER/UNDER LINES"))
-    lines.append(fmt_asian_ou_section(m.get("odds_asian_ou")))
-    lines.append(fmt_box_bottom())
-
-    lines.append("")  # Blank line after match block
-
+    lines = [
+        "═" * w,
+        title,
+        meta,
+        "═" * w,
+        fmt_box_top("MAIN MARKETS"),
+        fmt_row("1X2 (Result)", fmt_3way(m.get("odds_1x2"))),
+        fmt_row("Double Chance", fmt_dc(m.get("odds_dc"))),
+        fmt_row("GG/NG", fmt_gg(m.get("odds_gg"))),
+        fmt_row("1X2 Two Up", fmt_3way(m.get("odds_1x2_two_up"))),
+        fmt_row("1X2 One Up", fmt_3way(m.get("odds_1x2_one_up"))),
+        fmt_box_bottom(),
+        fmt_box_top("OVER/UNDER LINES"),
+        fmt_ou_section(m.get("odds_ou")),
+        fmt_box_bottom(),
+        fmt_box_top("ASIAN OVER/UNDER LINES"),
+        fmt_asian_ou_section(m.get("odds_asian_ou")),
+        fmt_box_bottom(),
+        "",
+    ]
     return "\n".join(lines)
 
 
-def run():
-    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
+def run() -> List[dict]:
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
     os.makedirs(output_dir, exist_ok=True)
-    start = _time.time()
-    matches = asyncio.run(scrape())
+    started = time.perf_counter()
 
-    if matches:
-        with open(os.path.join(output_dir, 'supabet_odds.json'), 'w') as f:
-            json.dump(matches, f, indent=2)
+    tz = ZoneInfo(TIMEZONE)
+    now_utc = datetime.now(timezone.utc)
+    now_local = now_utc.astimezone(tz)
+    today = now_local.date()
 
-        with open(os.path.join(output_dir, 'supabet_matches.txt'), 'w', encoding='utf-8') as f:
-            f.write('SUPABET GHANA - ALL MATCHES\n')
-            f.write(f'Generated: {datetime.now().strftime("%A, %d %B %Y %H:%M:%S")}\n')
-            f.write(f'Total: {len(matches)} matches\n')
-            f.write('=' * 60 + '\n\n')
+    print("\n" + "🟡 " * 20)
+    print("   SUPABET GHANA SCRAPER (ASYNC API)")
+    print(f"   {now_local.strftime('%A, %d %B %Y %H:%M:%S')}")
+    print("🟡 " * 20 + "\n")
+    print("  ⚡ Fetching today's football fixtures via adv.bet API...")
+
+    matches = asyncio.run(scrape_today_async(today, tz, now_utc))
+    n = len(matches)
+
+    json_path = os.path.join(output_dir, "supabet_odds.json")
+    txt_path = os.path.join(output_dir, "supabet_matches.txt")
+
+    with open(json_path, "w", encoding="utf-8") as jf:
+        json.dump(matches, jf, ensure_ascii=False, indent=2)
+        jf.write("\n")
+
+    with open(txt_path, "w", encoding="utf-8") as tf:
+        tf.write("SUPABET GHANA - ALL MATCHES\n")
+        tf.write(f"Generated: {now_local.strftime('%A, %d %B %Y %H:%M:%S')}\n")
+        tf.write(f"Total: {n} matches\n")
+        tf.write("=" * 60 + "\n\n")
+        if not matches:
+            tf.write(f"No prematch football for today ({TIMEZONE}).\n")
+        else:
             for m in matches:
-                f.write(format_match_text_block(m))
+                tf.write(format_match_text_block(m))
 
-        print(f"Saved to {os.path.join(output_dir, 'supabet_odds.json')}")
-        print(f"Full list saved to {os.path.join(output_dir, 'supabet_matches.txt')}")
-        print(f"   Open the .txt file to see all {len(matches)} matches!")
-        print(f"⏱️  Scraping completed in {_time.time() - start:.1f}s")
+    if n == 0:
+        print(f"⚠️  No prematch matches found for {today} ({TIMEZONE}).")
     else:
-        print('⚠️ No matches found')
+        print(f"\n📋 SUPABET GHANA")
+        print(f"⚽ Total matches: {n}")
+        print(f"With 1X2 odds: {sum(1 for m in matches if m.get('odds_1x2'))}")
+        print(f"With O/U odds:   {sum(1 for m in matches if m.get('odds_ou'))}")
+        print(f"With GG odds:    {sum(1 for m in matches if m.get('odds_gg'))}")
+        print("=" * 50)
+        head = min(10, n)
+        print(f"\n📝 Sample (first {head}):")
+        for m in matches[:head]:
+            print(f"   {m['home_team']} vs {m['away_team']} | {m['kickoff']} | {m['tournament']}")
+        if n > head:
+            print(f"  ... and {n - head} more")
 
+    elapsed = time.perf_counter() - started
+    print("=" * 50)
+    print(f"💾 Saved to {json_path}")
+    print(f"📄 Full list: {txt_path}")
+    if n > 0:
+        print(f"   Open the .txt file to see all {n} matches!")
+    print(f"⏱️  Scraping completed in {elapsed:.1f}s")
     return matches
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     run()

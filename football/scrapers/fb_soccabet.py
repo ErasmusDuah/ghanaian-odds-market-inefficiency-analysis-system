@@ -91,6 +91,7 @@ async def scrape():
     all_matches = []
     now = datetime.now()
     today = now.date()
+    today_str = today.strftime('%Y-%m-%d')
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -99,7 +100,7 @@ async def scrape():
         )
         page = await ctx.new_page()
         
-        url = 'https://www.soccabet.com/sports?s=77'
+        url = f'https://www.soccabet.com/sports?tr={today_str}&s=77'
         try:
             print(f"  [Soccabet] Navigating to sportsbook...")
             await page.goto(url, wait_until='domcontentloaded', timeout=30000)
