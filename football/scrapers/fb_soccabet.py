@@ -105,19 +105,23 @@ async def scrape():
             print(f"  [Soccabet] Navigating to sportsbook...")
             await page.goto(url, wait_until='domcontentloaded', timeout=30000)
             try:
-                await page.wait_for_selector('app-event-item', timeout=15000)
+                # Short wait for event items to start appearing from WebSocket push
+                await page.wait_for_selector('app-event-item', timeout=3000)
             except Exception:
                 pass
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(1000)
         except Exception as e:
             print(f"  [Soccabet] Navigation error: {e}")
             await browser.close()
             return []
 
-        print(f"  [Soccabet] Scrolling to load matches...")
-        for i in range(10): # Scroll to load more matches
-            await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-            await page.wait_for_timeout(1000)
+        print(f"  [Soccabet] Fast scrolling to trigger rendering...")
+        await page.evaluate("""async () => {
+            for (let i = 0; i < 5; i++) {
+                window.scrollTo(0, document.body.scrollHeight);
+                await new Promise(r => setTimeout(r, 250));
+            }
+        }""")
 
         loc = page.locator("app-event-item")
         count = await loc.count()
