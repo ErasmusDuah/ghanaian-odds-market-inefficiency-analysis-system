@@ -24,10 +24,10 @@ from typing import Any
 BASE_URL = "https://bet-api.bangbet.com/api/bet/match/list"
 SOURCE = "bangbet_gh"
 SPORT_ID_SOCCER = "sr:sport:1"
-OU_LINES = ("0.5", "1.5", "2.5", "3.5", "4.5", "5.5")
 MARKET_GROUPS = {
     "1x2": 0,
     "ou": 3,
+    "dc": 4,
     "gg": 5,
 }
 
@@ -103,7 +103,7 @@ def request_group(group_index: int, page: int, config: ScrapeConfig) -> dict[str
         try:
             with urllib.request.urlopen(request, timeout=config.request_timeout) as response:
                 raw = response.read().decode("utf-8")
-            data = json.loads(raw, parse_float=str)
+            data = json.loads(raw)
             if data.get("result") != 1:
                 raise RuntimeError(f"Bangbet API error: {data.get('info') or data}")
             return data.get("data") or {}
@@ -126,10 +126,14 @@ def event_dt(event: dict[str, Any], tz: timezone) -> datetime:
     return datetime.fromtimestamp(int(event["scheduledTime"]) / 1000, tz=tz)
 
 
-def odds_value(value: Any) -> str | None:
+def safe_float(value: Any) -> float | None:
+    """Convert a value to float, returning None if not possible."""
     if value is None or value == "":
         return None
-    return str(value)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def active_market(market: dict[str, Any]) -> bool:
@@ -143,15 +147,15 @@ def flatten_markets(event: dict[str, Any]) -> list[dict[str, Any]]:
     return markets
 
 
-def parse_1x2(event: dict[str, Any]) -> dict[str, str] | None:
+def parse_1x2(event: dict[str, Any]) -> dict[str, float] | None:
     for market in flatten_markets(event):
         if str(market.get("name") or "").lower() != "1x2" or not active_market(market):
             continue
-        values: dict[str, str] = {}
+        values: dict[str, float] = {}
         for outcome in market.get("outcomes") or []:
             if not outcome.get("active"):
                 continue
-            odd = odds_value(outcome.get("odds"))
+            odd = safe_float(outcome.get("odds"))
             if odd is None:
                 continue
             outcome_id = str(outcome.get("id") or "")
@@ -165,42 +169,79 @@ def parse_1x2(event: dict[str, Any]) -> dict[str, str] | None:
     return None
 
 
-def parse_ou(event: dict[str, Any]) -> dict[str, dict[str, str]]:
-    parsed: dict[str, dict[str, str]] = {}
+def parse_ou(event: dict[str, Any]) -> tuple[dict[str, dict[str, float]], dict[str, dict[str, float]]]:
+    """Parse all Over/Under lines, partitioning .5 lines into odds_ou and others into odds_asian_ou."""
+    odds_ou: dict[str, dict[str, float]] = {}
+    odds_asian_ou: dict[str, dict[str, float]] = {}
+
     for market in flatten_markets(event):
         if str(market.get("id") or "") != "18" or not active_market(market):
             continue
         spec = str(market.get("specifiers") or "")
-        line = spec.replace("total=", "").replace("&", "")
-        if line not in OU_LINES:
+        raw_line = spec.replace("total=", "").replace("&", "")
+        try:
+            line_val = float(raw_line)
+            line_str = str(line_val)
+        except (ValueError, TypeError):
             continue
-        row: dict[str, str] = {}
+
+        row: dict[str, float] = {}
         for outcome in market.get("outcomes") or []:
             if not outcome.get("active"):
                 continue
             desc = str(outcome.get("desc") or "").lower()
-            odd = odds_value(outcome.get("odds"))
+            odd = safe_float(outcome.get("odds"))
             if odd is None:
                 continue
             if desc.startswith("over"):
                 row["over"] = odd
             elif desc.startswith("under"):
                 row["under"] = odd
+
         if {"over", "under"} <= row.keys():
-            parsed[line] = row
-    return parsed
+            if line_val % 1.0 == 0.5:
+                odds_ou[line_str] = row
+            else:
+                odds_asian_ou[line_str] = row
+
+    return odds_ou, odds_asian_ou
 
 
-def parse_gg(event: dict[str, Any]) -> dict[str, str] | None:
+def parse_dc(event: dict[str, Any]) -> dict[str, float]:
+    """Parse Double Chance market (market id=10). Returns {'1x': ..., '12': ..., 'x2': ...}."""
+    for market in flatten_markets(event):
+        if str(market.get("id") or "") != "10" or not active_market(market):
+            continue
+        values: dict[str, float] = {}
+        for outcome in market.get("outcomes") or []:
+            if not outcome.get("active"):
+                continue
+            odd = safe_float(outcome.get("odds"))
+            if odd is None:
+                continue
+            outcome_id = str(outcome.get("id") or "")
+            # Bangbet DC outcome IDs: 9 = home or draw (1X), 10 = home or away (12), 11 = draw or away (X2)
+            if outcome_id == "9":
+                values["1x"] = odd
+            elif outcome_id == "10":
+                values["12"] = odd
+            elif outcome_id == "11":
+                values["x2"] = odd
+        if {"1x", "12", "x2"} <= values.keys():
+            return values
+    return {}
+
+
+def parse_gg(event: dict[str, Any]) -> dict[str, float] | None:
     for market in flatten_markets(event):
         if str(market.get("id") or "") != "29" or not active_market(market):
             continue
-        values: dict[str, str] = {}
+        values: dict[str, float] = {}
         for outcome in market.get("outcomes") or []:
             if not outcome.get("active"):
                 continue
             desc = str(outcome.get("desc") or "").lower()
-            odd = odds_value(outcome.get("odds"))
+            odd = safe_float(outcome.get("odds"))
             if odd is None:
                 continue
             if desc == "yes":
@@ -229,7 +270,21 @@ def base_match(event: dict[str, Any], tz: timezone) -> dict[str, Any]:
         "source": SOURCE,
         "odds_1x2": {},
         "odds_ou": {},
+        "odds_asian_ou": {},
+        "odds_dc": {},
         "odds_gg": None,
+        "odds_1x2_one_up": {},
+        "odds_1x2_two_up": {},
+        "odds_fh_1x2": {},
+        "odds_sh_1x2": {},
+        "odds_fh_ou": {},
+        "odds_sh_ou": {},
+        "odds_fh_dc": {},
+        "odds_sh_dc": {},
+        "odds_corners_1x2": {},
+        "odds_bookings_1x2": {},
+        "odds_bookings_ou": {},
+        "odds_gg_2plus": {},
     }
 
 
@@ -270,7 +325,13 @@ def scrape_today(config: ScrapeConfig) -> ScrapeResult:
                     if odds:
                         records[event_id]["odds_1x2"] = odds
                 elif market_name == "ou":
-                    records[event_id]["odds_ou"].update(parse_ou(event))
+                    ou, asian_ou = parse_ou(event)
+                    records[event_id]["odds_ou"].update(ou)
+                    records[event_id]["odds_asian_ou"].update(asian_ou)
+                elif market_name == "dc":
+                    dc = parse_dc(event)
+                    if dc:
+                        records[event_id]["odds_dc"] = dc
                 elif market_name == "gg":
                     records[event_id]["odds_gg"] = parse_gg(event)
 
@@ -286,36 +347,162 @@ def scrape_today(config: ScrapeConfig) -> ScrapeResult:
     return ScrapeResult(matches=matches, total_fetched=total_fetched, page_logs=page_logs)
 
 
-def format_txt(matches: list[dict[str, Any]]) -> str:
-    blocks: list[str] = []
-    for match in matches:
-        lines = [
-            f"{match['home_team']} vs {match['away_team']}",
-            match["tournament"],
-            match["kickoff"],
-        ]
-        one_x_two = match["odds_1x2"]
-        lines.append(f"1X2: {one_x_two['home']} | {one_x_two['draw']} | {one_x_two['away']}")
-        for line in OU_LINES:
-            ou = match["odds_ou"].get(line)
-            if ou:
-                lines.append(f"O/U {line}: Over {ou['over']} | Under {ou['under']}")
-        gg = match.get("odds_gg")
-        if gg:
-            lines.append(f"GG/NG: Yes {gg['yes']} | No {gg['no']}")
-        blocks.append("\n".join(lines))
-    return "\n\n".join(blocks) + ("\n" if blocks else "")
+# ── BOX-DRAWING FORMAT HELPERS ────────────────────────────────────────────────
 
+def fmt_row(label, val):
+    prefix = f"│ {label:<16} "
+    val_width = 80 - len(prefix) - 2
+    return f"{prefix}{val:<{val_width}} │"
+
+def fmt_box_top(title):
+    prefix = f"┌── {title} "
+    dash_count = 80 - len(prefix) - 1
+    return prefix + "─" * dash_count + "┐"
+
+def fmt_box_bottom():
+    return "└" + "─" * 78 + "┘"
+
+def fmt_box_subheading(sub_title):
+    content = f"[{sub_title}]"
+    return f"│ {content:<76} │"
+
+def fmt_box_divider():
+    line = "─" * 76
+    return f"│ {line} │"
+
+def fmt_3way(o):
+    if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
+        return "N/A"
+    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+
+def fmt_dc(o):
+    if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
+        return "N/A"
+    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+
+def fmt_gg(o):
+    if not o or o.get("yes") is None or o.get("no") is None:
+        return "N/A"
+    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+
+def fmt_ou_section(ou_dict):
+    if not ou_dict:
+        return fmt_row("", "(No Over/Under lines available)")
+    try:
+        sorted_keys = sorted(ou_dict.keys(), key=lambda x: float(x))
+    except Exception:
+        return fmt_row("", "(No Over/Under lines available)")
+    rows = []
+    for line in sorted_keys:
+        try:
+            if float(line) % 1.0 != 0.5:
+                continue
+        except ValueError:
+            continue
+        ou = ou_dict[line]
+        over = ou.get("over")
+        under = ou.get("under")
+        if over is not None and under is not None:
+            line_label = f"Line {line}"
+            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            rows.append(fmt_row(line_label, line_val))
+    if not rows:
+        return fmt_row("", "(No Over/Under lines available)")
+    return "\n".join(rows)
+
+def fmt_asian_ou_section(ou_dict):
+    if not ou_dict:
+        return fmt_row("", "(No Asian Over/Under lines available)")
+    try:
+        sorted_keys = sorted(ou_dict.keys(), key=lambda x: float(x))
+    except Exception:
+        return fmt_row("", "(No Asian Over/Under lines available)")
+    rows = []
+    for line in sorted_keys:
+        ou = ou_dict[line]
+        over = ou.get("over")
+        under = ou.get("under")
+        if over is not None and under is not None:
+            line_label = f"Line {line}"
+            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            rows.append(fmt_row(line_label, line_val))
+    if not rows:
+        return fmt_row("", "(No Asian Over/Under lines available)")
+    return "\n".join(rows)
+
+
+def format_match_text_block(m):
+    # Header
+    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    if m.get("is_live"):
+        title += " (🔴 LIVE)"
+    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+
+    # Border width
+    w = 80
+
+    # Formatting markets
+    m_1x2 = fmt_3way(m.get("odds_1x2"))
+    m_dc = fmt_dc(m.get("odds_dc"))
+    m_gg = fmt_gg(m.get("odds_gg"))
+    m_2up = fmt_3way(m.get("odds_1x2_two_up"))
+    m_1up = fmt_3way(m.get("odds_1x2_one_up"))
+
+    # Construct the block
+    lines = []
+    lines.append("═" * w)
+    lines.append(f"{title}")
+    lines.append(f"{meta}")
+    lines.append("═" * w)
+
+    # Main Markets
+    lines.append(fmt_box_top("MAIN MARKETS"))
+    lines.append(fmt_row("1X2 (Result)", m_1x2))
+    lines.append(fmt_row("Double Chance", m_dc))
+    lines.append(fmt_row("GG/NG", m_gg))
+    lines.append(fmt_row("1X2 Two Up", m_2up))
+    lines.append(fmt_row("1X2 One Up", m_1up))
+    lines.append(fmt_box_bottom())
+
+    # Over/Under Lines
+    lines.append(fmt_box_top("OVER/UNDER LINES"))
+    lines.append(fmt_ou_section(m.get("odds_ou")))
+    lines.append(fmt_box_bottom())
+
+    # Asian Over/Under Lines
+    lines.append(fmt_box_top("ASIAN OVER/UNDER LINES"))
+    lines.append(fmt_asian_ou_section(m.get("odds_asian_ou")))
+    lines.append(fmt_box_bottom())
+
+    lines.append("")  # Blank line after match block
+
+    return "\n".join(lines)
+
+
+# ── OUTPUT WRITERS ─────────────────────────────────────────────────────────────
 
 def write_outputs(matches: list[dict[str, Any]], output_dir: Path) -> tuple[Path, Path]:
     os.makedirs(output_dir, exist_ok=True)
     json_path = output_dir / "bangbet_odds.json"
     txt_path = output_dir / "bangbet_matches.txt"
+
+    now = datetime.now()
+
     with open(str(json_path), "w", encoding="utf-8", newline="\n") as file:
         file.write(json.dumps(matches, indent=2, ensure_ascii=False))
         file.write("\n")
+
     with open(str(txt_path), "w", encoding="utf-8", newline="\n") as file:
-        file.write(format_txt(matches))
+        file.write("BANGBET GHANA - ALL MATCHES\n")
+        file.write(f"Generated: {now.strftime('%A, %d %B %Y %H:%M:%S')}\n")
+        file.write(f"Total: {len(matches)} matches\n")
+        file.write("=" * 60 + "\n\n")
+        if not matches:
+            file.write("No prematch football for today.\n")
+        else:
+            for m in matches:
+                file.write(format_match_text_block(m))
+
     return json_path, txt_path
 
 
@@ -333,7 +520,7 @@ def print_summary(result: ScrapeResult, json_path: Path, txt_path: Path, elapsed
     print()
     print("[INFO] Fetching today's matches...")
     for market, page, count, total in result.page_logs:
-        label = "1X2" if market == "1x2" else "O/U" if market == "ou" else "GG/NG"
+        label = {"1x2": "1X2", "ou": "O/U", "dc": "DC", "gg": "GG/NG"}.get(market, market)
         print(f"  [OK] {label} Page {page}: {count} matches (Total API rows: {total})")
     print()
     print(f"[INFO] Total matches fetched: {result.total_fetched}")
@@ -341,6 +528,7 @@ def print_summary(result: ScrapeResult, json_path: Path, txt_path: Path, elapsed
     print("BANGBET GHANA")
     print(f"Total matches fetched: {len(result.matches)}")
     print(f"With 1X2 odds: {sum(1 for match in result.matches if match.get('odds_1x2'))}")
+    print(f"With DC odds:  {sum(1 for match in result.matches if match.get('odds_dc'))}")
     print("=" * 50)
     print()
     print("Sample (first 10 matches):")
@@ -385,7 +573,8 @@ def main() -> int:
     print_summary(result, json_path, txt_path, elapsed)
     if args.print_all:
         print()
-        print(format_txt(result.matches), end="")
+        for m in result.matches:
+            print(format_match_text_block(m), end="")
     return 0
 
 
@@ -398,7 +587,7 @@ def run() -> list[dict]:
     print(banner(datetime.now()))
 
     config = ScrapeConfig(
-        output_dir=Path(__file__).resolve().parent,
+        output_dir=Path(output_dir),
         max_pages=8,
         page_size=100,
     )

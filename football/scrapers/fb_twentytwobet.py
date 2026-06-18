@@ -168,16 +168,22 @@ def pick_btts(markets: List[dict]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def pick_ou_lines(markets: List[dict]) -> Optional[Dict[str, Any]]:
+def pick_all_ou_lines(markets: List[dict]) -> Dict[str, Any]:
+    """Fetch ALL total lines (whole, .5, .25, .75) returning exact string keys."""
     ou_lines = {}
     for m in markets:
         if m.get("vendorMarketId") != 18:
             continue
         spec = m.get("specifiers") or ""
-        match = re.search(r'total=(\d+\.5)', spec)
+        match = re.search(r'total=(\d+(?:\.\d+)?)', spec)
         if not match:
             continue
-        line_str = match.group(1)
+        raw_line = match.group(1)
+        # Normalize key to str(float) to ensure "2" and "2.0" are the same
+        try:
+            line_str = str(float(raw_line))
+        except ValueError:
+            continue
         outs = m.get("outcomes") or []
         if len(outs) != 2:
             continue
@@ -188,8 +194,27 @@ def pick_ou_lines(markets: List[dict]) -> Optional[Dict[str, Any]]:
         under = by_vo.get("13")
         if over is not None and under is not None:
             ou_lines[line_str] = {"over": float(over), "under": float(under)}
-            
-    return ou_lines if ou_lines else None
+
+    return ou_lines
+
+
+def pick_dc(markets: List[dict]) -> Optional[Dict[str, Any]]:
+    for m in markets:
+        if m.get("vendorMarketId") != 10:
+            continue
+        if m.get("specifiers"):
+            continue
+        outs = m.get("outcomes") or []
+        if len(outs) != 3:
+            continue
+        by_vo = {str(o.get("vendorOutcomeId") or ""): o.get("odds") for o in outs}
+        if "9" in by_vo and "10" in by_vo and "11" in by_vo:
+            return {
+                "1x": float(by_vo["9"]),
+                "12": float(by_vo["10"]),
+                "x2": float(by_vo["11"]),
+            }
+    return None
 
 
 def build_league_label(league: dict, cat_by_id: Dict[int, dict]) -> str:
@@ -239,7 +264,21 @@ def scrape_for_calendar_day(
         
         odds_1x2 = pick_1x2(markets) or {}
         odds_gg = pick_btts(markets) or {}
-        odds_ou = pick_ou_lines(markets) or {}
+        odds_dc = pick_dc(markets) or {}
+
+        # Fetch all O/U lines (standard .5 and asian wholes/.25/.75)
+        all_ou = pick_all_ou_lines(markets)
+        odds_ou = {}
+        odds_asian_ou = {}
+        for line_str, val in all_ou.items():
+            try:
+                line_val = float(line_str)
+            except ValueError:
+                continue
+            if line_val % 1.0 == 0.5:
+                odds_ou[line_str] = val
+            else:
+                odds_asian_ou[line_str] = val
 
         if not odds_1x2:
             continue
@@ -262,8 +301,22 @@ def scrape_for_calendar_day(
             "is_live": False,
             "source": "twentytwobet_gh",
             "odds_1x2": odds_1x2,
+            "odds_1x2_one_up": {},
+            "odds_1x2_two_up": {},
+            "odds_fh_1x2": {},
+            "odds_sh_1x2": {},
+            "odds_fh_ou": {},
+            "odds_sh_ou": {},
+            "odds_fh_dc": {},
+            "odds_sh_dc": {},
+            "odds_corners_1x2": {},
+            "odds_bookings_1x2": {},
+            "odds_bookings_ou": {},
             "odds_ou": odds_ou,
+            "odds_asian_ou": odds_asian_ou,
             "odds_gg": odds_gg,
+            "odds_gg_2plus": {},
+            "odds_dc": odds_dc,
         }
         
         out.append(row)
@@ -288,6 +341,203 @@ def display_matches(matches):
     if len(matches) > 10:
         print(f"  ... and {len(matches) - 10} more")
     print("=" * 50)
+
+
+def fmt_row(label, val):
+    prefix = f"│ {label:<16} "
+    val_width = 80 - len(prefix) - 2
+    return f"{prefix}{val:<{val_width}} │"
+
+def fmt_box_top(title):
+    prefix = f"┌── {title} "
+    dash_count = 80 - len(prefix) - 1
+    return prefix + "─" * dash_count + "┐"
+
+def fmt_box_bottom():
+    return "└" + "─" * 78 + "┘"
+
+def fmt_box_subheading(sub_title):
+    content = f"[{sub_title}]"
+    return f"│ {content:<76} │"
+
+def fmt_box_divider():
+    line = "─" * 76
+    return f"│ {line} │"
+
+def fmt_3way(o):
+    if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
+        return "N/A"
+    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+
+def fmt_dc(o):
+    if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
+        return "N/A"
+    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+
+def fmt_gg(o):
+    if not o or o.get("yes") is None or o.get("no") is None:
+        return "N/A"
+    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+
+def fmt_nested_ou_inline(ou_dict):
+    if not ou_dict:
+        return "N/A"
+    try:
+        sorted_keys = sorted(ou_dict.keys(), key=lambda x: float(x))
+    except Exception:
+        return "N/A"
+    parts = []
+    for line in sorted_keys:
+        ou = ou_dict[line]
+        over = ou.get("over")
+        under = ou.get("under")
+        if over is not None and under is not None:
+            parts.append(f"[{line}: O {over}/U {under}]")
+    return "  ".join(parts)
+
+def fmt_ou_section(ou_dict):
+    if not ou_dict:
+        return fmt_row("", "(No Over/Under lines available)")
+    try:
+        sorted_keys = sorted(ou_dict.keys(), key=lambda x: float(x))
+    except Exception:
+        return fmt_row("", "(No Over/Under lines available)")
+    rows = []
+    for line in sorted_keys:
+        try:
+            if float(line) % 1.0 != 0.5:
+                continue
+        except ValueError:
+            continue
+        ou = ou_dict[line]
+        over = ou.get("over")
+        under = ou.get("under")
+        if over is not None and under is not None:
+            line_label = f"Line {line}"
+            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            rows.append(fmt_row(line_label, line_val))
+    return "\n".join(rows)
+
+def fmt_asian_ou_section(ou_dict):
+    if not ou_dict:
+        return fmt_row("", "(No Asian Over/Under lines available)")
+    try:
+        sorted_keys = sorted(ou_dict.keys(), key=lambda x: float(x))
+    except Exception:
+        return fmt_row("", "(No Asian Over/Under lines available)")
+    rows = []
+    for line in sorted_keys:
+        ou = ou_dict[line]
+        over = ou.get("over")
+        under = ou.get("under")
+        if over is not None and under is not None:
+            line_label = f"Line {line}"
+            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            rows.append(fmt_row(line_label, line_val))
+    return "\n".join(rows)
+
+def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
+    """Like fmt_ou_section but shows ALL lines (no .5 filter). Used for half-time markets."""
+    if not ou_dict:
+        return fmt_row("", empty_msg)
+    try:
+        sorted_keys = sorted(ou_dict.keys(), key=lambda x: float(x))
+    except Exception:
+        return fmt_row("", empty_msg)
+    rows = []
+    for line in sorted_keys:
+        ou = ou_dict[line]
+        over = ou.get("over")
+        under = ou.get("under")
+        if over is not None and under is not None:
+            line_label = f"Line {line}"
+            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            rows.append(fmt_row(line_label, line_val))
+    if not rows:
+        return fmt_row("", empty_msg)
+    return "\n".join(rows)
+
+def format_match_text_block(m):
+    # Header
+    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    if m.get("is_live"):
+        title += " (🔴 LIVE)"
+    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+    
+    # Border width
+    w = 80
+    
+    # Formatting markets
+    m_1x2 = fmt_3way(m.get("odds_1x2"))
+    m_dc = fmt_dc(m.get("odds_dc"))
+    m_gg = fmt_gg(m.get("odds_gg"))
+    m_2up = fmt_3way(m.get("odds_1x2_two_up"))
+    m_1up = fmt_3way(m.get("odds_1x2_one_up"))
+    
+    # 1st Half / 2nd Half
+    fh_1x2 = fmt_3way(m.get("odds_fh_1x2"))
+    fh_dc = fmt_dc(m.get("odds_fh_dc"))
+    
+    sh_1x2 = fmt_3way(m.get("odds_sh_1x2"))
+    sh_dc = fmt_dc(m.get("odds_sh_dc"))
+    
+    # Specials
+    c_1x2 = fmt_3way(m.get("odds_corners_1x2"))
+    b_1x2 = fmt_3way(m.get("odds_bookings_1x2"))
+    gg_2plus = fmt_gg(m.get("odds_gg_2plus"))
+
+    # Construct the block
+    lines = []
+    lines.append("═" * w)
+    lines.append(f"{title}")
+    lines.append(f"{meta}")
+    lines.append("═" * w)
+    
+    # Main Markets
+    lines.append(fmt_box_top("MAIN MARKETS"))
+    lines.append(fmt_row("1X2 (Result)", m_1x2))
+    lines.append(fmt_row("Double Chance", m_dc))
+    lines.append(fmt_row("GG/NG", m_gg))
+    lines.append(fmt_row("1X2 Two Up", m_2up))
+    lines.append(fmt_row("1X2 One Up", m_1up))
+    lines.append(fmt_box_bottom())
+    
+    # Over/Under Lines
+    lines.append(fmt_box_top("OVER/UNDER LINES"))
+    lines.append(fmt_ou_section(m.get("odds_ou")))
+    lines.append(fmt_box_bottom())
+    
+    # Asian Over/Under Lines
+    lines.append(fmt_box_top("ASIAN OVER/UNDER LINES"))
+    lines.append(fmt_asian_ou_section(m.get("odds_asian_ou")))
+    lines.append(fmt_box_bottom())
+    
+    # Half Time Markets
+    lines.append(fmt_box_top("HALF TIME MARKETS"))
+    lines.append(fmt_box_subheading("1ST HALF"))
+    lines.append(fmt_row("1X2 (Result)", fh_1x2))
+    lines.append(fmt_row("Double Chance", fh_dc))
+    lines.append(fmt_box_subheading("1ST HALF OVER/UNDER"))
+    lines.append(fmt_ou_section_all(m.get("odds_fh_ou")))
+    lines.append(fmt_box_divider())
+    lines.append(fmt_box_subheading("2ND HALF"))
+    lines.append(fmt_row("1X2 (Result)", sh_1x2))
+    lines.append(fmt_row("Double Chance", sh_dc))
+    lines.append(fmt_box_subheading("2ND HALF OVER/UNDER"))
+    lines.append(fmt_ou_section_all(m.get("odds_sh_ou")))
+    lines.append(fmt_box_bottom())
+    
+    # Specials & Stats
+    lines.append(fmt_box_top("CORNERS, BOOKINGS & SPECIALS"))
+    lines.append(fmt_row("Corners 1X2", c_1x2))
+    lines.append(fmt_row("Bookings 1X2", b_1x2))
+    lines.append(fmt_box_subheading("BOOKINGS OVER/UNDER"))
+    lines.append(fmt_ou_section_all(m.get("odds_bookings_ou"), empty_msg="(No Bookings O/U lines available)"))
+    lines.append(fmt_row("GG/NG 2+", gg_2plus))
+    lines.append(fmt_box_bottom())
+    lines.append("") # Blank line after match block
+    
+    return "\n".join(lines)
 
 
 def run():
@@ -326,20 +576,7 @@ def run():
             f.write(f"Total: {len(matches)} matches\n")
             f.write("=" * 60 + "\n\n")
             for match in matches:
-                live_tag = "🔴 LIVE" if match.get('is_live') else ""
-                f.write(f"⚽ {match['home_team']} vs {match['away_team']} {live_tag}\n")
-                f.write(f"🏆 {match['tournament']}\n")
-                f.write(f"🕐 {match['kickoff']}\n")
-                if match['odds_1x2']:
-                    o = match['odds_1x2']
-                    f.write(f"1X2: {o['home']} | {o['draw']} | {o['away']}\n")
-                if match['odds_ou']:
-                    for line_str, ou in match['odds_ou'].items():
-                        f.write(f"O/U {line_str}: Over {ou['over']} | Under {ou['under']}\n")
-                if match['odds_gg']:
-                    gg = match['odds_gg']
-                    f.write(f"GG/NG: Yes {gg.get('yes', '?')} | No {gg.get('no', '?')}\n")
-                f.write("\n")
+                f.write(format_match_text_block(match))
 
         print(f"💾 Saved to {os.path.join(output_dir, 'twentytwobet_odds.json')}")
         print(f"📄 Full list: {os.path.join(output_dir, 'twentytwobet_matches.txt')}")

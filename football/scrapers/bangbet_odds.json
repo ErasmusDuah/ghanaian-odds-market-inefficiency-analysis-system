@@ -1,0 +1,602 @@
+[
+  {
+    "home_team": "Valeriodoce EC MG",
+    "away_team": "SC Aymores MG",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "Brazil. Mineiro, Modulo II",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "2.39",
+      "draw": "2.85",
+      "away": "2.85"
+    },
+    "odds_ou": {
+      "0.5": {
+        "over": "1.06",
+        "under": "8.0"
+      },
+      "1.5": {
+        "over": "1.36",
+        "under": "2.8"
+      },
+      "2.5": {
+        "over": "2.12",
+        "under": "1.54"
+      },
+      "3.5": {
+        "over": "3.6",
+        "under": "1.19"
+      },
+      "4.5": {
+        "over": "6.0",
+        "under": "1.05"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.89",
+      "no": "1.7"
+    }
+  },
+  {
+    "home_team": "Ghana",
+    "away_team": "Panama",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "International. FIFA World Cup",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "2.37",
+      "draw": "3.3",
+      "away": "3.35"
+    },
+    "odds_ou": {
+      "0.5": {
+        "over": "1.08",
+        "under": "9.8"
+      },
+      "1.5": {
+        "over": "1.37",
+        "under": "3.25"
+      },
+      "2.5": {
+        "over": "2.14",
+        "under": "1.75"
+      },
+      "3.5": {
+        "over": "3.8",
+        "under": "1.29"
+      },
+      "4.5": {
+        "over": "7.8",
+        "under": "1.1"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.87",
+      "no": "1.94"
+    }
+  },
+  {
+    "home_team": "New York City FC II",
+    "away_team": "Carolina Core FC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. MLS Next Pro",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "2.31",
+      "draw": "3.6",
+      "away": "2.45"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.1",
+        "under": "6.2"
+      },
+      "2.5": {
+        "over": "1.37",
+        "under": "2.55"
+      },
+      "3.5": {
+        "over": "1.92",
+        "under": "1.67"
+      },
+      "4.5": {
+        "over": "3.0",
+        "under": "1.27"
+      },
+      "5.5": {
+        "over": "6.2",
+        "under": "1.1"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.36",
+      "no": "2.55"
+    }
+  },
+  {
+    "home_team": "Alexandria Reds",
+    "away_team": "Hub City FC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. National Premier Soccer League",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "1.48",
+      "draw": "4.0",
+      "away": "5.0"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.12",
+        "under": "5.6"
+      },
+      "2.5": {
+        "over": "1.43",
+        "under": "2.39"
+      },
+      "3.5": {
+        "over": "2.04",
+        "under": "1.59"
+      },
+      "4.5": {
+        "over": "3.25",
+        "under": "1.23"
+      },
+      "5.5": {
+        "over": "7.0",
+        "under": "1.08"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.55",
+      "no": "2.08"
+    }
+  },
+  {
+    "home_team": "Ambassadors FC Ohio",
+    "away_team": "Cleveland SC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. National Premier Soccer League",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "1.81",
+      "draw": "3.75",
+      "away": "3.3"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.11",
+        "under": "5.8"
+      },
+      "2.5": {
+        "over": "1.4",
+        "under": "2.47"
+      },
+      "3.5": {
+        "over": "1.98",
+        "under": "1.63"
+      },
+      "4.5": {
+        "over": "3.1",
+        "under": "1.25"
+      },
+      "5.5": {
+        "over": "6.6",
+        "under": "1.09"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.42",
+      "no": "2.36"
+    }
+  },
+  {
+    "home_team": "American Soccer Club New York",
+    "away_team": "Osners FC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. National Premier Soccer League",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "1.38",
+      "draw": "4.5",
+      "away": "5.8"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.06",
+        "under": "8.4"
+      },
+      "2.5": {
+        "over": "1.26",
+        "under": "3.05"
+      },
+      "3.5": {
+        "over": "1.66",
+        "under": "1.93"
+      },
+      "4.5": {
+        "over": "2.45",
+        "under": "1.4"
+      },
+      "5.5": {
+        "over": "4.5",
+        "under": "1.17"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.42",
+      "no": "2.35"
+    }
+  },
+  {
+    "home_team": "Buffalo Stallions",
+    "away_team": "Rochester NY FC Academy",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. National Premier Soccer League",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "5.0",
+      "draw": "4.7",
+      "away": "1.41"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.09",
+        "under": "6.6"
+      },
+      "2.5": {
+        "over": "1.33",
+        "under": "2.7"
+      },
+      "3.5": {
+        "over": "1.85",
+        "under": "1.72"
+      },
+      "4.5": {
+        "over": "2.85",
+        "under": "1.31"
+      },
+      "5.5": {
+        "over": "5.6",
+        "under": "1.11"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.49",
+      "no": "2.17"
+    }
+  },
+  {
+    "home_team": "Annapolis Blues FC",
+    "away_team": "Hill City FC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. USL League Two",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "1.94",
+      "draw": "3.5",
+      "away": "3.15"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.14",
+        "under": "5.0"
+      },
+      "2.5": {
+        "over": "1.5",
+        "under": "2.21"
+      },
+      "3.5": {
+        "over": "2.2",
+        "under": "1.5"
+      },
+      "4.5": {
+        "over": "3.55",
+        "under": "1.19"
+      },
+      "5.5": {
+        "over": "8.2",
+        "under": "1.06"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.48",
+      "no": "2.22"
+    }
+  },
+  {
+    "home_team": "Christos FC",
+    "away_team": "Northern Virginia FC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. USL League Two",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "2.7",
+      "draw": "3.75",
+      "away": "2.08"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.07",
+        "under": "7.6"
+      },
+      "2.5": {
+        "over": "1.29",
+        "under": "2.9"
+      },
+      "3.5": {
+        "over": "1.74",
+        "under": "1.84"
+      },
+      "4.5": {
+        "over": "2.6",
+        "under": "1.35"
+      },
+      "5.5": {
+        "over": "4.9",
+        "under": "1.14"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.31",
+      "no": "2.75"
+    }
+  },
+  {
+    "home_team": "Connecticut Rush",
+    "away_team": "Western Mass Pioneers",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. USL League Two",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "3.7",
+      "draw": "3.8",
+      "away": "1.7"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.1",
+        "under": "6.0"
+      },
+      "2.5": {
+        "over": "1.39",
+        "under": "2.49"
+      },
+      "3.5": {
+        "over": "1.96",
+        "under": "1.64"
+      },
+      "4.5": {
+        "over": "3.1",
+        "under": "1.26"
+      },
+      "5.5": {
+        "over": "6.4",
+        "under": "1.09"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.43",
+      "no": "2.33"
+    }
+  },
+  {
+    "home_team": "Kalamazoo FC",
+    "away_team": "Flint City Bucks",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. USL League Two",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "6.2",
+      "draw": "4.4",
+      "away": "1.37"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.1",
+        "under": "6.2"
+      },
+      "2.5": {
+        "over": "1.38",
+        "under": "2.55"
+      },
+      "3.5": {
+        "over": "1.94",
+        "under": "1.66"
+      },
+      "4.5": {
+        "over": "3.05",
+        "under": "1.27"
+      },
+      "5.5": {
+        "over": "6.2",
+        "under": "1.1"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.58",
+      "no": "2.02"
+    }
+  },
+  {
+    "home_team": "San Francisco Glens SC",
+    "away_team": "Academica SC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. USL League Two",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "1.74",
+      "draw": "3.75",
+      "away": "3.6"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.14",
+        "under": "5.0"
+      },
+      "2.5": {
+        "over": "1.48",
+        "under": "2.25"
+      },
+      "3.5": {
+        "over": "2.18",
+        "under": "1.51"
+      },
+      "4.5": {
+        "over": "3.5",
+        "under": "1.2"
+      },
+      "5.5": {
+        "over": "8.2",
+        "under": "1.06"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.51",
+      "no": "2.16"
+    }
+  },
+  {
+    "home_team": "Sporting Jax II",
+    "away_team": "Nona FC",
+    "kickoff": "2026-06-17 23:00",
+    "tournament": "USA. USL League Two",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "4.8",
+      "draw": "3.55",
+      "away": "1.59"
+    },
+    "odds_ou": {
+      "0.5": {
+        "over": "1.04",
+        "under": "11.0"
+      },
+      "1.5": {
+        "over": "1.26",
+        "under": "3.4"
+      },
+      "2.5": {
+        "over": "1.82",
+        "under": "1.75"
+      },
+      "3.5": {
+        "over": "2.95",
+        "under": "1.28"
+      },
+      "4.5": {
+        "over": "5.0",
+        "under": "1.09"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.88",
+      "no": "1.7"
+    }
+  },
+  {
+    "home_team": "West Chester United SC",
+    "away_team": "Philadelphia Ukrainian Nationals",
+    "kickoff": "2026-06-17 23:30",
+    "tournament": "USA. National Premier Soccer League",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "1.49",
+      "draw": "4.4",
+      "away": "4.5"
+    },
+    "odds_ou": {
+      "1.5": {
+        "over": "1.05",
+        "under": "9.4"
+      },
+      "2.5": {
+        "over": "1.22",
+        "under": "3.3"
+      },
+      "3.5": {
+        "over": "1.58",
+        "under": "2.05"
+      },
+      "4.5": {
+        "over": "2.28",
+        "under": "1.47"
+      },
+      "5.5": {
+        "over": "4.0",
+        "under": "1.2"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.32",
+      "no": "2.65"
+    }
+  },
+  {
+    "home_team": "SSA Swarm FC",
+    "away_team": "Asheville City SC",
+    "kickoff": "2026-06-17 23:30",
+    "tournament": "USA. USL W League",
+    "is_live": false,
+    "status": "Not start",
+    "source": "bangbet_gh",
+    "odds_1x2": {
+      "home": "3.85",
+      "draw": "3.6",
+      "away": "1.72"
+    },
+    "odds_ou": {
+      "0.5": {
+        "over": "1.02",
+        "under": "15.0"
+      },
+      "1.5": {
+        "over": "1.18",
+        "under": "4.2"
+      },
+      "2.5": {
+        "over": "1.61",
+        "under": "2.01"
+      },
+      "3.5": {
+        "over": "2.47",
+        "under": "1.4"
+      },
+      "4.5": {
+        "over": "4.1",
+        "under": "1.14"
+      }
+    },
+    "odds_gg": {
+      "yes": "1.62",
+      "no": "1.97"
+    }
+  }
+]

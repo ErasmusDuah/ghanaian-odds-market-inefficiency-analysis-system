@@ -16,8 +16,8 @@ STOPWORDS = {
     'fk', 'fc', 'sc', 'cf', 'ac', 'bk', 'fk', 'sk', 'if', 'bfk', 'spor', 'sport',
     'united', 'city', 'town', 'reserve', 'reserves', 'u19', 'u20', 'u21', 'u23',
     'women', 'youth', 'under', 'club', 'team', 'real', 'atletico', 'atletico',
-    'depor', 'deportivo', 'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21',
-    'citizen', 'citizens'
+    'depor', 'deportivo', 'deportes', 'deportiva', 'cd', 'csd', 'sd', 'ud',
+    'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21', 'citizen', 'citizens'
 }
 
 def clean_tokens(name):

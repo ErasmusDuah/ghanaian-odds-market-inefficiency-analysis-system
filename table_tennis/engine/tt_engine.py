@@ -69,24 +69,42 @@ def player_names_match(a: str, b: str) -> bool:
     if not tokens_a or not tokens_b:
         return False
         
+    # Remove common non-name tokens
+    ignore_tokens = {'liga', 'pro', 'cup', 'setka', 'series', 'elite', 'tt', 'women', 'men', 'international'}
+    tokens_a = tokens_a - ignore_tokens
+    tokens_b = tokens_b - ignore_tokens
+    
+    if not tokens_a or not tokens_b:
+        return False
+        
     if tokens_a == tokens_b:
         return True
         
-    if tokens_a.issubset(tokens_b) and len(tokens_a) >= 2:
-        return True
-    if tokens_b.issubset(tokens_a) and len(tokens_b) >= 2:
-        return True
-        
-    intersection = tokens_a.intersection(tokens_b)
-    if len(intersection) >= 2:
-        return True
-        
-    str_a = ' '.join(sorted(tokens_a))
-    str_b = ' '.join(sorted(tokens_b))
-    if SequenceMatcher(None, str_a, str_b).ratio() >= 0.8:
-        return True
-        
-    return False
+    def token_match(t1, t2):
+        if t1 == t2:
+            return True
+        if len(t1) == 1 and len(t2) > 1:
+            return t2.startswith(t1)
+        if len(t2) == 1 and len(t1) > 1:
+            return t1.startswith(t2)
+        if len(t1) > 1 and len(t2) > 1:
+            return SequenceMatcher(None, t1, t2).ratio() >= 0.75
+        return False
+
+    matched_b = set()
+    matches_count = 0
+    for ta in tokens_a:
+        for tb in tokens_b:
+            if tb not in matched_b and token_match(ta, tb):
+                matched_b.add(tb)
+                matches_count += 1
+                break
+                
+    min_len = min(len(tokens_a), len(tokens_b))
+    if min_len == 1:
+        return matches_count >= 1
+    else:
+        return matches_count >= min_len and matches_count >= 2
 
 
 def parse_kickoff(ko_str):
@@ -109,8 +127,8 @@ def _matches_same_game(a, b):
     if not ko_a or not ko_b:
         return False, False
         
-    # Must be within 1.5 hours (5400 seconds)
-    if abs((ko_a - ko_b).total_seconds()) > 5400:
+    # Must be within 15 minutes (900 seconds)
+    if abs((ko_a - ko_b).total_seconds()) > 900:
         return False, False
 
     home_a, away_a = a.get('home_team', ''), a.get('away_team', '')
@@ -316,7 +334,7 @@ def scan_2way_arb(group, total_stake):
                 })
 
             # --- QUASI-ARB: SCENARIO A ---
-            if profit_pct_a < MIN_ARB_PROFIT_PCT:
+            if profit_pct_a <= MAX_ARB_PROFIT_PCT:
                 odds_list = [h1, a2_actual]
                 q_stk = _quasi_stakes(odds_list, total_stake)
                 if q_stk:
@@ -431,7 +449,7 @@ def scan_2way_arb(group, total_stake):
                 })
 
             # --- QUASI-ARB: SCENARIO B ---
-            if profit_pct_b < MIN_ARB_PROFIT_PCT:
+            if profit_pct_b <= MAX_ARB_PROFIT_PCT:
                 odds_list = [a1, h2_actual]
                 q_stk = _quasi_stakes(odds_list, total_stake)
                 if q_stk:
