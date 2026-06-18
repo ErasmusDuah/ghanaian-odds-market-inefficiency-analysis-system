@@ -128,12 +128,12 @@ async def scrape():
             print(f"  [Soccabet] Navigating to sportsbook...")
             await page.goto(url, wait_until='domcontentloaded', timeout=15000)
             try:
-                # Wait for the event items to start appearing
-                await page.wait_for_selector('app-event-item', timeout=4000)
-            except Exception:
-                pass
+                # Wait for the event items to start appearing (resolves instantly once first item loads)
+                await page.wait_for_selector('app-event-item', timeout=12000)
+            except Exception as e:
+                print(f"  [Soccabet] Warning: Timeout waiting for event items to load: {e}")
             # Short wait for WebSocket data to finish rendering
-            await page.wait_for_timeout(200)
+            await page.wait_for_timeout(300)
         except Exception as e:
             print(f"  [Soccabet] Navigation error: {e}")
             await browser.close()
