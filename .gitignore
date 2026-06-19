@@ -12,6 +12,7 @@ __pycache__/
 # ── Generated odds data (per sport, rebuilt on every run) ──
 football/data/*.json
 football/data/*.txt
+football/data/soccabet_cache/
 table_tennis/data/*.json
 table_tennis/data/*.txt
 basketball/data/*.json
