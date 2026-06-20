@@ -28,7 +28,8 @@ DOMAIN_FALLBACKS = [
 DEFAULT_SITE = DOMAIN_FALLBACKS[0]
 TIMEZONE = "Africa/Accra"
 IMPERSONATE = "chrome120"   # curl_cffi TLS fingerprint to impersonate
-FETCH_SUBGAMES = os.getenv("ONEXBET_FETCH_SUBGAMES", "0").strip().lower() in {"1", "true", "yes", "on"}
+FETCH_HALVES = os.getenv("BETWINNER_FETCH_HALVES", "1").strip().lower() not in {"0", "false", "no", "off"}
+FETCH_SUBGAMES = os.getenv("BETWINNER_FETCH_SUBGAMES", "0").strip().lower() in {"1", "true", "yes", "on"}
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 EVENT_CACHE_PATH = os.path.join(_DATA_DIR, "betwinner_event_cache.json")
 
@@ -36,7 +37,7 @@ OU_TOTALS: Tuple[float, ...] = (1.5, 2.5, 3.5, 4.5, 5.5)
 DEFAULT_TF_MS = 172800000
 REQUEST_TIMEOUT = 12        # seconds (curl_cffi scalar timeout)
 CHAMP_CONCURRENCY = 80
-DETAIL_CONCURRENCY = 60
+DETAIL_CONCURRENCY = int(os.getenv("BETWINNER_DETAIL_CONCURRENCY", "120"))
 FAST_BULK_LIMIT = 50
 FAST_BULK_PARAM_SETS = [
     {
@@ -582,10 +583,10 @@ async def collect_today_games_async(
                             
             subgame_tasks = []
             subgame_keys = []
-            if fh_id:
+            if FETCH_HALVES and fh_id:
                 subgame_tasks.append(fetch_game_zip_async(session, site, fh_id, referer))
                 subgame_keys.append("fh")
-            if sh_id:
+            if FETCH_HALVES and sh_id:
                 subgame_tasks.append(fetch_game_zip_async(session, site, sh_id, referer))
                 subgame_keys.append("sh")
             if FETCH_SUBGAMES and corners_id:
@@ -668,7 +669,12 @@ async def collect_today_games_async(
                 }
             }
 
-        detail_label = "details, halves & deep subgames" if FETCH_SUBGAMES else "details & half-time markets"
+        if FETCH_SUBGAMES:
+            detail_label = "details, halves & deep subgames"
+        elif FETCH_HALVES:
+            detail_label = "details & half-time markets"
+        else:
+            detail_label = "main details only (ultra fast)"
         print(f"  ⚡ Fetching {detail_label} for {len(stubs)} matches...")
         tasks = [process_stub(stub) for stub in stubs]
         results = await asyncio.gather(*tasks)
