@@ -39,7 +39,8 @@ OU_TOTALS: Tuple[float, ...] = (1.5, 2.5, 3.5, 4.5, 5.5)
 DEFAULT_TF_MS = 172800000
 REQUEST_TIMEOUT = 12        # seconds (curl_cffi scalar timeout)
 CHAMP_CONCURRENCY = 80
-DETAIL_CONCURRENCY = 60
+DETAIL_CONCURRENCY = int(os.getenv("ONEXBET_DETAIL_CONCURRENCY", "120"))
+SESSION_MAX_CLIENTS = max(CHAMP_CONCURRENCY, DETAIL_CONCURRENCY)
 FAST_BULK_LIMIT = 50
 FAST_BULK_PARAM_SETS = [
     {
@@ -384,7 +385,7 @@ async def _probe_working_domain(tf_ms: int) -> Tuple[str, str, List[dict]]:
     Returns (domain, referer, champs) so the caller can reuse the already-fetched
     league list without making a second GetChampsZip request.
     """
-    async with AsyncSession(impersonate=IMPERSONATE) as probe_session:
+    async with AsyncSession(impersonate=IMPERSONATE, max_clients=SESSION_MAX_CLIENTS) as probe_session:
         for domain in DOMAIN_FALLBACKS:
             referer = f"{domain}/en/line/football"
             try:
@@ -425,7 +426,7 @@ async def collect_today_games_async(
         print("  \U0001f50d Auto-detecting working 1xBet domain...")
         site, referer, champs = await _probe_working_domain(tf_ms)
 
-    async with AsyncSession(impersonate=IMPERSONATE) as session:
+    async with AsyncSession(impersonate=IMPERSONATE, max_clients=SESSION_MAX_CLIENTS) as session:
         # 1. Champs already fetched during probe — skip redundant GetChampsZip
         if not cached_stubs and not champs:
             return []
