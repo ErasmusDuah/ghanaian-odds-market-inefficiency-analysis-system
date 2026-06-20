@@ -12,6 +12,7 @@ import asyncio
 import itertools
 import json
 import os
+import re
 import sys
 import time
 from datetime import date, datetime, timezone
@@ -258,9 +259,34 @@ def _is_noise_league(league: str) -> bool:
     lower_league = league.lower()
     return any(x in lower_league for x in [
         'alternative', 'matches of the day', 'player props',
+        'team vs player', 'player vs team', 'team v player', 'player v team',
         'special bets', 'shots', 'corners', 'cards', 'stats',
-        'virtual', 'cyber'
+        'goalscorer', 'player specials', 'to score', 'virtual', 'cyber'
     ])
+
+
+def _is_noise_match(home_team: str, away_team: str, league: str = "") -> bool:
+    lower_home = home_team.strip().lower()
+    lower_away = away_team.strip().lower()
+    lower_league = league.strip().lower()
+
+    if _is_noise_league(lower_league):
+        return True
+
+    generic_sides = {
+        '1st team', '1st teams', 'first team', 'first teams',
+        '2nd team', '2nd teams', 'second team', 'second teams',
+        'home team', 'away team', 'team 1', 'team 2',
+        'home', 'away', 'draw', 'yes', 'no',
+    }
+    if lower_home in generic_sides or lower_away in generic_sides:
+        return True
+
+    ordinal_team_pattern = re.compile(r'^\d+(st|nd|rd|th)?\s+teams?$')
+    if ordinal_team_pattern.match(lower_home) or ordinal_team_pattern.match(lower_away):
+        return True
+
+    return False
 
 
 def _load_event_cache(target: date) -> List[Tuple[int, dict, str]]:
@@ -325,14 +351,13 @@ def collect_from_fast_bulk(
             continue
 
         league = (game.get("LE") or game.get("L") or "").strip()
-        if _is_noise_league(league):
-            continue
-
         home_team = (game.get("O1") or "").strip()
         away_team = (game.get("O2") or "").strip()
         if not home_team or not away_team:
             continue
         if '/' in home_team or '/' in away_team:
+            continue
+        if _is_noise_match(home_team, away_team, league):
             continue
 
         odds = build_odds_block(iter_linefeed_outcomes(game))
@@ -543,6 +568,8 @@ async def collect_today_games_async(
                 return None
                 
             league = (detail.get("LE") or detail.get("L") or league_fallback or "").strip()
+            if _is_noise_match(home_team, away_team, league):
+                return None
             
             # Parse main markets
             entries = iter_linefeed_outcomes(detail)
@@ -704,10 +731,7 @@ def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[d
         # Skip Alternative Matches, Shots, Corners, etc.
         league = (m.get("league") or "").strip()
         lower_league = league.lower()
-        if any(x in lower_league for x in [
-            'alternative', 'matches of the day', 'player props', 
-            'special bets', 'shots', 'corners', 'cards', 'stats'
-        ]):
+        if _is_noise_match(home_team, away_team, league):
             continue
 
         odds_raw = m.get("odds") or {}
