@@ -42,6 +42,7 @@ from scrapers.fb_bangbet      import run as fetch_bangbet
 from scrapers.fb_soccabet     import run as fetch_soccabet
 from scrapers.fb_supabet      import run as fetch_supabet
 from scrapers.fb_betwinner    import run as fetch_betwinner
+from scrapers.fb_paripesa     import run as fetch_paripesa
 
 from engine.fb_intensive_engine import run_intensive, display_all
 from engine.fb_verifier       import verify_opportunities
@@ -59,6 +60,7 @@ ACTIVE_SCRAPERS = [
     ('Soccabet',     fetch_soccabet),
     ('Supabet',      fetch_supabet),
     ('Betwinner',    fetch_betwinner),
+    ('Paripesa',     fetch_paripesa),
 ]
 
 
@@ -169,7 +171,7 @@ def run_scan():
 
         print("============================================================")
         print("MATCHES FETCHED PER PLATFORM:")
-        for name in ['Sportybet', 'Betway', 'Football.com', '1xBet', '22Bet', 'MSport', 'Bangbet', 'Soccabet', 'Supabet', 'Betwinner']:
+        for name in ['Sportybet', 'Betway', 'Football.com', '1xBet', '22Bet', 'MSport', 'Bangbet', 'Soccabet', 'Supabet', 'Betwinner', 'Paripesa']:
             count = len(fetched.get(name, []))
             print(f"  {name:<12}: {count}")
         print("============================================================\n")
@@ -194,6 +196,7 @@ def run_scan():
             soccabet_matches     = fetched.get('Soccabet',     []),
             supabet_matches      = fetched.get('Supabet',      []),
             betwinner_matches    = fetched.get('Betwinner',    []),
+            paripesa_matches     = fetched.get('Paripesa',     []),
         )
 
         # Lock in next run time exactly 2 minutes after calculations complete
