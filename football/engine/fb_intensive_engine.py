@@ -82,7 +82,8 @@ STOPWORDS = {
     'united', 'city', 'town', 'reserve', 'reserves', 'u19', 'u20', 'u21', 'u23',
     'women', 'youth', 'under', 'club', 'team', 'real', 'atletico',
     'depor', 'deportivo', 'deportes', 'deportiva', 'cd', 'csd', 'sd', 'ud',
-    'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21', 'citizen', 'citizens'
+    'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21', 'citizen', 'citizens',
+    'union', 'as', 'cs', 'sporting', 'athletic', 'athletics', 'association'
 }
 
 ASSOCIATIONS = {'hapoel', 'maccabi', 'beitar', 'ironi'}
@@ -166,9 +167,8 @@ def _same_game(a, b):
     if a['source'] == b['source']:
         return False
     
-    t_a = a.get('kickoff', '').split()
-    t_b = b.get('kickoff', '').split()
-    times_match = (len(t_a) > 1 and len(t_b) > 1 and t_a[1][:5] == t_b[1][:5])
+    if a.get('kickoff', '') != b.get('kickoff', ''):
+        return False
         
     if not tournament_similar(a.get('tournament', ''), b.get('tournament', '')):
         return False
@@ -179,116 +179,95 @@ def _same_game(a, b):
     if not tournament_similar(ha + aa, hb + ab):
         return False
         
-    if times_match:
-        home_ok = smart_team_match(ha, hb)
-        away_ok = smart_team_match(aa, ab)
-        if home_ok and away_ok:
-            return True
-            
     return smart_team_match(ha, hb) and smart_team_match(aa, ab)
 
 # ── OPTIMIZED UNION-FIND PAIRING ENGINE ────────────────────────────────────────
 def match_all_platforms(all_matches):
-    parsed_matches = []
+    by_kickoff = defaultdict(list)
     for m in all_matches:
-        ko = m.get('kickoff', '')
-        ts = 0.0
-        try:
-            ts = datetime.strptime(ko, '%Y-%m-%d %H:%M').timestamp()
-        except Exception:
-            pass
-        parsed_matches.append({'match': m, 'ts': ts})
-    
-    parsed_matches.sort(key=lambda x: x['ts'])
-    
-    n = len(parsed_matches)
-    parent = list(range(n))
-
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    def union(x, y):
-        rx, ry = find(x), find(y)
-        if rx != ry:
-            parent[rx] = ry
-
-    # Sliding time window of 2 hours (7200 seconds)
-    TIME_WINDOW = 7200.0
-
-    # Token guards pre-computation
-    token_sets = []
-    for i in range(n):
-        m = parsed_matches[i]['match']
-        home_tokens = set(clean_tokens(m.get('home_team', '')))
-        away_tokens = set(clean_tokens(m.get('away_team', '')))
-        token_sets.append((home_tokens, away_tokens))
-        
-    core_sets = []
-    for i in range(n):
-        h_tok, a_tok = token_sets[i]
-        h_core = h_tok - ASSOCIATIONS - GENERIC_WORDS
-        a_core = a_tok - ASSOCIATIONS - GENERIC_WORDS
-        core_sets.append((h_core, a_core))
-
-    for i in range(n):
-        m_i = parsed_matches[i]['match']
-        ts_i = parsed_matches[i]['ts']
-        h_tok_i, a_tok_i = token_sets[i]
-        h_core_i, a_core_i = core_sets[i]
-        
-        for j in range(i + 1, n):
-            # 1. Time-window guard (since list is sorted, we break inner loop instantly)
-            if parsed_matches[j]['ts'] - ts_i > TIME_WINDOW:
-                break
-                
-            # 2. Transitive union guard
-            if find(i) == find(j):
-                continue
-                
-            m_j = parsed_matches[j]['match']
-            if m_i['source'] == m_j['source']:
-                continue
-                
-            # 3. Token Guards
-            h_tok_j, a_tok_j = token_sets[j]
-            h_core_j, a_core_j = core_sets[j]
-            
-            if h_core_i and h_core_j and not (h_core_i & h_core_j):
-                continue
-            if a_core_i and a_core_j and not (a_core_i & a_core_j):
-                continue
-                
-            assoc_h_i = h_tok_i & ASSOCIATIONS
-            assoc_h_j = h_tok_j & ASSOCIATIONS
-            if assoc_h_i and assoc_h_j and assoc_h_i != assoc_h_j:
-                continue
-            assoc_a_i = a_tok_i & ASSOCIATIONS
-            assoc_a_j = a_tok_j & ASSOCIATIONS
-            if assoc_a_i and assoc_a_j and assoc_a_i != assoc_a_j:
-                continue
-                
-            # If passes all guards, run fuzzy text check
-            if _same_game(m_i, m_j):
-                union(i, j)
-
-    components = defaultdict(list)
-    for i in range(n):
-        components[find(i)].append(i)
+        by_kickoff[m.get('kickoff', '')].append(m)
 
     groups = []
-    for indices in components.values():
-        if len(indices) < 2:
+    for ko, matches in by_kickoff.items():
+        n = len(matches)
+        if n < 2:
             continue
-        sources = [parsed_matches[i]['match']['source'] for i in indices]
-        if len(set(sources)) < 2:
-            continue
-        groups.append({
-            'matches': [parsed_matches[i]['match'] for i in indices],
-            'sources': sources,
-        })
+            
+        parent = list(range(n))
+
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(x, y):
+            rx, ry = find(x), find(y)
+            if rx != ry:
+                parent[rx] = ry
+
+        token_sets = []
+        for i in range(n):
+            m = matches[i]
+            home_tokens = set(clean_tokens(m.get('home_team', '')))
+            away_tokens = set(clean_tokens(m.get('away_team', '')))
+            token_sets.append((home_tokens, away_tokens))
+            
+        core_sets = []
+        for i in range(n):
+            h_tok, a_tok = token_sets[i]
+            h_core = h_tok - ASSOCIATIONS - GENERIC_WORDS
+            a_core = a_tok - ASSOCIATIONS - GENERIC_WORDS
+            core_sets.append((h_core, a_core))
+
+        for i in range(n):
+            m_i = matches[i]
+            h_tok_i, a_tok_i = token_sets[i]
+            h_core_i, a_core_i = core_sets[i]
+            
+            for j in range(i + 1, n):
+                if find(i) == find(j):
+                    continue
+                    
+                m_j = matches[j]
+                if m_i['source'] == m_j['source']:
+                    continue
+                    
+                # Token Guards
+                h_tok_j, a_tok_j = token_sets[j]
+                h_core_j, a_core_j = core_sets[j]
+                
+                if h_core_i and h_core_j and not (h_core_i & h_core_j):
+                    continue
+                if a_core_i and a_core_j and not (a_core_i & a_core_j):
+                    continue
+                    
+                assoc_h_i = h_tok_i & ASSOCIATIONS
+                assoc_h_j = h_tok_j & ASSOCIATIONS
+                if assoc_h_i and assoc_h_j and assoc_h_i != assoc_h_j:
+                    continue
+                assoc_a_i = a_tok_i & ASSOCIATIONS
+                assoc_a_j = a_tok_j & ASSOCIATIONS
+                if assoc_a_i and assoc_a_j and assoc_a_i != assoc_a_j:
+                    continue
+                    
+                if _same_game(m_i, m_j):
+                    union(i, j)
+
+        components = defaultdict(list)
+        for i in range(n):
+            components[find(i)].append(i)
+
+        for indices in components.values():
+            if len(indices) < 2:
+                continue
+            sources = [matches[i]['source'] for i in indices]
+            if len(set(sources)) < 2:
+                continue
+            groups.append({
+                'matches': [matches[i] for i in indices],
+                'sources': sources,
+            })
     return groups
 
 # ── HELPERS ────────────────────────────────────────────────────────────────────
@@ -527,15 +506,21 @@ def scan_2way_nested_numpy(pair, market_key, market_label_prefix, outcomes_info,
     return results
 
 def scan_double_chance_numpy(pair, dc_key, main_key, market_label, total_stake):
+    prefix = ""
+    if "1st Half" in market_label:
+        prefix = "1st Half "
+    elif "2nd Half" in market_label:
+        prefix = "2nd Half "
+
     results = []
     # Combo 1: 1X vs 2
-    r1 = _scan_2way_hybrid(pair, dc_key, '1x', main_key, 'away', f"{market_label} 1X vs 2", '1X (Home/Draw)', 'Away Win', total_stake)
+    r1 = _scan_2way_hybrid(pair, dc_key, '1x', main_key, 'away', f"{market_label} 1X vs 2", f"{prefix}1X (Home/Draw)", f"{prefix}Away Win", total_stake)
     if r1: results.extend(r1)
     # Combo 2: X2 vs 1
-    r2 = _scan_2way_hybrid(pair, dc_key, 'x2', main_key, 'home', f"{market_label} X2 vs 1", 'X2 (Draw/Away)', 'Home Win', total_stake)
+    r2 = _scan_2way_hybrid(pair, dc_key, 'x2', main_key, 'home', f"{market_label} X2 vs 1", f"{prefix}X2 (Draw/Away)", f"{prefix}Home Win", total_stake)
     if r2: results.extend(r2)
     # Combo 3: 12 vs X
-    r3 = _scan_2way_hybrid(pair, dc_key, '12', main_key, 'draw', f"{market_label} 12 vs X", '12 (Home/Away)', 'Draw', total_stake)
+    r3 = _scan_2way_hybrid(pair, dc_key, '12', main_key, 'draw', f"{market_label} 12 vs X", f"{prefix}12 (Home/Away)", f"{prefix}Draw", total_stake)
     if r3: results.extend(r3)
     return results
 
@@ -599,16 +584,16 @@ def _scan_one_group(group, total_stake, empty):
         opps.extend(scan_3way_numpy(pair, 'odds_1x2_two_up', '1X2 Two Up', [('home', 'Home Win'), ('draw', 'Draw'), ('away', 'Away Win')], total_stake))
     # 4. 1st Half 1X2
     if _has_odds(pair, 'odds_fh_1x2'):
-        opps.extend(scan_3way_numpy(pair, 'odds_fh_1x2', '1st Half 1X2', [('home', 'Home Win'), ('draw', 'Draw'), ('away', 'Away Win')], total_stake))
+        opps.extend(scan_3way_numpy(pair, 'odds_fh_1x2', '1st Half 1X2', [('home', '1st Half Home Win'), ('draw', '1st Half Draw'), ('away', '1st Half Away Win')], total_stake))
     # 5. 2nd Half 1X2
     if _has_odds(pair, 'odds_sh_1x2'):
-        opps.extend(scan_3way_numpy(pair, 'odds_sh_1x2', '2nd Half 1X2', [('home', 'Home Win'), ('draw', 'Draw'), ('away', 'Away Win')], total_stake))
+        opps.extend(scan_3way_numpy(pair, 'odds_sh_1x2', '2nd Half 1X2', [('home', '2nd Half Home Win'), ('draw', '2nd Half Draw'), ('away', '2nd Half Away Win')], total_stake))
     # 6. Corners 1X2
     if _has_odds(pair, 'odds_corners_1x2'):
-        opps.extend(scan_3way_numpy(pair, 'odds_corners_1x2', 'Corners 1X2', [('home', 'Home Win'), ('draw', 'Draw'), ('away', 'Away Win')], total_stake))
+        opps.extend(scan_3way_numpy(pair, 'odds_corners_1x2', 'Corners 1X2', [('home', 'Corners Home Win'), ('draw', 'Corners Draw'), ('away', 'Corners Away Win')], total_stake))
     # 7. Bookings 1X2
     if _has_odds(pair, 'odds_bookings_1x2'):
-        opps.extend(scan_3way_numpy(pair, 'odds_bookings_1x2', 'Bookings 1X2', [('home', 'Home Win'), ('draw', 'Draw'), ('away', 'Away Win')], total_stake))
+        opps.extend(scan_3way_numpy(pair, 'odds_bookings_1x2', 'Bookings 1X2', [('home', 'Bookings Home Win'), ('draw', 'Bookings Draw'), ('away', 'Bookings Away Win')], total_stake))
 
     # 8. Over/Under
     if _has_odds(pair, 'odds_ou'):
@@ -618,20 +603,20 @@ def _scan_one_group(group, total_stake, empty):
         opps.extend(scan_2way_nested_numpy(pair, 'odds_asian_ou', 'Asian Over/Under', [('over', 'Over'), ('under', 'Under')], total_stake))
     # 9. 1st Half Over/Under
     if _has_odds(pair, 'odds_fh_ou'):
-        opps.extend(scan_2way_nested_numpy(pair, 'odds_fh_ou', '1st Half Over/Under', [('over', 'Over'), ('under', 'Under')], total_stake))
+        opps.extend(scan_2way_nested_numpy(pair, 'odds_fh_ou', '1st Half Over/Under', [('over', '1st Half Over'), ('under', '1st Half Under')], total_stake))
     # 10. 2nd Half Over/Under
     if _has_odds(pair, 'odds_sh_ou'):
-        opps.extend(scan_2way_nested_numpy(pair, 'odds_sh_ou', '2nd Half Over/Under', [('over', 'Over'), ('under', 'Under')], total_stake))
+        opps.extend(scan_2way_nested_numpy(pair, 'odds_sh_ou', '2nd Half Over/Under', [('over', '2nd Half Over'), ('under', '2nd Half Under')], total_stake))
     # 11. Bookings Over/Under
     if _has_odds(pair, 'odds_bookings_ou'):
-        opps.extend(scan_2way_nested_numpy(pair, 'odds_bookings_ou', 'Bookings Over/Under', [('over', 'Over'), ('under', 'Under')], total_stake))
+        opps.extend(scan_2way_nested_numpy(pair, 'odds_bookings_ou', 'Bookings Over/Under', [('over', 'Bookings Over'), ('under', 'Bookings Under')], total_stake))
 
     # 12. GG/NG
     if _has_odds(pair, 'odds_gg'):
         opps.extend(scan_2way_numpy(pair, 'odds_gg', 'GG/NG', [('yes', 'GG Yes'), ('no', 'GG No')], total_stake))
     # 13. GG/NG 2+
     if _has_odds(pair, 'odds_gg_2plus'):
-        opps.extend(scan_2way_numpy(pair, 'odds_gg_2plus', 'GG/NG 2+', [('yes', 'GG Yes'), ('no', 'GG No')], total_stake))
+        opps.extend(scan_2way_numpy(pair, 'odds_gg_2plus', 'GG/NG 2+', [('yes', 'GG 2+ Yes'), ('no', 'GG 2+ No')], total_stake))
 
     # 14. Double Chance markets
     if _has_odds(pair, 'odds_dc') and _has_odds(pair, 'odds_1x2'):
@@ -701,7 +686,7 @@ def run_intensive(total_stake=None,
                         normalized_dict[norm_k] = v
                     m[n_key] = normalized_dict
 
-    filtered_lists = {k: [m for m in v if not is_virtual_match(m)]
+    filtered_lists = {k: [m for m in v if not is_virtual_match(m) and not m.get('is_live', False)]
                       for k, v in raw.items()}
 
     all_matches = [m for v in filtered_lists.values() for m in v]
@@ -802,6 +787,7 @@ def display_all(opportunities, num_groups, total_stake,
     with open(bal_path, 'w', encoding='utf-8') as f:
         f.write(f"⚖️  BALANCED ARBITRAGE — {len(balanced)} opportunities\n")
         f.write(f"Guaranteed equal profit on ALL outcomes\n")
+        f.write(f"💡 TIP: If a match is hidden on Sportybet, switch their filter from 'Popular' to 'All' or search for it!\n")
         f.write(f"{sep}\n")
         if balanced:
             for opp in sorted(balanced, key=lambda x: x['profit_pct'], reverse=True):
@@ -813,6 +799,7 @@ def display_all(opportunities, num_groups, total_stake,
     with open(unb_path, 'w', encoding='utf-8') as f:
         f.write(f"📊 UNBALANCED ARBITRAGE — {len(unbalanced)} opportunities\n")
         f.write(f"All outcomes profitable — amounts differ\n")
+        f.write(f"💡 TIP: If a match is hidden on Sportybet, switch their filter from 'Popular' to 'All' or search for it!\n")
         f.write(f"{sep}\n")
         if unbalanced:
             for opp in sorted(unbalanced, key=lambda x: x['max_profit_ghs'], reverse=True):
@@ -824,6 +811,7 @@ def display_all(opportunities, num_groups, total_stake,
     with open(qua_path, 'w', encoding='utf-8') as f:
         f.write(f"🛡️  QUASI-ARB (No-Loss) — {len(quasi)} opportunities\n")
         f.write(f"Worst case: break even | Best case: profit\n")
+        f.write(f"💡 TIP: If a match is hidden on Sportybet, switch their filter from 'Popular' to 'All' or search for it!\n")
         f.write(f"{sep}\n")
         if quasi:
             for opp in sorted(quasi, key=lambda x: x['best_profit_ghs'], reverse=True):

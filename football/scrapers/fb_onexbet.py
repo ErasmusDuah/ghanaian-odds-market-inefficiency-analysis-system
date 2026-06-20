@@ -1,14 +1,15 @@
 """
-1xBet Ghana football prematch odds (ASYNC AIOHTTP VERSION).
+1xBet Ghana football prematch odds (ASYNC curl_cffi VERSION).
 
 Fetches all leagues globally and processes odds for all matches occurring today.
+Uses curl_cffi with Chrome TLS impersonation to bypass Cloudflare Bot Management.
+Falls back through multiple 1xBet mirror domains automatically.
 Outputs to the standard format required by the arbitrage engine.
 """
 from __future__ import annotations
 
-import argparse
 import asyncio
-import aiohttp
+import itertools
 import json
 import os
 import sys
@@ -17,19 +18,27 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
-DEFAULT_SITE = "https://1xbet.com.gh"
-REFERRER = "https://1xbet.com.gh/en/line/football"
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-)
+from curl_cffi.requests import AsyncSession
+
+# Domain fallback list — tried in order until one succeeds
+# 1xbet.com.gh often has TCP-level blocks; 1xbet.com & 1xbet.ng work via curl_cffi
+DOMAIN_FALLBACKS = [
+    "https://1xbet.com.gh",
+    "https://1xbet.com",
+    "https://1xbet.ng",
+]
+DEFAULT_SITE = DOMAIN_FALLBACKS[0]
 TIMEZONE = "Africa/Accra"
+IMPERSONATE = "chrome120"   # curl_cffi TLS fingerprint to impersonate
+FETCH_SUBGAMES = os.getenv("ONEXBET_FETCH_SUBGAMES", "0").strip().lower() in {"1", "true", "yes", "on"}
+_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+EVENT_CACHE_PATH = os.path.join(_DATA_DIR, "onexbet_event_cache.json")
 
 OU_TOTALS: Tuple[float, ...] = (1.5, 2.5, 3.5, 4.5, 5.5)
 DEFAULT_TF_MS = 172800000
-REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=10, connect=4, sock_read=8)
-CHAMP_CONCURRENCY = 40
-DETAIL_CONCURRENCY = 24
+REQUEST_TIMEOUT = 12        # seconds (curl_cffi scalar timeout)
+CHAMP_CONCURRENCY = 80
+DETAIL_CONCURRENCY = 60
 FAST_BULK_LIMIT = 50
 FAST_BULK_PARAM_SETS = [
     {
@@ -47,9 +56,11 @@ FAST_BULK_PARAM_SETS = [
     },
 ]
 
+_REQUEST_NONCE = itertools.count()
+
 
 async def async_linefeed_get(
-    session: aiohttp.ClientSession,
+    session: AsyncSession,
     site: str,
     method: str,
     params: Dict[str, Any],
@@ -57,6 +68,8 @@ async def async_linefeed_get(
     max_attempts: int = 3,
 ) -> dict:
     origin = site.rstrip("/")
+    request_nonce = next(_REQUEST_NONCE)
+    cache_buster = f"{int(time.time() * 1000)}{request_nonce:04d}"
     # Format query string correctly including array/list parameters
     q_parts = []
     for k, v in params.items():
@@ -65,30 +78,35 @@ async def async_linefeed_get(
                 q_parts.append(f"{k}={item}")
         else:
             q_parts.append(f"{k}={v}")
+    if method != "GetChampsZip":
+        q_parts.append(f"_={cache_buster}")
     q = "&".join(q_parts)
-    
+
     url = f"{origin}/service-api/LineFeed/{method}?{q}"
     headers = {
-        "User-Agent": USER_AGENT,
         "Referer": referer,
         "Origin": origin,
         "Accept": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
+        "Expires": "0",
+        "If-Modified-Since": "Sat, 01 Jan 2000 00:00:00 GMT",
     }
-    
+
     for attempt in range(max_attempts):
         try:
-            async with session.get(url, headers=headers) as resp:
-                if resp.status == 200:
-                    data = await resp.json(content_type=None)
-                    if data.get("Success") is False:
-                        print(f"  ⚠️ LineFeed error for {method}: {data.get('Error')}")
-                        return {}
-                    return data
+            resp = await session.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("Success") is False:
+                    error_msg = str(data.get("Error") or "")
+                    if not (method == "GetGameZip" and "Game is not found in Sports" in error_msg):
+                        print(f"  \u26a0\ufe0f LineFeed error for {method}: {data.get('Error')}")
+                    return {}
+                return data
         except Exception as e:
             if attempt == max_attempts - 1:
-                print(f"  ⚠️ Request failed for {method} after {max_attempts} attempts: {e}")
+                print(f"  \u26a0\ufe0f Request failed for {method} after {max_attempts} attempts: {e}")
             else:
                 await asyncio.sleep(0.5 * (attempt + 1))
     return {}
@@ -186,7 +204,7 @@ def build_odds_block(entries: Iterable[dict]) -> Dict[str, Any]:
     return block
 
 
-async def fetch_champs_async(session: aiohttp.ClientSession, site: str, tf_ms: int, referer: str) -> List[dict]:
+async def fetch_champs_async(session: AsyncSession, site: str, tf_ms: int, referer: str) -> List[dict]:
     data = await async_linefeed_get(
         session, site, "GetChampsZip",
         {"sport": 1, "lng": "en", "tf": tf_ms, "tz": 0, "country": 80},
@@ -195,7 +213,7 @@ async def fetch_champs_async(session: aiohttp.ClientSession, site: str, tf_ms: i
     return list(data.get("Value") or [])
 
 
-async def fetch_champ_games_async(session: aiohttp.ClientSession, site: str, li: int, tf_ms: int, referer: str) -> Optional[dict]:
+async def fetch_champ_games_async(session: AsyncSession, site: str, li: int, tf_ms: int, referer: str) -> Optional[dict]:
     return await async_linefeed_get(
         session, site, "GetChampZip",
         {
@@ -211,7 +229,7 @@ async def fetch_champ_games_async(session: aiohttp.ClientSession, site: str, li:
     )
 
 
-async def fetch_game_zip_async(session: aiohttp.ClientSession, site: str, game_id: int, referer: str) -> Optional[dict]:
+async def fetch_game_zip_async(session: AsyncSession, site: str, game_id: int, referer: str) -> Optional[dict]:
     data = await async_linefeed_get(
         session, site, "GetGameZip",
         {"id": game_id, "lng": "en", "cfview": 0, "isSubGames": "true",
@@ -221,7 +239,7 @@ async def fetch_game_zip_async(session: aiohttp.ClientSession, site: str, game_i
     return data.get("Value") if isinstance(data.get("Value"), dict) else None
 
 
-async def fetch_fast_bulk_async(session: aiohttp.ClientSession, site: str, referer: str) -> List[dict]:
+async def fetch_fast_bulk_async(session: AsyncSession, site: str, referer: str) -> List[dict]:
     for params in FAST_BULK_PARAM_SETS:
         data = await async_linefeed_get(
             session,
@@ -244,6 +262,44 @@ def _is_noise_league(league: str) -> bool:
         'special bets', 'shots', 'corners', 'cards', 'stats',
         'virtual', 'cyber'
     ])
+
+
+def _load_event_cache(target: date) -> List[Tuple[int, dict, str]]:
+    try:
+        with open(EVENT_CACHE_PATH, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return []
+
+    if payload.get("date") != target.isoformat():
+        return []
+
+    stubs: List[Tuple[int, dict, str]] = []
+    for item in payload.get("events") or []:
+        try:
+            gid = int(item["event_id"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        stub = {"I": gid, "S": item.get("kickoff_ts")}
+        stubs.append((gid, stub, item.get("league", "")))
+    return stubs
+
+
+def _save_event_cache(target: date, stubs: List[Tuple[int, dict, str]]) -> None:
+    events = []
+    for gid, stub, league in stubs:
+        events.append({
+            "event_id": gid,
+            "kickoff_ts": stub.get("S"),
+            "league": league,
+        })
+
+    try:
+        os.makedirs(os.path.dirname(EVENT_CACHE_PATH), exist_ok=True)
+        with open(EVENT_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump({"date": target.isoformat(), "events": events}, f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        print(f"  ⚠️ Could not save 1xBet event cache: {e}")
 
 
 def collect_from_fast_bulk(
@@ -298,6 +354,33 @@ def collect_from_fast_bulk(
     return matches
 
 
+async def _probe_working_domain(tf_ms: int) -> Tuple[str, str, List[dict]]:
+    """Try each domain in DOMAIN_FALLBACKS and return the first that works.
+    Returns (domain, referer, champs) so the caller can reuse the already-fetched
+    league list without making a second GetChampsZip request.
+    """
+    async with AsyncSession(impersonate=IMPERSONATE) as probe_session:
+        for domain in DOMAIN_FALLBACKS:
+            referer = f"{domain}/en/line/football"
+            try:
+                # Pre-fetch landing page to initialize session cookies
+                try:
+                    await probe_session.get(referer, headers={"Referer": domain}, timeout=REQUEST_TIMEOUT)
+                except Exception as ce:
+                    print(f"  ⚠️ Pre-fetch failed for {domain}: {ce}")
+                champs = await fetch_champs_async(probe_session, domain, tf_ms, referer)
+                if champs:
+                    print(f"  \u2705 Using domain: {domain} ({len(champs)} leagues)")
+                    return domain, referer, champs
+                else:
+                    print(f"  \u26a0\ufe0f {domain}: connected but no leagues returned")
+            except Exception as e:
+                print(f"  \u274c {domain}: {type(e).__name__}")
+    # Return the first as last-resort fallback
+    print(f"  \u26a0\ufe0f All domains failed, defaulting to {DOMAIN_FALLBACKS[0]}")
+    return DOMAIN_FALLBACKS[0], f"{DOMAIN_FALLBACKS[0]}/en/line/football", []
+
+
 async def collect_today_games_async(
     site: str,
     tf_ms: int,
@@ -306,59 +389,77 @@ async def collect_today_games_async(
     tz: ZoneInfo,
     now_utc: datetime,
 ) -> List[dict]:
-    async with aiohttp.ClientSession(
-        connector=aiohttp.TCPConnector(limit=80, ttl_dns_cache=300),
-        timeout=REQUEST_TIMEOUT,
-        headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
-    ) as session:
-        # 1. Fetch all champs (leagues)
-        champs = await fetch_champs_async(session, site, tf_ms, referer)
-        if not champs:
+    cached_stubs = _load_event_cache(target)
+    if cached_stubs:
+        print(f"  ⚡ Using cached 1xBet event list ({len(cached_stubs)} matches) - refreshing odds directly...")
+        site = site or DEFAULT_SITE
+        referer = referer or f"{site}/en/line/football"
+        champs = []
+    else:
+        # Auto-detect working domain and league list.
+        print("  \U0001f50d Auto-detecting working 1xBet domain...")
+        site, referer, champs = await _probe_working_domain(tf_ms)
+
+    async with AsyncSession(impersonate=IMPERSONATE) as session:
+        # 1. Champs already fetched during probe — skip redundant GetChampsZip
+        if not cached_stubs and not champs:
             return []
 
-        # 2. Concurrently fetch all games within those leagues
-        sem_champ = asyncio.Semaphore(CHAMP_CONCURRENCY)
-        
-        async def get_champ_games(li: int) -> List[Tuple[int, dict, str]]:
-            async with sem_champ:
-                blob = await fetch_champ_games_async(session, site, li, tf_ms, referer)
-                if not blob or not isinstance(blob.get("Value"), dict):
-                    return []
-                val = blob["Value"]
-                league_name = (val.get("L") or val.get("LE") or "").strip()
-                
-                out_local = []
-                for g in val.get("G") or []:
-                    if not isinstance(g, dict):
-                        continue
-                    gid = g.get("I")
-                    if gid is None:
-                        continue
-                    kick = kickoff_utc_from_game(g)
-                    if kick is None:
-                        continue
-                    local_d = kick.astimezone(tz).date()
-                    if local_d != target or kick <= now_utc:
-                        continue
-                    out_local.append((int(gid), g, league_name))
-                return out_local
+        # Pre-fetch the landing page to initialize session cookies to bypass CDN cache
+        try:
+            landing_url = f"{site}/en/line/football"
+            await session.get(landing_url, headers={"Referer": site}, timeout=REQUEST_TIMEOUT)
+            print("  🍪 Session cookies initialized successfully.")
+        except Exception as e:
+            print(f"  ⚠️ Failed to initialize session cookies: {e}")
 
-        print(f"  ⚡ Fetching games for {len(champs)} leagues...")
-        champ_tasks = [get_champ_games(ch.get("LI")) for ch in champs if ch.get("LI")]
-        champ_results = await asyncio.gather(*champ_tasks)
+        if cached_stubs:
+            stubs = cached_stubs
+        else:
+            # 2. Concurrently fetch all games within those leagues
+            sem_champ = asyncio.Semaphore(CHAMP_CONCURRENCY)
+            
+            async def get_champ_games(li: int) -> List[Tuple[int, dict, str]]:
+                async with sem_champ:
+                    blob = await fetch_champ_games_async(session, site, li, tf_ms, referer)
+                    if not blob or not isinstance(blob.get("Value"), dict):
+                        return []
+                    val = blob["Value"]
+                    league_name = (val.get("L") or val.get("LE") or "").strip()
+                    
+                    out_local = []
+                    for g in val.get("G") or []:
+                        if not isinstance(g, dict):
+                            continue
+                        gid = g.get("I")
+                        if gid is None:
+                            continue
+                        kick = kickoff_utc_from_game(g)
+                        if kick is None:
+                            continue
+                        local_d = kick.astimezone(tz).date()
+                        if local_d != target or kick <= now_utc:
+                            continue
+                        out_local.append((int(gid), g, league_name))
+                    return out_local
 
-        stubs = []
-        seen_game_ids = set()
-        for batch in champ_results:
-            for gid, g, league_name in batch:
-                if gid not in seen_game_ids:
-                    seen_game_ids.add(gid)
-                    stubs.append((gid, g, league_name))
+            print(f"  ⚡ Fetching games for {len(champs)} leagues...")
+            champ_tasks = [get_champ_games(ch.get("LI")) for ch in champs if ch.get("LI")]
+            champ_results = await asyncio.gather(*champ_tasks)
+
+            stubs = []
+            seen_game_ids = set()
+            for batch in champ_results:
+                for gid, g, league_name in batch:
+                    if gid not in seen_game_ids:
+                        seen_game_ids.add(gid)
+                        stubs.append((gid, g, league_name))
+            _save_event_cache(target, stubs)
 
         if not stubs:
             return []
 
-        # 3. Concurrently fetch main game details and subgames
+        # 3. Concurrently fetch main game details and optional subgames
         sem_detail = asyncio.Semaphore(DETAIL_CONCURRENCY)
 
         def extract_1x2(ents, g):
@@ -401,12 +502,33 @@ async def collect_today_games_async(
             x = {}
             for e in ents:
                 if e.get("G") == g:
-                    if e.get("T") == 180:
-                        x["yes"] = _outcome_price(e)
-                    elif e.get("T") == 181:
-                        x["no"] = _outcome_price(e)
-            if "yes" in x and "no" in x:
-                return {"yes": float(x["yes"]), "no": float(x["no"])}
+                    t = e.get("T")
+                    if t in (180, 182):
+                        x["gg"] = _outcome_price(e)
+                    elif t in (181, 183):
+                        x["ng"] = _outcome_price(e)
+            if "gg" in x and "ng" in x:
+                return {"gg": float(x["gg"]), "ng": float(x["ng"])}
+            return {}
+
+        def extract_gg_2plus(ents):
+            x = {}
+            for e in ents:
+                if e.get("G") != 19:
+                    continue
+                try:
+                    p_val = float(e.get("P"))
+                except (TypeError, ValueError):
+                    continue
+                if p_val != 2.0:
+                    continue
+                t = e.get("T")
+                if t == 11273:
+                    x["gg"] = _outcome_price(e)
+                elif t == 11274:
+                    x["ng"] = _outcome_price(e)
+            if "gg" in x and "ng" in x:
+                return {"gg": float(x["gg"]), "ng": float(x["ng"])}
             return {}
 
         async def process_stub(item: Tuple[int, dict, str]) -> Optional[dict]:
@@ -434,6 +556,7 @@ async def collect_today_games_async(
             odds_dc = extract_dc(entries, 8)
             odds_ou = extract_ou(entries, 17)
             odds_gg = extract_gg(entries, 19)
+            odds_gg_2plus = extract_gg_2plus(entries)
             
             # Find subgames
             sg = detail.get("SG") or []
@@ -467,17 +590,19 @@ async def collect_today_games_async(
             if sh_id:
                 subgame_tasks.append(fetch_game_zip_async(session, site, sh_id, referer))
                 subgame_keys.append("sh")
-            if corners_id:
+            if FETCH_SUBGAMES and corners_id:
                 subgame_tasks.append(fetch_game_zip_async(session, site, corners_id, referer))
                 subgame_keys.append("corners")
-            if bookings_id:
+            if FETCH_SUBGAMES and bookings_id:
                 subgame_tasks.append(fetch_game_zip_async(session, site, bookings_id, referer))
                 subgame_keys.append("bookings")
                 
             subgame_results = []
             if subgame_tasks:
-                async with sem_detail:
-                    subgame_results = await asyncio.gather(*subgame_tasks)
+                async def _fetch_sub(coro):
+                    async with sem_detail:
+                        return await coro
+                subgame_results = await asyncio.gather(*[_fetch_sub(t) for t in subgame_tasks])
                     
             subgames_data = dict(zip(subgame_keys, subgame_results))
             
@@ -538,17 +663,22 @@ async def collect_today_games_async(
                     "odds_sh_ou": odds_sh_ou,
                     "odds_bookings_ou": odds_bookings_ou,
                     "gg_ng": odds_gg,
-                    "odds_gg_2plus": {},
+                    "odds_gg_2plus": odds_gg_2plus,
                     "odds_dc": odds_dc,
                     "odds_fh_dc": odds_fh_dc,
                     "odds_sh_dc": odds_sh_dc,
                 }
             }
 
-        print(f"  ⚡ Fetching details & subgames for {len(stubs)} matches...")
+        detail_label = "details, halves & deep subgames" if FETCH_SUBGAMES else "details & half-time markets"
+        print(f"  ⚡ Fetching {detail_label} for {len(stubs)} matches...")
         tasks = [process_stub(stub) for stub in stubs]
         results = await asyncio.gather(*tasks)
         matches = [r for r in results if r is not None]
+        if cached_stubs:
+            live_ids = {m.get("event_id") for m in matches if m.get("event_id") is not None}
+            if live_ids:
+                _save_event_cache(target, [stub for stub in stubs if stub[0] in live_ids])
         matches.sort(key=lambda x: x.get("kickoff_utc") or "")
         return matches
 
@@ -695,17 +825,25 @@ def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[d
             except (TypeError, ValueError):
                 pass
 
+        def convert_yes_no_market(raw_market):
+            out = {}
+            if raw_market.get("gg") and raw_market.get("ng"):
+                try:
+                    out = {
+                        "yes": float(raw_market["gg"]),
+                        "no":  float(raw_market["ng"]),
+                    }
+                except (TypeError, ValueError):
+                    pass
+            return out
+
         # --- GG/NG ---
         gn = odds_raw.get("gg_ng") or {}
-        odds_gg = {}
-        if gn.get("gg") and gn.get("ng"):
-            try:
-                odds_gg = {
-                    "yes": float(gn["gg"]),
-                    "no":  float(gn["ng"]),
-                }
-            except (TypeError, ValueError):
-                pass
+        odds_gg = convert_yes_no_market(gn)
+
+        # --- GG/NG 2+ / Each team to score 2 or more ---
+        gg2 = odds_raw.get("odds_gg_2plus") or {}
+        odds_gg_2plus = convert_yes_no_market(gg2)
 
         # Helper to convert nested over/under lines and partition standard vs asian
         def convert_nested_ou(raw_ou_dict, partition_asian=False):
@@ -749,6 +887,7 @@ def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[d
                 kickoff_str = ku[:16].replace("T", " ")
 
         standard.append({
+            "event_id":    m.get("event_id"),
             "home_team":  (m.get("home_team") or "").strip(),
             "away_team":  (m.get("away_team") or "").strip(),
             "kickoff":    kickoff_str,
@@ -770,7 +909,7 @@ def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[d
             "odds_bookings_1x2": odds_bookings_1x2,
             "odds_bookings_ou": odds_bookings_ou,
             "odds_gg":    odds_gg,
-            "odds_gg_2plus": {},
+            "odds_gg_2plus": odds_gg_2plus,
             "odds_dc":    odds_dc,
         })
 
@@ -932,6 +1071,7 @@ def format_match_text_block(m):
     lines.append(fmt_row("1X2 (Result)", m_1x2))
     lines.append(fmt_row("Double Chance", m_dc))
     lines.append(fmt_row("GG/NG", m_gg))
+    lines.append(fmt_row("GG/NG 2+", gg_2plus))
     lines.append(fmt_row("1X2 Two Up", m_2up))
     lines.append(fmt_row("1X2 One Up", m_1up))
     lines.append(fmt_box_bottom())
@@ -967,15 +1107,20 @@ def format_match_text_block(m):
     lines.append(fmt_row("Bookings 1X2", b_1x2))
     lines.append(fmt_box_subheading("BOOKINGS OVER/UNDER"))
     lines.append(fmt_ou_section_all(m.get("odds_bookings_ou"), empty_msg="(No Bookings O/U lines available)"))
-    lines.append(fmt_row("GG/NG 2+", gg_2plus))
     lines.append(fmt_box_bottom())
     lines.append("") # Blank line after match block
     
     return "\n".join(lines)
 
 
+# Use the shared formatter so every football scraper has the same text output.
+try:
+    from .fb_output_formatter import format_match_text_block
+except ImportError:
+    from fb_output_formatter import format_match_text_block
+
 def run() -> List[dict]:
-    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
+    output_dir = _DATA_DIR
     os.makedirs(output_dir, exist_ok=True)
     started = time.perf_counter()
 
@@ -998,7 +1143,7 @@ def run() -> List[dict]:
     raw_matches = asyncio.run(collect_today_games_async(
         site=DEFAULT_SITE,
         tf_ms=DEFAULT_TF_MS,
-        referer=REFERRER,
+        referer=f"{DEFAULT_SITE}/en/line/football",
         target=today,
         tz=tz,
         now_utc=now_utc,
@@ -1024,7 +1169,7 @@ def run() -> List[dict]:
         print("=" * 50)
 
     # Save files
-    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
+    output_dir = _DATA_DIR
     os.makedirs(output_dir, exist_ok=True)
     json_path = os.path.join(output_dir, "onexbet_odds.json")
     txt_path  = os.path.join(output_dir, "onexbet_matches.txt")
@@ -1061,3 +1206,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -169,6 +169,72 @@ async def scrape_footballcom():
     return all_matches
 
 
+UNAVAILABLE_MARKET_STATUSES = {
+    'suspended', 'deactivated', 'closed', 'locked', 'inactive', 'disabled',
+    'halted', 'stopped', 'unavailable', 'hidden', 'blocked', 'void',
+    'removed', 'settled', 'cashout',
+}
+
+_FALSEY_FLAGS = {0, '0', False, 'false', 'False', 'no', 'No'}
+
+
+def _flag_is_false(value):
+    return value in _FALSEY_FLAGS
+
+
+def _flag_is_true(value):
+    return value is True or str(value).lower() == 'true' or value == 1
+
+
+def is_market_active(market):
+    """Return True only for Football.com markets that should be bettable."""
+    if not isinstance(market, dict):
+        return False
+
+    if _flag_is_true(market.get('banned')):
+        return False
+    if _flag_is_true(market.get('isLocked')) or _flag_is_true(market.get('locked')):
+        return False
+    if _flag_is_true(market.get('isSuspended')) or _flag_is_true(market.get('isSettled')):
+        return False
+
+    for field in ('isActive', 'active', 'isVisible', 'visible', 'display'):
+        if field in market and _flag_is_false(market.get(field)):
+            return False
+
+    status = str(market.get('status', '') or '').strip().lower()
+    if status in UNAVAILABLE_MARKET_STATUSES:
+        return False
+
+    return True
+
+
+def is_outcome_active(outcome):
+    if not isinstance(outcome, dict):
+        return False
+
+    if _flag_is_true(outcome.get('banned')):
+        return False
+    if _flag_is_true(outcome.get('isLocked')) or _flag_is_true(outcome.get('locked')):
+        return False
+    if _flag_is_true(outcome.get('isSuspended')) or _flag_is_true(outcome.get('isSettled')):
+        return False
+
+    for field in ('isActive', 'active', 'isVisible', 'visible', 'display'):
+        if field in outcome and _flag_is_false(outcome.get(field)):
+            return False
+
+    status = str(outcome.get('status', '') or '').strip().lower()
+    if status in UNAVAILABLE_MARKET_STATUSES:
+        return False
+
+    try:
+        odds = float(outcome.get('odds', 0) or 0)
+    except (TypeError, ValueError):
+        return False
+    return odds > 1.01
+
+
 def parse_response(data):
     matches = []
     if not isinstance(data, dict):
@@ -203,6 +269,7 @@ def parse_event(event, tournament_name='', now=None):
     away_team = event.get('awayTeamName', '')
     kickoff = event.get('estimateStartTime', '')
     status = event.get('matchStatus', '')
+    event_id = str(event.get('eventId', '') or event.get('id', '') or '')
 
     if not home_team or not away_team:
         return None
@@ -227,6 +294,8 @@ def parse_event(event, tournament_name='', now=None):
         'kickoff': str(kickoff),
         'tournament': tournament_name,
         'is_live': is_live,
+        'status': status,
+        'event_id': event_id,
         'source': 'footballcom_gh',
         'odds_1x2': {},
         'odds_1x2_one_up': {},
@@ -250,22 +319,12 @@ def parse_event(event, tournament_name='', now=None):
     markets = event.get('markets', [])
 
     for market in markets:
-        market_id = str(market.get('id', ''))
-        market_status = market.get('status', '')
-        
-        # Skip suspended/deactivated/closed markets
-        if market_status in ['suspended', 'deactivated', 'closed',
-                              'Suspended', 'Deactivated', 'Closed']:
+        if not is_market_active(market):
             continue
-        
+
+        market_id = str(market.get('id', ''))
         outcomes = market.get('outcomes', [])
-        
-        # Filter out suspended/inactive outcomes
-        active_outcomes = [
-            o for o in outcomes
-            if o.get('isActive', 1) != 0
-            and str(o.get('odds', 0) or 0) not in ('0', '', 'None')
-        ]
+        active_outcomes = [o for o in outcomes if is_outcome_active(o)]
 
         if market_id == '1' and len(active_outcomes) >= 3:
             h = float(active_outcomes[0].get('odds', 0) or 0)
@@ -530,6 +589,12 @@ def format_match_text_block(m):
     
     return "\n".join(lines)
 
+
+# Use the shared formatter so every football scraper has the same text output.
+try:
+    from .fb_output_formatter import format_match_text_block
+except ImportError:
+    from fb_output_formatter import format_match_text_block
 
 def run():
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')

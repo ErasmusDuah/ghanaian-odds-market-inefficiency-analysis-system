@@ -201,7 +201,14 @@ def run_scan():
         calc_end_str = calc_end_time.strftime('%I:%M:%S %p').lstrip('0').lower()
         next_run_str = next_run_dt.strftime('%I:%M:%S %p').lstrip('0').lower()
 
-        scan_time  = time.time() - scan_start
+        verify_enabled = str(_env.get('SPORTYBET_FRONTEND_VERIFY', '0')).lower() in {'1', 'true', 'yes', 'on'}
+        if verify_enabled and opportunities:
+            opportunities, dropped = verify_opportunities(opportunities, fetched)
+            if dropped:
+                print(f"  WARNING: Sportybet frontend verifier dropped {dropped} hidden/locked opportunity(s).")
+            scan_time = time.time() - scan_start
+        else:
+            scan_time = time.time() - scan_start
 
         total_time = scrape_time + scan_time
 

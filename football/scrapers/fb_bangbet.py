@@ -15,6 +15,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -267,6 +268,7 @@ def base_match(event: dict[str, Any], tz: timezone) -> dict[str, Any]:
         "tournament": normalize_tournament(event.get("tournamentName") or ""),
         "is_live": False,
         "status": "Not start",
+        "event_id": str(event.get("id") or ""),
         "source": SOURCE,
         "odds_1x2": {},
         "odds_ou": {},
@@ -288,55 +290,100 @@ def base_match(event: dict[str, Any], tz: timezone) -> dict[str, Any]:
     }
 
 
+def scrape_market_group(
+    market_name: str,
+    group_index: int,
+    config: ScrapeConfig,
+    today,
+) -> tuple[dict[str, dict[str, Any]], int, list[tuple[str, int, int, int]]]:
+    records: dict[str, dict[str, Any]] = {}
+    total_fetched = 0
+    page_logs: list[tuple[str, int, int, int]] = []
+
+    for page in range(1, config.max_pages + 1):
+        data = request_group(group_index, page, config)
+        events = page_events(data)
+        if not events:
+            break
+
+        total_fetched += len(events)
+        page_logs.append((market_name, page, len(events), 0))
+        today_rows = 0
+        future_rows = 0
+
+        for event in events:
+            kickoff = event_dt(event, config.country_tz)
+            if kickoff.date() > today:
+                future_rows += 1
+                continue
+            if kickoff.date() < today:
+                continue
+
+            today_rows += 1
+            if event.get("matchStatus") != "not_started" or not event.get("active"):
+                continue
+
+            event_id = str(event.get("id") or "")
+            if event_id not in records:
+                records[event_id] = base_match(event, config.country_tz)
+
+            if market_name == "1x2":
+                odds = parse_1x2(event)
+                if odds:
+                    records[event_id]["odds_1x2"] = odds
+            elif market_name == "ou":
+                ou, asian_ou = parse_ou(event)
+                records[event_id]["odds_ou"].update(ou)
+                records[event_id]["odds_asian_ou"].update(asian_ou)
+            elif market_name == "dc":
+                dc = parse_dc(event)
+                if dc:
+                    records[event_id]["odds_dc"] = dc
+            elif market_name == "gg":
+                records[event_id]["odds_gg"] = parse_gg(event)
+
+        if len(events) < config.page_size:
+            break
+        if today_rows == 0 and future_rows:
+            break
+
+    return records, total_fetched, page_logs
+
+
 def scrape_today(config: ScrapeConfig) -> ScrapeResult:
     now = datetime.now(config.country_tz)
     today = now.date()
     records: dict[str, dict[str, Any]] = {}
     total_fetched = 0
     page_logs: list[tuple[str, int, int, int]] = []
+    group_results: dict[str, tuple[dict[str, dict[str, Any]], int, list[tuple[str, int, int, int]]]] = {}
 
-    for market_name, group_index in MARKET_GROUPS.items():
-        for page in range(1, config.max_pages + 1):
-            data = request_group(group_index, page, config)
-            events = page_events(data)
-            if not events:
-                break
+    with ThreadPoolExecutor(max_workers=len(MARKET_GROUPS)) as executor:
+        futures = {
+            executor.submit(scrape_market_group, market_name, group_index, config, today): market_name
+            for market_name, group_index in MARKET_GROUPS.items()
+        }
+        for future in as_completed(futures):
+            market_name = futures[future]
+            group_results[market_name] = future.result()
 
-            total_fetched += len(events)
-            page_logs.append((market_name, page, len(events), total_fetched))
-            stop_after_page = False
+    for market_name in MARKET_GROUPS:
+        group_records, group_total, group_logs = group_results.get(market_name, ({}, 0, []))
+        total_fetched += group_total
+        for log_market, page, count, _ in group_logs:
+            running_total = (page_logs[-1][3] if page_logs else 0) + count
+            page_logs.append((log_market, page, count, running_total))
 
-            for event in events:
-                kickoff = event_dt(event, config.country_tz)
-                if kickoff.date() > today:
-                    stop_after_page = True
-                    continue
-                if kickoff.date() < today:
-                    continue
-                if event.get("matchStatus") != "not_started" or not event.get("active"):
-                    continue
-
-                event_id = str(event.get("id") or "")
-                if event_id not in records:
-                    records[event_id] = base_match(event, config.country_tz)
-
-                if market_name == "1x2":
-                    odds = parse_1x2(event)
-                    if odds:
-                        records[event_id]["odds_1x2"] = odds
-                elif market_name == "ou":
-                    ou, asian_ou = parse_ou(event)
-                    records[event_id]["odds_ou"].update(ou)
-                    records[event_id]["odds_asian_ou"].update(asian_ou)
-                elif market_name == "dc":
-                    dc = parse_dc(event)
-                    if dc:
-                        records[event_id]["odds_dc"] = dc
-                elif market_name == "gg":
-                    records[event_id]["odds_gg"] = parse_gg(event)
-
-            if stop_after_page or len(events) < config.page_size:
-                break
+        for event_id, group_match in group_records.items():
+            if event_id not in records:
+                records[event_id] = group_match
+                continue
+            records[event_id]["odds_ou"].update(group_match.get("odds_ou") or {})
+            records[event_id]["odds_asian_ou"].update(group_match.get("odds_asian_ou") or {})
+            for key in ("odds_1x2", "odds_dc", "odds_gg"):
+                value = group_match.get(key)
+                if value:
+                    records[event_id][key] = value
 
     matches = [
         match
@@ -347,7 +394,7 @@ def scrape_today(config: ScrapeConfig) -> ScrapeResult:
     return ScrapeResult(matches=matches, total_fetched=total_fetched, page_logs=page_logs)
 
 
-# ── BOX-DRAWING FORMAT HELPERS ────────────────────────────────────────────────
+# BOX-DRAWING FORMAT HELPERS
 
 def fmt_row(label, val):
     prefix = f"│ {label:<16} "
@@ -577,6 +624,12 @@ def main() -> int:
             print(format_match_text_block(m), end="")
     return 0
 
+
+# Use the shared formatter so every football scraper has the same text output.
+try:
+    from .fb_output_formatter import format_match_text_block
+except ImportError:
+    from fb_output_formatter import format_match_text_block
 
 def run() -> list[dict]:
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')

@@ -627,6 +627,12 @@ def main() -> int:
     return 0
 
 
+# Use the shared formatter so every football scraper has the same text output.
+try:
+    from .fb_output_formatter import format_match_text_block
+except ImportError:
+    from fb_output_formatter import format_match_text_block
+
 def run() -> list:
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
     os.makedirs(output_dir, exist_ok=True)

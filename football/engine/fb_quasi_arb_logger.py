@@ -169,6 +169,10 @@ def _shorten_profit_side(best_outcome: str, line: str) -> str:
         return 'GG'
     if b_low == 'gg no':
         return 'NG'
+    if b_low == 'gg 2+ yes':
+        return 'GG2+'
+    if b_low == 'gg 2+ no':
+        return 'NG2+'
 
     # Fallback — unknown market type; log the raw label so we never crash
     return b

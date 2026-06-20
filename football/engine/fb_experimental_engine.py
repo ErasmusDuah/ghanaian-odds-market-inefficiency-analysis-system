@@ -36,7 +36,8 @@ STOPWORDS = {
     'united', 'city', 'town', 'reserve', 'reserves', 'u19', 'u20', 'u21', 'u23',
     'women', 'youth', 'under', 'club', 'team', 'real', 'atletico', 'atletico',
     'depor', 'deportivo', 'deportes', 'deportiva', 'cd', 'csd', 'sd', 'ud',
-    'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21', 'citizen', 'citizens'
+    'de', 'la', 'del', 'ii', 'b', 'u-19', 'u-20', 'u-21', 'citizen', 'citizens',
+    'union', 'as', 'cs', 'sporting', 'athletic', 'athletics', 'association'
 }
 
 def clean_tokens(name):
@@ -135,14 +136,8 @@ def _matches_same_game(a, b):
     """
     if a['source'] == b['source']:
         return False
-    date_a = a.get('kickoff', '')[:10]
-    date_b = b.get('kickoff', '')[:10]
-    if date_a != date_b:
+    if a.get('kickoff', '') != b.get('kickoff', ''):
         return False
-        
-    t_a = a.get('kickoff', '').split()
-    t_b = b.get('kickoff', '').split()
-    times_match = (len(t_a) > 1 and len(t_b) > 1 and t_a[1][:5] == t_b[1][:5])
         
     if not tournament_similar(a.get('tournament', ''), b.get('tournament', '')):
         return False
@@ -153,12 +148,6 @@ def _matches_same_game(a, b):
     if not tournament_similar(home_a + away_a, home_b + away_b):
         return False
         
-    if times_match:
-        home_ok = smart_team_match(home_a, home_b)
-        away_ok = smart_team_match(away_a, away_b)
-        if home_ok and away_ok:
-            return True
-            
     return smart_team_match(home_a, home_b) and smart_team_match(away_a, away_b)
 
 
@@ -166,59 +155,50 @@ def match_all_platforms(all_matches):
     """
     Groups the same match across different platforms using a union-find
     (disjoint-set) approach so that grouping is TRANSITIVE.
-
-    Old algorithm: compare every match against one anchor → if the anchor
-    name doesn't fuzzy-match platform C but another grouped match does,
-    platform C is silently excluded from the group.
-
-    New algorithm:
-      1. Build an edge for every pair (i, j) that refer to the same fixture.
-      2. Compute connected components — all platforms that can reach each
-         other through any chain of pairwise matches end up in one group.
-      3. Only keep groups that contain matches from at least 2 platforms.
-
-    This means: if Sportybet↔MSport and MSport↔Bangbet both match,
-    all three are grouped together even if Sportybet↔Bangbet would fail
-    on its own.
     """
-    n = len(all_matches)
-
-    # Union-Find helpers
-    parent = list(range(n))
-
-    def find(x):
-        while parent[x] != x:
-            parent[x] = parent[parent[x]]  # path compression
-            x = parent[x]
-        return x
-
-    def union(x, y):
-        rx, ry = find(x), find(y)
-        if rx != ry:
-            parent[rx] = ry
-
-    # Build edges — O(n²) but n is typically a few hundred
-    for i in range(n):
-        for j in range(i + 1, n):
-            if _matches_same_game(all_matches[i], all_matches[j]):
-                union(i, j)
-
-    # Collect components
     from collections import defaultdict
-    components = defaultdict(list)
-    for i in range(n):
-        components[find(i)].append(i)
+    by_kickoff = defaultdict(list)
+    for m in all_matches:
+        by_kickoff[m.get('kickoff', '')].append(m)
 
     groups = []
-    for indices in components.values():
-        if len(indices) < 2:
+    for ko, matches in by_kickoff.items():
+        n = len(matches)
+        if n < 2:
             continue
-        # Verify at least 2 different sources (same-source duplicates don't count)
-        sources = [all_matches[i]['source'] for i in indices]
-        if len(set(sources)) < 2:
-            continue
-        matches = [all_matches[i] for i in indices]
-        groups.append({'matches': matches, 'sources': sources})
+            
+        parent = list(range(n))
+
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]  # path compression
+                x = parent[x]
+            return x
+
+        def union(x, y):
+            rx, ry = find(x), find(y)
+            if rx != ry:
+                parent[rx] = ry
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                if _matches_same_game(matches[i], matches[j]):
+                    union(i, j)
+
+        components = defaultdict(list)
+        for i in range(n):
+            components[find(i)].append(i)
+
+        for indices in components.values():
+            if len(indices) < 2:
+                continue
+            sources = [matches[i]['source'] for i in indices]
+            if len(set(sources)) < 2:
+                continue
+            groups.append({
+                'matches': [matches[i] for i in indices],
+                'sources': sources
+            })
 
     return groups
 
@@ -621,16 +601,16 @@ def run_experimental(total_stake=None,
     if bangbet_matches  is None: bangbet_matches  = load_json('data/bangbet_odds.json')
 
     # Filter virtual/esports from ALL platforms
-    sportybet_matches    = [m for m in sportybet_matches    if not is_virtual_match(m)]
-    betway_matches       = [m for m in betway_matches       if not is_virtual_match(m)]
-    footballcom_matches  = [m for m in footballcom_matches  if not is_virtual_match(m)]
-    onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m)]
-    twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m)]
-    soccabet_matches     = [m for m in soccabet_matches     if not is_virtual_match(m)]
-    betpawa_matches      = [m for m in betpawa_matches      if not is_virtual_match(m)]
-    msport_matches       = [m for m in msport_matches       if not is_virtual_match(m)]
-    supabet_matches      = [m for m in supabet_matches      if not is_virtual_match(m)]
-    bangbet_matches      = [m for m in bangbet_matches      if not is_virtual_match(m)]
+    sportybet_matches    = [m for m in sportybet_matches    if not is_virtual_match(m) and not m.get('is_live', False)]
+    betway_matches       = [m for m in betway_matches       if not is_virtual_match(m) and not m.get('is_live', False)]
+    footballcom_matches  = [m for m in footballcom_matches  if not is_virtual_match(m) and not m.get('is_live', False)]
+    onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
+    twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m) and not m.get('is_live', False)]
+    soccabet_matches     = [m for m in soccabet_matches     if not is_virtual_match(m) and not m.get('is_live', False)]
+    betpawa_matches      = [m for m in betpawa_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
+    msport_matches       = [m for m in msport_matches       if not is_virtual_match(m) and not m.get('is_live', False)]
+    supabet_matches      = [m for m in supabet_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
+    bangbet_matches      = [m for m in bangbet_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
 
     all_matches = (
         sportybet_matches + betway_matches + footballcom_matches +

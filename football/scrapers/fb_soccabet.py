@@ -323,25 +323,14 @@ def parse_matches(
     return results
 
 
+# Use the shared formatter so every football scraper has the same text output.
+try:
+    from .fb_output_formatter import format_match_text_block
+except ImportError:
+    from fb_output_formatter import format_match_text_block
+
 def format_txt(matches: list[dict[str, Any]]) -> str:
-    blocks: list[str] = []
-    for match in matches:
-        lines = [
-            f"{match['home_team']} vs {match['away_team']}",
-            match["tournament"],
-            match["kickoff"],
-        ]
-        one_x_two = match["odds_1x2"]
-        lines.append(f"1X2: {one_x_two['home']} | {one_x_two['draw']} | {one_x_two['away']}")
-        for line in OU_LINES:
-            ou = match.get("odds_ou", {}).get(line)
-            if ou:
-                lines.append(f"O/U {line}: Over {ou['over']} | Under {ou['under']}")
-        gg = match.get("odds_gg")
-        if gg:
-            lines.append(f"GG/NG: Yes {gg['yes']} | No {gg['no']}")
-        blocks.append("\n".join(lines))
-    return "\n\n".join(blocks) + ("\n" if blocks else "")
+    return "".join(format_match_text_block(match) for match in matches)
 
 
 def write_outputs(matches: list[dict[str, Any]], output_dir: Path) -> tuple[Path, Path]:
