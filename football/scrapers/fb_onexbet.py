@@ -34,6 +34,7 @@ IMPERSONATE = "chrome120"   # curl_cffi TLS fingerprint to impersonate
 FETCH_SUBGAMES = os.getenv("ONEXBET_FETCH_SUBGAMES", "0").strip().lower() in {"1", "true", "yes", "on"}
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 EVENT_CACHE_PATH = os.path.join(_DATA_DIR, "onexbet_event_cache.json")
+MIN_EVENT_CACHE_STUBS = 50
 
 OU_TOTALS: Tuple[float, ...] = (1.5, 2.5, 3.5, 4.5, 5.5)
 DEFAULT_TF_MS = 172800000
@@ -353,10 +354,18 @@ def _load_event_cache(target: date) -> List[Tuple[int, dict, str]]:
             continue
         stub = {"I": gid, "S": item.get("kickoff_ts")}
         stubs.append((gid, stub, item.get("league", "")))
+
+    if 0 < len(stubs) < MIN_EVENT_CACHE_STUBS:
+        print(f"  WARNING: 1xBet cache has only {len(stubs)} events; refreshing full event list...")
+        return []
     return stubs
 
 
 def _save_event_cache(target: date, stubs: List[Tuple[int, dict, str]]) -> None:
+    if 0 < len(stubs) < MIN_EVENT_CACHE_STUBS:
+        print(f"  WARNING: Not saving suspiciously small 1xBet cache ({len(stubs)} events)")
+        return
+
     events = []
     for gid, stub, league in stubs:
         events.append({

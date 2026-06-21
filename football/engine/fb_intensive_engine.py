@@ -329,9 +329,8 @@ def _profits(odds_list, stakes):
     total = sum(stakes)
     return [round(o * s - total, 2) for o, s in zip(odds_list, stakes)]
 
-def _unique_odds(pair, market_key, outcome_key):
+def _collect_odds(pair, market_key, outcome_key):
     mtype = market_key.replace('odds_', '')
-    seen  = {}
     items = []
     for plat in PLATFORMS:
         if (plat, mtype, None) in _EXCLUDED:
@@ -340,14 +339,10 @@ def _unique_odds(pair, market_key, outcome_key):
         v = _f(market.get(outcome_key, 0))
         if v <= 1.01:
             continue
-        key = round(v, 2)
-        if key not in seen:
-            seen[key] = plat
-            items.append((v, plat))
+        items.append((v, plat))
     return items
 
-def _unique_nested_odds(pair, market_key, line, outcome_key):
-    seen = {}
+def _collect_nested_odds(pair, market_key, line, outcome_key):
     items = []
     mtype = market_key.replace('odds_', '')
     for plat in PLATFORMS:
@@ -358,10 +353,7 @@ def _unique_nested_odds(pair, market_key, line, outcome_key):
         v = _f(line_data.get(outcome_key, 0))
         if v <= 1.01:
             continue
-        key = round(v, 2)
-        if key not in seen:
-            seen[key] = plat
-            items.append((v, plat))
+        items.append((v, plat))
     return items
 
 # ── Permutations Output formatter ──────────────────────────────────────────────
@@ -434,9 +426,9 @@ def _all_categories(market_label, arb_sum_f, profit_pct_f, total_stake, leg_tupl
 
 # ── NUMPY BROADCAST SCANNER HELPERS ────────────────────────────────────────────
 def scan_3way_numpy(pair, market_key, market_label, outcomes_info, total_stake):
-    o0_items = _unique_odds(pair, market_key, outcomes_info[0][0])
-    o1_items = _unique_odds(pair, market_key, outcomes_info[1][0])
-    o2_items = _unique_odds(pair, market_key, outcomes_info[2][0])
+    o0_items = _collect_odds(pair, market_key, outcomes_info[0][0])
+    o1_items = _collect_odds(pair, market_key, outcomes_info[1][0])
+    o2_items = _collect_odds(pair, market_key, outcomes_info[2][0])
 
     if not o0_items or not o1_items or not o2_items:
         return []
@@ -463,8 +455,8 @@ def scan_3way_numpy(pair, market_key, market_label, outcomes_info, total_stake):
     return results
 
 def scan_2way_numpy(pair, market_key, market_label, outcomes_info, total_stake):
-    o0_items = _unique_odds(pair, market_key, outcomes_info[0][0])
-    o1_items = _unique_odds(pair, market_key, outcomes_info[1][0])
+    o0_items = _collect_odds(pair, market_key, outcomes_info[0][0])
+    o1_items = _collect_odds(pair, market_key, outcomes_info[1][0])
 
     if not o0_items or not o1_items:
         return []
@@ -495,8 +487,8 @@ def scan_2way_nested_numpy(pair, market_key, market_label_prefix, outcomes_info,
 
     results = []
     for line in all_lines:
-        o0_items = _unique_nested_odds(pair, market_key, line, outcomes_info[0][0])
-        o1_items = _unique_nested_odds(pair, market_key, line, outcomes_info[1][0])
+        o0_items = _collect_nested_odds(pair, market_key, line, outcomes_info[0][0])
+        o1_items = _collect_nested_odds(pair, market_key, line, outcomes_info[1][0])
         if not o0_items or not o1_items:
             continue
 
@@ -538,8 +530,8 @@ def scan_double_chance_numpy(pair, dc_key, main_key, market_label, total_stake):
     return results
 
 def _scan_2way_hybrid(pair, key1, outcome1, key2, outcome2, market_label, label1, label2, total_stake):
-    o0_items = _unique_odds(pair, key1, outcome1)
-    o1_items = _unique_odds(pair, key2, outcome2)
+    o0_items = _collect_odds(pair, key1, outcome1)
+    o1_items = _collect_odds(pair, key2, outcome2)
 
     if not o0_items or not o1_items:
         return []
@@ -664,7 +656,7 @@ def run_intensive(total_stake=None,
 
     def _load(path):
         try:
-            with open(path) as f:
+            with open(path, encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
             return []

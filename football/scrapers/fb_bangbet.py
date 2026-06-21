@@ -31,6 +31,7 @@ MARKET_GROUPS = {
     "dc": 4,
     "gg": 5,
 }
+RECENT_FALLBACK_MAX_AGE_SECONDS = 20 * 60
 
 
 @dataclass(frozen=True)
@@ -563,6 +564,30 @@ def save_outputs(matches: list[dict[str, Any]], preferred_output_dir: Path) -> t
         return write_outputs(matches, fallback_dir)
 
 
+def load_recent_fallback(output_dir: Path) -> list[dict[str, Any]]:
+    path = output_dir / "bangbet_odds.json"
+    try:
+        if not path.exists():
+            return []
+        age = time.time() - path.stat().st_mtime
+        if age > RECENT_FALLBACK_MAX_AGE_SECONDS:
+            return []
+        with open(str(path), "r", encoding="utf-8") as file:
+            rows = json.load(file)
+    except Exception:
+        return []
+
+    now = datetime.now(timezone.utc)
+    fresh: list[dict[str, Any]] = []
+    for match in rows if isinstance(rows, list) else []:
+        try:
+            kickoff = datetime.strptime(str(match.get("kickoff", "")), "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+        if kickoff > now and match.get("odds_1x2"):
+            fresh.append(match)
+    return fresh
+
 def print_summary(result: ScrapeResult, json_path: Path, txt_path: Path, elapsed: float) -> None:
     print()
     print("[INFO] Fetching today's matches...")
@@ -644,7 +669,23 @@ def run() -> list[dict]:
         max_pages=8,
         page_size=100,
     )
-    result = scrape_today(config)
+    try:
+        result = scrape_today(config)
+    except Exception as exc:
+        print(f"WARNING: Bangbet scrape failed: {exc}")
+        fallback = load_recent_fallback(config.output_dir)
+        if fallback:
+            print(f"WARNING: Using recent Bangbet snapshot ({len(fallback)} matches) instead of failed scrape")
+            result = ScrapeResult(matches=fallback, total_fetched=0, page_logs=[])
+        else:
+            raise
+
+    if not result.matches:
+        fallback = load_recent_fallback(config.output_dir)
+        if fallback:
+            print(f"WARNING: Using recent Bangbet snapshot ({len(fallback)} matches) instead of empty scrape")
+            result = ScrapeResult(matches=fallback, total_fetched=result.total_fetched, page_logs=result.page_logs)
+
     json_path, txt_path = save_outputs(result.matches, config.output_dir)
 
     elapsed = _time.perf_counter() - started
