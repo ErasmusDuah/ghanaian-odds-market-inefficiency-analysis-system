@@ -41,6 +41,7 @@ CHAMP_CONCURRENCY = 80
 DETAIL_CONCURRENCY = int(os.getenv("BETWINNER_DETAIL_CONCURRENCY", "120"))
 SESSION_MAX_CLIENTS = max(CHAMP_CONCURRENCY, DETAIL_CONCURRENCY)
 FAST_BULK_LIMIT = 50
+MIN_CACHE_STUBS = int(os.getenv("BETWINNER_MIN_CACHE_STUBS", "100"))
 FAST_BULK_PARAM_SETS = [
     {
         "sports": 1,
@@ -353,6 +354,9 @@ def _load_event_cache(target: date) -> List[Tuple[int, dict, str]]:
             continue
         stub = {"I": gid, "S": item.get("kickoff_ts")}
         stubs.append((gid, stub, league))
+    if 0 < len(stubs) < MIN_CACHE_STUBS:
+        print(f"  WARNING: Betwinner cache has only {len(stubs)} events; refreshing full event list...")
+        return []
     return stubs
 
 
@@ -366,6 +370,10 @@ def _save_event_cache(target: date, stubs: List[Tuple[int, dict, str]]) -> None:
             "kickoff_ts": stub.get("S"),
             "league": league,
         })
+
+    if 0 < len(events) < MIN_CACHE_STUBS:
+        print(f"  WARNING: Not saving suspiciously small Betwinner cache ({len(events)} events)")
+        return
 
     try:
         os.makedirs(os.path.dirname(EVENT_CACHE_PATH), exist_ok=True)

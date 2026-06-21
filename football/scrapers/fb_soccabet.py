@@ -42,6 +42,9 @@ SOURCE = "soccabet_gh"
 WS_URL = "wss://www.soccabet.com/ws/"
 SPORT_ID_SOCCER = "77"
 OU_LINES = ("0.5", "1.5", "2.5", "3.5", "4.5", "5.5")
+MIN_GOOD_MATCHES = int(os.getenv("SOCCABET_MIN_GOOD_MATCHES", "50"))
+MAX_WS_ATTEMPTS = int(os.getenv("SOCCABET_WS_ATTEMPTS", "3"))
+GOOD_SNAPSHOT = "soccabet_last_good.json"
 
 # Soccabet marketTypeId → our internal market name
 # Discovered via WebSocket frame inspection:
@@ -345,6 +348,43 @@ def write_outputs(matches: list[dict[str, Any]], output_dir: Path) -> tuple[Path
     return json_path, txt_path
 
 
+def _snapshot_path(output_dir: Path) -> Path:
+    return output_dir / GOOD_SNAPSHOT
+
+
+def _load_last_good(output_dir: Path, today_str: str) -> list[dict[str, Any]]:
+    candidates = [_snapshot_path(output_dir), output_dir / "soccabet_odds.json"]
+    for path in candidates:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, list) or len(data) < MIN_GOOD_MATCHES:
+            continue
+        same_day = [m for m in data if str(m.get("kickoff", "")).startswith(today_str)]
+        if len(same_day) >= MIN_GOOD_MATCHES:
+            return same_day
+    return []
+
+
+def _save_last_good(output_dir: Path, matches: list[dict[str, Any]]) -> None:
+    if len(matches) < MIN_GOOD_MATCHES:
+        return
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        _snapshot_path(output_dir).write_text(json.dumps(matches, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    except OSError as exc:
+        print(f"[WARN] Could not save Soccabet last-good snapshot: {exc}")
+
+
+def _is_suspiciously_low(matches: list[dict[str, Any]], baseline: list[dict[str, Any]]) -> bool:
+    if len(matches) >= MIN_GOOD_MATCHES:
+        return False
+    if baseline and len(matches) < max(MIN_GOOD_MATCHES, int(len(baseline) * 0.5)):
+        return True
+    return len(matches) == 0
+
+
 def save_outputs(matches: list[dict[str, Any]], preferred_dir: Path) -> tuple[Path, Path]:
     try:
         return write_outputs(matches, preferred_dir)
@@ -386,19 +426,45 @@ async def _async_scrape() -> list[dict]:
     print(banner(now))
     print(f"  [Soccabet] Connecting to WebSocket feed...")
 
-    raw_matches, raw_markets = await ws_fetch_all(today_str, timeout_secs=12.0)
-    n_raw_markets = sum(len(v) for v in raw_markets.values())
-
-    print(f"  [Soccabet] Received {len(raw_matches)} match objects, {n_raw_markets} market updates")
-    print(f"  [Soccabet] Parsing and filtering today's prematch football...")
-
-    matches = parse_matches(raw_matches, raw_markets, today_str)
-
     output_dir = Path(__file__).resolve().parent.parent / "data"
+    baseline = _load_last_good(output_dir, today_str)
+    if baseline:
+        print(f"  [Soccabet] Last-good snapshot available ({len(baseline)} matches)")
+
+    best_matches: list[dict[str, Any]] = []
+    best_raw_count = 0
+    best_market_count = 0
+
+    for attempt in range(1, max(1, MAX_WS_ATTEMPTS) + 1):
+        timeout = 12.0 + (attempt - 1) * 6.0
+        raw_matches, raw_markets = await ws_fetch_all(today_str, timeout_secs=timeout)
+        n_raw_markets = sum(len(v) for v in raw_markets.values())
+
+        print(f"  [Soccabet] Attempt {attempt}: received {len(raw_matches)} match objects, {n_raw_markets} market updates")
+        print(f"  [Soccabet] Parsing and filtering today's prematch football...")
+
+        matches = parse_matches(raw_matches, raw_markets, today_str)
+        if len(matches) > len(best_matches):
+            best_matches = matches
+            best_raw_count = len(raw_matches)
+            best_market_count = n_raw_markets
+        if not _is_suspiciously_low(matches, baseline):
+            break
+        print(f"  [Soccabet] Partial feed suspected ({len(matches)} matches); retrying...")
+
+    matches = best_matches
+    if _is_suspiciously_low(matches, baseline):
+        print(f"  [Soccabet] Using last-good snapshot instead of partial feed ({len(matches)} < {len(baseline)})")
+        matches = baseline
+        best_raw_count = len(matches)
+        best_market_count = 0
+    else:
+        _save_last_good(output_dir, matches)
+
     json_path, txt_path = save_outputs(matches, output_dir)
 
     elapsed = time.perf_counter() - started
-    print_summary(matches, json_path, txt_path, elapsed, len(raw_matches), n_raw_markets)
+    print_summary(matches, json_path, txt_path, elapsed, best_raw_count, best_market_count)
 
     return matches
 
