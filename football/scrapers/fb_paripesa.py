@@ -42,6 +42,7 @@ CHAMP_CONCURRENCY = 80
 DETAIL_CONCURRENCY = int(os.getenv("PARIPESA_DETAIL_CONCURRENCY", "240"))
 SESSION_MAX_CLIENTS = max(CHAMP_CONCURRENCY, DETAIL_CONCURRENCY)
 FAST_BULK_LIMIT = 50
+MIN_CACHE_STUBS = int(os.getenv("PARIPESA_MIN_CACHE_STUBS", "100"))
 FAST_BULK_PARAM_SETS = [
     {
         "sports": 1,
@@ -259,12 +260,50 @@ async def fetch_fast_bulk_async(session: AsyncSession, site: str, referer: str) 
 
 def _is_noise_league(league: str) -> bool:
     lower_league = league.lower()
-    return any(x in lower_league for x in [
+    noise_fragments = (
         'alternative', 'matches of the day', 'player props',
         'team vs player', 'player vs team', 'team v player', 'player v team',
-        'special bets', 'shots', 'corners', 'cards', 'stats',
-        'goalscorer', 'player specials', 'to score', 'virtual', 'cyber'
-    ])
+        'special bets', 'shots', 'corners', 'cards', 'stats', 'statistics',
+        'goalscorer', 'player specials', 'to score', 'virtual', 'cyber',
+        'duel of the players', 'player duel', 'duel.', 'goals. statistics',
+    )
+    return any(fragment in lower_league for fragment in noise_fragments)
+
+
+def _looks_like_person_vs_team(home: str, away: str, league: str) -> bool:
+    text = f"{home} {away} {league}".lower()
+    if any(marker in text for marker in (
+        'duel of the players', 'goals. statistics', 'player statistics',
+        'goalscorer', 'player specials', 'shots on target', 'to score',
+    )):
+        return True
+
+    team_words = (
+        'fc', 'fk', 'sc', 'cf', 'afc', 'bk', 'if', 'sk', 'club', 'united', 'city',
+        'town', 'women', 'u19', 'u20', 'u21', 'u23', 'ii', 'reserve', 'reserves',
+        'national', 'sporting', 'athletic', 'academy', 'calcio', 'deportivo',
+    )
+
+    def personish(name: str) -> bool:
+        clean = re.sub(r'[^a-z\s-]', ' ', name.lower()).strip()
+        parts = [p for p in clean.replace('-', ' ').split() if p]
+        if len(parts) < 2 or len(parts) > 4:
+            return False
+        if any(part in team_words for part in parts):
+            return False
+        return all(len(part) > 1 for part in parts)
+
+    countries = {
+        'argentina', 'australia', 'austria', 'belgium', 'brazil', 'canada', 'chile',
+        'china', 'colombia', 'croatia', 'denmark', 'egypt', 'england', 'finland',
+        'france', 'germany', 'ghana', 'greece', 'iran', 'ireland', 'italy', 'japan',
+        'mexico', 'morocco', 'netherlands', 'nigeria', 'norway', 'poland',
+        'portugal', 'saudi arabia', 'scotland', 'senegal', 'serbia', 'spain',
+        'sweden', 'switzerland', 'turkey', 'ukraine', 'uruguay', 'usa', 'wales',
+    }
+    home_person = personish(home)
+    away_person = personish(away)
+    return (home_person and away in countries) or (away_person and home in countries)
 
 
 def _is_noise_match(home_team: str, away_team: str, league: str = "") -> bool:
@@ -288,7 +327,7 @@ def _is_noise_match(home_team: str, away_team: str, league: str = "") -> bool:
     if ordinal_team_pattern.match(lower_home) or ordinal_team_pattern.match(lower_away):
         return True
 
-    return False
+    return _looks_like_person_vs_team(lower_home, lower_away, lower_league)
 
 
 def _load_event_cache(target: date) -> List[Tuple[int, dict, str]]:
@@ -307,19 +346,31 @@ def _load_event_cache(target: date) -> List[Tuple[int, dict, str]]:
             gid = int(item["event_id"])
         except (KeyError, TypeError, ValueError):
             continue
+        league = item.get("league", "")
+        if _is_noise_league(str(league)):
+            continue
         stub = {"I": gid, "S": item.get("kickoff_ts")}
-        stubs.append((gid, stub, item.get("league", "")))
+        stubs.append((gid, stub, league))
+    if 0 < len(stubs) < MIN_CACHE_STUBS:
+        print(f"  WARNING: Paripesa cache has only {len(stubs)} events; refreshing full event list...")
+        return []
     return stubs
 
 
 def _save_event_cache(target: date, stubs: List[Tuple[int, dict, str]]) -> None:
     events = []
     for gid, stub, league in stubs:
+        if _is_noise_league(str(league)):
+            continue
         events.append({
             "event_id": gid,
             "kickoff_ts": stub.get("S"),
             "league": league,
         })
+
+    if 0 < len(events) < MIN_CACHE_STUBS:
+        print(f"  WARNING: Not saving suspiciously small Paripesa cache ({len(events)} events)")
+        return
 
     try:
         os.makedirs(os.path.dirname(EVENT_CACHE_PATH), exist_ok=True)
@@ -708,10 +759,6 @@ async def collect_today_games_async(
         tasks = [process_stub(stub) for stub in stubs]
         results = await asyncio.gather(*tasks)
         matches = [r for r in results if r is not None]
-        if cached_stubs:
-            live_ids = {m.get("event_id") for m in matches if m.get("event_id") is not None}
-            if live_ids:
-                _save_event_cache(target, [stub for stub in stubs if stub[0] in live_ids])
         matches.sort(key=lambda x: x.get("kickoff_utc") or "")
         return matches
 
