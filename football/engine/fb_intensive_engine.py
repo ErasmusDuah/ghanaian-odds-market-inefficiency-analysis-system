@@ -1,7 +1,7 @@
 """
 INTENSIVE ENGINE — Optimized exhaustive sports arbitrage scanner.
 
-For each matched game group, tests permutations across 12 platforms for 14 markets.
+For each matched game group, tests permutations across 13 platforms for 14 markets.
 Features:
   1. Time-window blocking (O(N) pre-filter)
   2. Set-based token guards (zero-cost rejects)
@@ -45,12 +45,12 @@ def _load_exclusions():
 
 _EXCLUDED = _load_exclusions()
 
-# ── PLATFORM REGISTRY (12 ACTIVE PLATFORMS) ─────────────────────────────────────
+# ── PLATFORM REGISTRY (13 ACTIVE PLATFORMS) ─────────────────────────────────────
 PLATFORMS = [
     'sportybet', 'betway', 'footballcom',
     'onexbet', 'twentytwobet', 'msport',
     'bangbet', 'soccabet', 'supabet', 'betwinner',
-    'paripesa', 'betpawa',
+    'paripesa', 'betpawa', 'betano',
 ]
 
 PLATFORM_DISPLAY = {
@@ -66,6 +66,7 @@ PLATFORM_DISPLAY = {
     'betwinner':    'Betwinner',
     'paripesa':     'Paripesa',
     'betpawa':      'BetPawa',
+    'betano':       'Betano',
 }
 
 SOURCE_MAP = {
@@ -81,6 +82,7 @@ SOURCE_MAP = {
     'betwinner':    'betwinner',
     'paripesa':     'paripesa',
     'betpawa':      'betpawa_gh',
+    'betano':       'betano_gh',
 }
 
 # ── FUZZY MATCHING ─────────────────────────────────────────────────────────────
@@ -648,7 +650,8 @@ def run_intensive(total_stake=None,
                   supabet_matches=None,
                   betwinner_matches=None,
                   paripesa_matches=None,
-                  betpawa_matches=None):
+                  betpawa_matches=None,
+                  betano_matches=None):
     if total_stake is None:
         _env = dotenv_values(_ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -672,6 +675,7 @@ def run_intensive(total_stake=None,
     if betwinner_matches    is None: betwinner_matches    = _load('data/betwinner_odds.json')
     if paripesa_matches     is None: paripesa_matches     = _load('data/paripesa_odds.json')
     if betpawa_matches      is None: betpawa_matches      = _load('data/betpawa_odds.json')
+    if betano_matches       is None: betano_matches       = _load('data/betano_odds.json')
 
     raw = {
         'sportybet':    sportybet_matches,
@@ -686,6 +690,7 @@ def run_intensive(total_stake=None,
         'betwinner':    betwinner_matches,
         'paripesa':     paripesa_matches,
         'betpawa':      betpawa_matches,
+        'betano':       betano_matches,
     }
 
     # Normalize nested market line keys across all platforms/matches
