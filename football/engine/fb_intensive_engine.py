@@ -50,7 +50,7 @@ PLATFORMS = [
     'sportybet', 'betway', 'footballcom',
     'onexbet', 'twentytwobet', 'msport',
     'bangbet', 'soccabet', 'supabet', 'betwinner',
-    'paripesa', 'betpawa', 'betano', 'betika',
+    'paripesa', 'betpawa', 'betano', 'betika', 'onewin',
 ]
 
 PLATFORM_DISPLAY = {
@@ -68,6 +68,7 @@ PLATFORM_DISPLAY = {
     'betpawa':      'BetPawa',
     'betano':       'Betano',
     'betika':       'Betika',
+    'onewin':       '1win',
 }
 
 SOURCE_MAP = {
@@ -85,6 +86,7 @@ SOURCE_MAP = {
     'betpawa':      'betpawa_gh',
     'betano':       'betano_gh',
     'betika':       'betika_gh',
+    'onewin':       '1win_gh',
 }
 
 # ── FUZZY MATCHING ─────────────────────────────────────────────────────────────
@@ -654,7 +656,8 @@ def run_intensive(total_stake=None,
                   paripesa_matches=None,
                   betpawa_matches=None,
                   betano_matches=None,
-                  betika_matches=None):
+                  betika_matches=None,
+                  onewin_matches=None):
     if total_stake is None:
         _env = dotenv_values(_ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -680,6 +683,7 @@ def run_intensive(total_stake=None,
     if betpawa_matches      is None: betpawa_matches      = _load('data/betpawa_odds.json')
     if betano_matches       is None: betano_matches       = _load('data/betano_odds.json')
     if betika_matches       is None: betika_matches       = _load('data/betika_odds.json')
+    if onewin_matches       is None: onewin_matches       = _load('data/onewin_odds.json')
 
     raw = {
         'sportybet':    sportybet_matches,
@@ -696,6 +700,7 @@ def run_intensive(total_stake=None,
         'betpawa':      betpawa_matches,
         'betano':       betano_matches,
         'betika':       betika_matches,
+        'onewin':       onewin_matches,
     }
 
     # Normalize nested market line keys across all platforms/matches
