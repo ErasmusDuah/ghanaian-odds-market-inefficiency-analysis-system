@@ -12,6 +12,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional
@@ -28,8 +29,9 @@ BASE_URL = "https://www.betano.com.gh"
 TIMEZONE = "Africa/Accra"
 REQUEST_TIMEOUT = 25
 DETAIL_TAB = os.getenv("BETANO_DETAIL_TAB", "14")
-MAX_WORKERS = int(os.getenv("BETANO_WORKERS", "12"))
+MAX_WORKERS = int(os.getenv("BETANO_WORKERS", "20"))
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+_thread_local = threading.local()
 
 _EMPTY_MARKETS = {
     "odds_1x2": {}, "odds_dc": {}, "odds_gg": {}, "odds_gg_2plus": {},
@@ -272,14 +274,21 @@ def _fetch_today_payload(session: requests.Session) -> Dict[str, Any]:
     return response.json().get("data") or {}
 
 
+def _detail_session() -> requests.Session:
+    session = getattr(_thread_local, "session", None)
+    if session is None:
+        session = requests.Session(impersonate="chrome120")
+        _thread_local.session = session
+    return session
+
+
 def _fetch_detail(event: Dict[str, Any]) -> Dict[str, Any]:
     url = event.get("url")
     if not url:
         return event
-    session = requests.Session(impersonate="chrome120")
     api_url = f"{BASE_URL}/api{url}?bt={DETAIL_TAB}"
     try:
-        response = session.get(api_url, headers=_headers(f"{BASE_URL}{url}?bt={DETAIL_TAB}"), timeout=REQUEST_TIMEOUT)
+        response = _detail_session().get(api_url, headers=_headers(f"{BASE_URL}{url}?bt={DETAIL_TAB}"), timeout=REQUEST_TIMEOUT)
         if response.status_code == 200:
             detail = (response.json().get("data") or {}).get("event") or {}
             if detail:
