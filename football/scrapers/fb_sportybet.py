@@ -6,6 +6,7 @@ import json
 import time as _time
 from datetime import datetime
 import aiohttp
+from urllib.parse import quote
 
 
 TODAY_URL = (
@@ -23,6 +24,10 @@ TOMORROW_URL = (
     '&pageSize=100&pageNum={page}'
     '&todayGames=false&timeline=1'
 )
+
+DETAIL_URL = 'https://www.sportybet.com/api/gh/factsCenter/event'
+DETAIL_CONCURRENCY = int(os.getenv('SPORTYBET_DETAIL_CONCURRENCY', '40'))
+
 
 
 async def fetch_page_direct(session, page_num,
@@ -101,6 +106,16 @@ async def scrape_all_matches():
             page_num += 1
             await asyncio.sleep(0.3)
 
+        if all_matches:
+            print("\n[INFO] Confirming markets against event detail pages...")
+            all_matches = await refresh_matches_with_event_details(
+                session, all_matches, headers)
+            with_any_odds = sum(
+                1 for match in all_matches
+                if any(match.get(key) for key in ODDS_KEYS)
+            )
+            print(f"  [OK] Detail-confirmed matches with odds: {with_any_odds}")
+
     # Sort by kickoff time
     all_matches.sort(key=lambda x: x['kickoff'])
 
@@ -116,6 +131,15 @@ UNAVAILABLE_MARKET_STATUSES = {
 
 _FALSEY_FLAGS = {0, '0', False, 'false', 'False', 'no', 'No'}
 
+ODDS_KEYS = (
+    'odds_1x2', 'odds_1x2_one_up', 'odds_1x2_two_up',
+    'odds_fh_1x2', 'odds_sh_1x2', 'odds_fh_ou', 'odds_sh_ou',
+    'odds_fh_dc', 'odds_sh_dc', 'odds_corners_1x2',
+    'odds_bookings_1x2', 'odds_bookings_ou', 'odds_ou',
+    'odds_asian_ou', 'odds_gg', 'odds_gg_2plus', 'odds_dc',
+)
+
+
 
 def _flag_is_false(value):
     return value in _FALSEY_FLAGS
@@ -123,6 +147,89 @@ def _flag_is_false(value):
 
 def _flag_is_true(value):
     return value is True or str(value).lower() == 'true' or value == 1
+
+
+def _status_is_available(value):
+    if value is None or value == '':
+        return True
+    if isinstance(value, (int, float)):
+        return value == 0
+
+    text = str(value).strip().lower()
+    if text in {'0', 'open', 'active', 'available'}:
+        return True
+    try:
+        return float(text) == 0
+    except ValueError:
+        return text not in UNAVAILABLE_MARKET_STATUSES
+
+
+def clear_odds(match):
+    cleaned = dict(match)
+    for key in ODDS_KEYS:
+        cleaned[key] = {}
+    return cleaned
+
+
+def detail_tournament_name(event, default=''):
+    sport = event.get('sport') if isinstance(event, dict) else {}
+    category = sport.get('category', {}) if isinstance(sport, dict) else {}
+    tournament = category.get('tournament', {}) if isinstance(category, dict) else {}
+    category_name = category.get('name', '') if isinstance(category, dict) else ''
+    tournament_name = tournament.get('name', '') if isinstance(tournament, dict) else ''
+    if category_name and tournament_name:
+        if tournament_name.lower().startswith(category_name.lower()):
+            return tournament_name
+        return f"{category_name}. {tournament_name}"
+    return default or tournament_name or category_name
+
+
+async def fetch_event_detail(session, event_id, headers):
+    if not event_id:
+        return None
+    url = (
+        f"{DETAIL_URL}?productId=3&eventId={quote(str(event_id), safe='')}"
+        f"&_t={int(_time.time() * 1000)}"
+    )
+    try:
+        async with session.get(
+                url, headers=headers,
+                timeout=aiohttp.ClientTimeout(total=12)
+        ) as response:
+            if response.status != 200:
+                return None
+            data = await response.json()
+    except Exception:
+        return None
+
+    if not isinstance(data, dict):
+        return None
+    detail = data.get('data')
+    if not isinstance(detail, dict):
+        return None
+    return detail
+
+
+async def refresh_matches_with_event_details(session, matches, headers):
+    if not matches:
+        return matches
+
+    semaphore = asyncio.Semaphore(max(1, DETAIL_CONCURRENCY))
+
+    async def refresh(match):
+        async with semaphore:
+            detail = await fetch_event_detail(session, match.get('event_id'), headers)
+        if not detail:
+            return clear_odds(match)
+
+        tournament = detail_tournament_name(detail, match.get('tournament', ''))
+        parsed = parse_event(detail, tournament, datetime.now())
+        if not parsed:
+            return clear_odds(match)
+        return parsed
+
+    refreshed = await asyncio.gather(*(refresh(match) for match in matches))
+    return [match for match in refreshed if match]
 
 
 def is_market_active(market):
@@ -141,8 +248,7 @@ def is_market_active(market):
         if field in market and _flag_is_false(market.get(field)):
             return False
 
-    status = str(market.get('status', '') or '').strip().lower()
-    if status in UNAVAILABLE_MARKET_STATUSES:
+    if not _status_is_available(market.get('status')):
         return False
 
     return True
@@ -163,8 +269,7 @@ def is_outcome_active(outcome):
         if field in outcome and _flag_is_false(outcome.get(field)):
             return False
 
-    status = str(outcome.get('status', '') or '').strip().lower()
-    if status in UNAVAILABLE_MARKET_STATUSES:
+    if not _status_is_available(outcome.get('status')):
         return False
 
     try:

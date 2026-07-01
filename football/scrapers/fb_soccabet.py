@@ -43,6 +43,7 @@ WS_URL = "wss://www.soccabet.com/ws/"
 SPORT_ID_SOCCER = "77"
 OU_LINES = ("0.5", "1.5", "2.5", "3.5", "4.5", "5.5")
 MIN_GOOD_MATCHES = int(os.getenv("SOCCABET_MIN_GOOD_MATCHES", "50"))
+SOCCABET_ALLOW_STALE_SNAPSHOT = str(os.getenv("SOCCABET_ALLOW_STALE_SNAPSHOT", "0")).lower() in {"1", "true", "yes", "on"}
 MAX_WS_ATTEMPTS = int(os.getenv("SOCCABET_WS_ATTEMPTS", "3"))
 GOOD_SNAPSHOT = "soccabet_last_good.json"
 
@@ -68,16 +69,19 @@ def banner(now: datetime) -> str:
     )
 
 
-async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict, dict]:
+async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict, dict, dict, dict, dict]:
     """
     Connect to Soccabet WebSocket, subscribe for today's football,
     collect all match and market messages until the stream goes idle.
     
     Returns:
-        (matches_by_id, markets_by_match_id)
+        (matches_by_id, markets_by_match_id, market_types_by_id, tournaments_by_id, categories_by_id)
     """
     matches: dict[int, dict] = {}
     markets: dict[int, list[dict]] = {}  # matchId → list of market dicts
+    market_types: dict[int, dict] = {}
+    tournaments: dict[int, dict] = {}
+    categories: dict[int, dict] = {}
 
     headers = {
         "Origin": "https://www.soccabet.com",
@@ -140,6 +144,18 @@ async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict
                                     matches[match_id].update(item)
                                 else:
                                     matches[match_id] = item
+                        elif obj_type == "market_type":
+                            market_type_id = item.get("id")
+                            if market_type_id is not None:
+                                market_types[int(market_type_id)] = item
+                        elif obj_type == "tournament":
+                            tournament_id = item.get("id")
+                            if tournament_id is not None:
+                                tournaments[int(tournament_id)] = item
+                        elif obj_type == "category":
+                            category_id = item.get("id")
+                            if category_id is not None:
+                                categories[int(category_id)] = item
                         elif obj_type == "market":
                             match_id = item.get("matchId")
                             if match_id is not None:
@@ -163,13 +179,132 @@ async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict
                 if got_init and idle_deadline and time.time() > idle_deadline:
                     break
 
-    return matches, markets
+    return matches, markets, market_types, tournaments, categories
+
+
+def _market_type_name(market_type: dict | None) -> str:
+    if not market_type:
+        return ""
+    return f"{market_type.get('name') or ''} {market_type.get('shortName') or ''}".strip().lower()
+
+
+def _market_type_is_live(market_type: dict | None) -> bool:
+    return bool((market_type or {}).get("isLive"))
+
+
+def _is_fulltime_1x2_market(mtype: int, market_type: dict | None) -> bool:
+    name = _market_type_name(market_type)
+    if market_type and not _market_type_is_live(market_type):
+        return name in {"1x2 1x2", "1x2"}
+    return mtype in (MARKET_TYPE_1X2_LIVE, MARKET_TYPE_1X2_PRE)
+
+
+def _is_fulltime_dc_market(mtype: int, market_type: dict | None) -> bool:
+    name = _market_type_name(market_type)
+    if market_type and not _market_type_is_live(market_type):
+        return name in {"double chance double chance", "double chance"}
+    return mtype == 4216
+
+
+def _is_fulltime_ou_market(mtype: int, market_type: dict | None) -> bool:
+    name = _market_type_name(market_type)
+    if market_type and not _market_type_is_live(market_type):
+        return name in {"under/over over/under", "under/over"}
+    return mtype in (MARKET_TYPE_OU, 4113)
+
+
+def _is_fulltime_asian_ou_market(mtype: int, market_type: dict | None) -> bool:
+    name = _market_type_name(market_type)
+    if market_type and not _market_type_is_live(market_type):
+        return name == "under/over asian"
+    return mtype == 6539
+
+
+def _is_fulltime_gg_market(mtype: int, market_type: dict | None) -> bool:
+    name = _market_type_name(market_type)
+    if market_type and not _market_type_is_live(market_type):
+        return name in {"both teams to score both teams to score", "both teams to score"}
+    return mtype in (MARKET_TYPE_GG, 4105)
+
+
+
+
+def _flag_text(value: Any) -> str:
+    return str(value).strip().lower()
+
+
+def _flag_true(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    return _flag_text(value) in {"1", "true", "yes", "y", "locked", "suspended", "disabled", "inactive", "closed"}
+
+
+def _flag_false(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return not value
+    return _flag_text(value) in {"0", "false", "no", "n", "locked", "suspended", "disabled", "inactive", "closed"}
+
+
+def _unavailable(obj: dict | None) -> bool:
+    if not isinstance(obj, dict):
+        return False
+    for key in ("isSuspended", "suspended", "isLocked", "locked", "isDisabled", "disabled", "blocked", "isBlocked"):
+        if _flag_true(obj.get(key)):
+            return True
+    for key in ("isActive", "active", "isVisible", "visible", "isAvailable", "available", "enabled", "isEnabled", "canBet", "bettable"):
+        if _flag_false(obj.get(key)):
+            return True
+    status = _flag_text(obj.get("status") or obj.get("state") or obj.get("tradingStatus") or obj.get("selectionStatus") or "")
+    return status in {"locked", "suspended", "disabled", "inactive", "closed", "unavailable", "blocked"}
+
+
+def _active_selections(selections: list[dict]) -> list[dict]:
+    return [sel for sel in selections or [] if not _unavailable(sel)]
+
+
+def _decimal_odds(sel: dict) -> float:
+    try:
+        return float(sel.get("odds") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+def _resolve_tournament_name(match_data: dict, tournaments: dict[int, dict] | None, categories: dict[int, dict] | None) -> str:
+    tournament_id = match_data.get("tournamentId")
+    tournament = (tournaments or {}).get(int(tournament_id or 0), {}) if tournament_id is not None else {}
+    category_id = tournament.get("categoryId") or match_data.get("categoryId")
+    category = (categories or {}).get(int(category_id or 0), {}) if category_id is not None else {}
+
+    tournament_name = (
+        match_data.get("tournamentName")
+        or tournament.get("name")
+        or ""
+    )
+    category_name = (
+        match_data.get("categoryName")
+        or category.get("name")
+        or ""
+    )
+
+    tournament_name = str(tournament_name).strip()
+    category_name = str(category_name).strip()
+    if category_name and tournament_name:
+        return f"{category_name}. {tournament_name}"
+    if tournament_name:
+        return tournament_name
+    return str(tournament_id or "")
 
 
 def parse_matches(
     raw_matches: dict[int, dict],
     raw_markets: dict[int, list[dict]],
     today_str: str,
+    market_types: dict[int, dict] | None = None,
+    tournaments: dict[int, dict] | None = None,
+    categories: dict[int, dict] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Parse raw WebSocket data into normalized match dicts.
@@ -212,38 +347,35 @@ def parse_matches(
         if any(kw in combined for kw in virtual_kws):
             continue
 
-        # Tournament
-        tournament_id = match_data.get("tournamentId", "")
-        tournament_name = match_data.get("tournamentName", "")
-        category_name = match_data.get("categoryName", "")
-        if category_name and tournament_name:
-            tournament = f"{category_name}. {tournament_name}"
-        elif tournament_name:
-            tournament = tournament_name
-        else:
-            tournament = str(tournament_id)
+        # Tournament metadata is delivered as separate WebSocket objects.
+        tournament = _resolve_tournament_name(match_data, tournaments, categories)
 
         # Parse markets for this match
         match_markets = raw_markets.get(match_id, [])
         
         odds_1x2 = {}
+        odds_dc = {}
         odds_ou: dict[str, dict[str, Any]] = {}
+        odds_asian_ou: dict[str, dict[str, Any]] = {}
         odds_gg = None
 
         for mkt in match_markets:
-            if mkt.get("isSuspended"):
+            if _unavailable(mkt):
                 continue
-            mtype = mkt.get("marketTypeId")
-            selections = mkt.get("selections", [])
+            mtype = int(mkt.get("marketTypeId") or 0)
+            market_type = (market_types or {}).get(mtype)
+            selections = _active_selections(mkt.get("selections", []))
+            if not selections:
+                continue
             special = mkt.get("special", "")
 
-            if mtype in (MARKET_TYPE_1X2_LIVE, MARKET_TYPE_1X2_PRE):
+            if _is_fulltime_1x2_market(mtype, market_type):
                 # 1X2: selections have outcome "1" (home), "X" (draw), "2" (away)
                 parsed = {}
                 for sel in selections:
                     outcome = str(sel.get("outcome", "")).strip()
-                    odds = sel.get("odds", 0)
-                    if odds and odds > 1.0:
+                    odds = _decimal_odds(sel)
+                    if odds > 1.0:
                         if outcome == "1":
                             parsed["home"] = odds
                         elif outcome in ("X", "x"):
@@ -253,8 +385,24 @@ def parse_matches(
                 if {"home", "draw", "away"} <= parsed.keys():
                     odds_1x2 = parsed
 
-            elif mtype == MARKET_TYPE_OU:
+            elif _is_fulltime_dc_market(mtype, market_type):
+                parsed_dc = {}
+                for sel in selections:
+                    outcome = str(sel.get("outcome", "")).upper().strip()
+                    odds = _decimal_odds(sel)
+                    if odds > 1.0:
+                        if outcome == "1X":
+                            parsed_dc["1x"] = odds
+                        elif outcome == "12":
+                            parsed_dc["12"] = odds
+                        elif outcome == "X2":
+                            parsed_dc["x2"] = odds
+                if {"1x", "12", "x2"} <= parsed_dc.keys():
+                    odds_dc = parsed_dc
+
+            elif _is_fulltime_ou_market(mtype, market_type) or _is_fulltime_asian_ou_market(mtype, market_type):
                 # Over/Under: special field contains the line e.g. "2.5"
+                target_ou = odds_asian_ou if _is_fulltime_asian_ou_market(mtype, market_type) else odds_ou
                 line = special.strip()
                 if not line:
                     # Try extracting from selections description
@@ -281,26 +429,30 @@ def parse_matches(
 
                 row: dict[str, Any] = {}
                 for sel in selections:
-                    outcome = str(sel.get("outcome", "")).strip()
-                    odds = sel.get("odds", 0)
-                    if odds and odds > 1.0:
-                        if outcome == "1":  # Over
+                    outcome = str(sel.get("outcome", "")).strip().lower()
+                    odds = _decimal_odds(sel)
+                    if odds > 1.0:
+                        if outcome in {"1", "over", "o"}:
                             row["over"] = odds
-                        elif outcome == "2":  # Under
+                        elif outcome in {"2", "under", "u"}:
                             row["under"] = odds
                 if {"over", "under"} <= row.keys():
-                    odds_ou[line_str] = row
+                    target_ou[line_str] = row
 
-            elif mtype == MARKET_TYPE_GG:
+            elif _is_fulltime_gg_market(mtype, market_type):
                 # GG/NG: outcome "1" = Yes, "2" = No
                 parsed_gg: dict[str, Any] = {}
                 for sel in selections:
                     outcome = str(sel.get("outcome", "")).strip()
-                    odds = sel.get("odds", 0)
-                    if odds and odds > 1.0:
+                    odds = _decimal_odds(sel)
+                    if odds > 1.0:
                         if outcome == "1":
                             parsed_gg["yes"] = odds
                         elif outcome == "2":
+                            parsed_gg["no"] = odds
+                        elif outcome.lower() == "yes":
+                            parsed_gg["yes"] = odds
+                        elif outcome.lower() == "no":
                             parsed_gg["no"] = odds
                 if {"yes", "no"} <= parsed_gg.keys():
                     odds_gg = parsed_gg
@@ -318,7 +470,9 @@ def parse_matches(
             "status": "Not start",
             "source": SOURCE,
             "odds_1x2": odds_1x2,
+            "odds_dc": odds_dc,
             "odds_ou": odds_ou,
+            "odds_asian_ou": odds_asian_ou,
             "odds_gg": odds_gg,
         })
 
@@ -403,6 +557,9 @@ def print_summary(matches: list[dict], json_path: Path, txt_path: Path,
     print("SOCCABET GHANA")
     print(f"Total matches fetched: {len(matches)}")
     print(f"With 1X2 odds: {sum(1 for m in matches if m.get('odds_1x2'))}")
+    print(f"With O/U odds: {sum(1 for m in matches if m.get('odds_ou'))}")
+    print(f"With DC odds:  {sum(1 for m in matches if m.get('odds_dc'))}")
+    print(f"With GG odds:  {sum(1 for m in matches if m.get('odds_gg'))}")
     print("=" * 50)
     print()
     print("Sample (first 10 matches):")
@@ -437,13 +594,13 @@ async def _async_scrape() -> list[dict]:
 
     for attempt in range(1, max(1, MAX_WS_ATTEMPTS) + 1):
         timeout = 12.0 + (attempt - 1) * 6.0
-        raw_matches, raw_markets = await ws_fetch_all(today_str, timeout_secs=timeout)
+        raw_matches, raw_markets, market_types, tournaments, categories = await ws_fetch_all(today_str, timeout_secs=timeout)
         n_raw_markets = sum(len(v) for v in raw_markets.values())
 
         print(f"  [Soccabet] Attempt {attempt}: received {len(raw_matches)} match objects, {n_raw_markets} market updates")
         print(f"  [Soccabet] Parsing and filtering today's prematch football...")
 
-        matches = parse_matches(raw_matches, raw_markets, today_str)
+        matches = parse_matches(raw_matches, raw_markets, today_str, market_types, tournaments, categories)
         if len(matches) > len(best_matches):
             best_matches = matches
             best_raw_count = len(raw_matches)
@@ -454,10 +611,13 @@ async def _async_scrape() -> list[dict]:
 
     matches = best_matches
     if _is_suspiciously_low(matches, baseline):
-        print(f"  [Soccabet] Using last-good snapshot instead of partial feed ({len(matches)} < {len(baseline)})")
-        matches = baseline
-        best_raw_count = len(matches)
-        best_market_count = 0
+        if SOCCABET_ALLOW_STALE_SNAPSHOT:
+            print(f"  [Soccabet] WARNING: using opt-in stale snapshot instead of partial feed ({len(matches)} < {len(baseline)})")
+            matches = baseline
+            best_raw_count = len(matches)
+            best_market_count = 0
+        else:
+            print(f"  [Soccabet] WARNING: partial fresh feed kept ({len(matches)} matches); stale snapshot ignored to avoid locked/old odds.")
     else:
         _save_last_good(output_dir, matches)
 

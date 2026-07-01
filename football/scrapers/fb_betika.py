@@ -15,7 +15,7 @@ import sys
 import threading
 import time
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 from curl_cffi import requests
@@ -87,9 +87,56 @@ def _line_key(value: Any) -> Optional[str]:
     return str(number)
 
 
+def _truthy_flag(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "on", "locked", "suspended", "inactive", "closed", "blocked"}
+
+
+def _falsey_flag(value: Any) -> bool:
+    if isinstance(value, bool):
+        return not value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"0", "false", "no", "off", "inactive", "disabled", "closed", "blocked"}
+
+
+def _market_unavailable(market: Dict[str, Any]) -> bool:
+    status = str(
+        market.get("status") or market.get("market_status") or market.get("trading_status") or market.get("state") or ""
+    ).strip().lower()
+    if status in {"suspended", "closed", "inactive", "blocked", "locked", "unavailable"}:
+        return True
+    for key in ("suspended", "locked", "is_suspended", "is_locked", "blocked", "is_blocked"):
+        if _truthy_flag(market.get(key)):
+            return True
+    for key in ("active", "is_active", "enabled", "is_enabled", "visible", "is_visible", "can_bet", "bettable"):
+        if _falsey_flag(market.get(key)):
+            return True
+    return False
+
+
+def _selection_unavailable(selection: Dict[str, Any]) -> bool:
+    status = str(
+        selection.get("status")
+        or selection.get("trading_status")
+        or selection.get("odd_status")
+        or selection.get("state")
+        or ""
+    ).strip().lower()
+    if status in {"suspended", "closed", "inactive", "blocked", "locked", "unavailable"}:
+        return True
+    for key in ("suspended", "locked", "is_suspended", "is_locked", "blocked", "is_blocked"):
+        if _truthy_flag(selection.get(key)):
+            return True
+    for key in ("active", "is_active", "enabled", "is_enabled", "visible", "is_visible", "can_bet", "bettable"):
+        if _falsey_flag(selection.get(key)):
+            return True
+    return False
 def _odd_price(selection: Dict[str, Any]) -> Optional[float]:
-    status = str(selection.get("status") or selection.get("trading_status") or "").lower()
-    if selection.get("suspended") or selection.get("locked") or status in {"suspended", "closed", "inactive", "blocked"}:
+    if _selection_unavailable(selection):
         return None
     return _price(selection.get("odd_value") or selection.get("odds") or selection.get("price"))
 
@@ -170,7 +217,8 @@ def _map_gg(match: Dict[str, Any], market: Dict[str, Any], key: str) -> None:
         match[key] = mapped
 
 
-def _put_ou(target: Dict[str, Dict[str, float]], selections: Iterable[Dict[str, Any]]) -> None:
+def _put_ou(target: Dict[str, Dict[str, float]], selections: Iterable[Dict[str, Any]], *, main_line_only: bool = False) -> None:
+    parsed_lines: Dict[str, Dict[str, float]] = {}
     for sel in selections:
         price = _odd_price(sel)
         parsed = sel.get("parsed_special_bet_value") or {}
@@ -180,10 +228,36 @@ def _put_ou(target: Dict[str, Dict[str, float]], selections: Iterable[Dict[str, 
         name = str(sel.get("display") or sel.get("odd_key") or "").lower()
         side = "over" if "over" in name else "under" if "under" in name else None
         if side:
-            target.setdefault(line, {})[side] = price
+            parsed_lines.setdefault(line, {})[side] = price
+
+    complete_lines = {line: odds for line, odds in parsed_lines.items() if odds.get("over") is not None and odds.get("under") is not None}
+    if main_line_only and len(complete_lines) > 1:
+        line, odds = _choose_main_ou_line(complete_lines)
+        target[line] = odds
+        return
+    target.update(complete_lines)
+
+
+def _choose_main_ou_line(lines: Dict[str, Dict[str, float]]) -> Tuple[str, Dict[str, float]]:
+    def score(item: Tuple[str, Dict[str, float]]) -> Tuple[float, float]:
+        line, odds = item
+        over = float(odds.get("over") or 0)
+        under = float(odds.get("under") or 0)
+        try:
+            line_number = abs(float(line))
+        except ValueError:
+            line_number = 99.0
+        # Betika's detail API exposes alternate totals that may not be placeable on the page.
+        # The page-visible total is normally the most balanced over/under pair, so keep that one.
+        balance = abs((1.0 / over) - (1.0 / under)) if over > 1 and under > 1 else 99.0
+        return (balance, line_number)
+
+    return min(lines.items(), key=score)
 
 
 def _apply_market(match: Dict[str, Any], market: Dict[str, Any]) -> None:
+    if _market_unavailable(market):
+        return
     market_id = str(market.get("sub_type_id") or "")
     name = str(market.get("name") or "").upper()
     selections = market.get("odds") or []
@@ -198,7 +272,7 @@ def _apply_market(match: Dict[str, Any], market: Dict[str, Any]) -> None:
     elif "BOTH TEAMS" in name and ("2+" in name or "2 OR MORE" in name) and "SCORE" in name:
         _map_gg(match, market, "odds_gg_2plus")
     elif market_id in MARKET_OU:
-        _put_ou(match[MARKET_OU[market_id]], selections)
+        _put_ou(match[MARKET_OU[market_id]], selections, main_line_only=True)
 
 
 def _fetch_events() -> List[Dict[str, Any]]:

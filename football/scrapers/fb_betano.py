@@ -29,6 +29,7 @@ BASE_URL = "https://www.betano.com.gh"
 TIMEZONE = "Africa/Accra"
 REQUEST_TIMEOUT = 25
 DETAIL_TAB = os.getenv("BETANO_DETAIL_TAB", "14")
+UPCOMING_PATH = "/sport/football/upcoming-matches-today/"
 MAX_WORKERS = int(os.getenv("BETANO_WORKERS", "20"))
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 _thread_local = threading.local()
@@ -54,7 +55,11 @@ def _headers(referer: str = f"{BASE_URL}/sport/football/") -> Dict[str, str]:
 def _new_session() -> requests.Session:
     session = requests.Session(impersonate="chrome120")
     try:
-        session.get(f"{BASE_URL}/sport/football/", headers={"User-Agent": _headers()["User-Agent"]}, timeout=REQUEST_TIMEOUT)
+        session.get(
+            f"{BASE_URL}{UPCOMING_PATH}",
+            headers=_headers(f"{BASE_URL}{UPCOMING_PATH}"),
+            timeout=REQUEST_TIMEOUT,
+        )
     except Exception:
         pass
     return session
@@ -269,9 +274,22 @@ def _convert_event(event: Dict[str, Any], tz: ZoneInfo, target_date) -> Optional
 
 
 def _fetch_today_payload(session: requests.Session) -> Dict[str, Any]:
-    response = session.get(f"{BASE_URL}/api/sport/football/upcoming-matches-today/", headers=_headers(), timeout=REQUEST_TIMEOUT)
-    response.raise_for_status()
-    return response.json().get("data") or {}
+    api_url = f"{BASE_URL}/api{UPCOMING_PATH}"
+    referer = f"{BASE_URL}{UPCOMING_PATH}"
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = session.get(api_url, headers=_headers(referer), timeout=REQUEST_TIMEOUT)
+            if response.status_code == 403 or "text/html" in str(response.headers.get("content-type", "")).lower():
+                session.get(referer, headers=_headers(referer), timeout=REQUEST_TIMEOUT)
+                response = session.get(api_url, headers=_headers(referer), timeout=REQUEST_TIMEOUT)
+            response.raise_for_status()
+            payload = response.json()
+            return payload.get("data") or {}
+        except Exception as exc:
+            last_error = exc
+            time.sleep(0.8 * (attempt + 1))
+    raise RuntimeError(f"Betano today API failed after retries: {last_error}")
 
 
 def _detail_session() -> requests.Session:
@@ -347,7 +365,11 @@ def run() -> List[Dict[str, Any]]:
     print(f"   {now_local.strftime('%A, %d %B %Y %H:%M:%S')}")
     print("🟧 " * 20 + "\n")
 
-    matches = collect_today_matches()
+    try:
+        matches = collect_today_matches()
+    except Exception as exc:
+        print(f"❌ Betano fetch failed: {exc}")
+        matches = []
     count = len(matches)
 
     if count == 0:

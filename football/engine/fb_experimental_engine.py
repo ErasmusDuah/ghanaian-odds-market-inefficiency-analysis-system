@@ -1,35 +1,49 @@
 """
-EXPERIMENTAL ENGINE — Standalone. Does NOT touch main.py or arbitrage_engine.py.
+EXPERIMENTAL ENGINE - Standalone. Does NOT touch main.py or arbitrage_engine.py.
 Reads the same scraped JSON files and detects THREE categories:
 
-  1. BALANCED ARB   — arb_sum < 1, equal profit on all outcomes (same as current system)
-  2. UNBALANCED ARB — arb_sum < 1, ALL outcomes profitable but amounts differ
-  3. QUASI-ARB      — arb_sum < 1, worst outcome breaks EXACTLY even, rest give profit
+  1. BALANCED ARB   - arb_sum < 1, equal profit on all outcomes (same as current system)
+  2. UNBALANCED ARB - arb_sum < 1, ALL outcomes profitable but amounts differ
+  3. QUASI-ARB      - arb_sum < 1, worst outcome breaks EXACTLY even, rest give profit
 
 Run via: python run_experimental.py
 """
 
 import json
 import os
+import sys
 import re
 from difflib import SequenceMatcher
 from dotenv import dotenv_values
 
-# ── CONFIG ─────────────────────────────────────────────────────────────────────
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
+try:
+    from engine.fb_market_guard import sanitize_all_platform_matches
+except ImportError:
+    from fb_market_guard import sanitize_all_platform_matches
+try:
+    from engine.fb_intensive_engine import is_pseudo_match
+except ImportError:
+    from fb_intensive_engine import is_pseudo_match
+
+
+# -- CONFIG ---------------------------------------------------------------------
 _ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
 
-# Profit thresholds — kept very low so even tiny arb is caught
+# Profit thresholds - kept very low so even tiny arb is caught
 MIN_BALANCED_PROFIT_PCT   = 0.001  # catch anything above 0.001%
 MIN_UNBALANCED_PROFIT_GHS = 0.10   # both legs must profit at least GHS 0.10
 MIN_QUASI_PROFIT_GHS      = 0.50   # best leg must profit at least GHS 0.50
 MAX_ARB_PROFIT_PCT        = 15.0   # sanity cap
 
 # Near-arb: NOT a guaranteed profit, but SO close it's worth watching
-# arb_sum between 1.00 and this value → flag as "near-arb"
+# arb_sum between 1.00 and this value -> flag as "near-arb"
 
 
 
-# ── SHARED: FUZZY MATCHING (copied logic, not imported, to keep fully standalone) ──
+# -- SHARED: FUZZY MATCHING (copied logic, not imported, to keep fully standalone) --
 
 STOPWORDS = {
     'fk', 'fc', 'sc', 'cf', 'ac', 'bk', 'fk', 'sk', 'if', 'bfk', 'spor', 'sport',
@@ -261,16 +275,16 @@ def get_best_odds(outcome_key, market_type, *platform_odds_pairs):
 
 
 
-# ── STAKE CALCULATION STRATEGIES ───────────────────────────────────────────────
+# -- STAKE CALCULATION STRATEGIES -----------------------------------------------
 
 def balanced_stakes(odds_list, total_stake):
-    """Standard arb stakes — equal profit on all outcomes."""
+    """Standard arb stakes - equal profit on all outcomes."""
     arb_sum = sum(1 / o for o in odds_list)
     return [round((1/o) / arb_sum * total_stake, 2) for o in odds_list]
 
 
 def flat_stakes(odds_list, total_stake):
-    """Equal GHS on every outcome — produces unequal profits."""
+    """Equal GHS on every outcome - produces unequal profits."""
     per_leg = round(total_stake / len(odds_list), 2)
     return [per_leg] * len(odds_list)
 
@@ -282,14 +296,14 @@ def quasi_stakes(odds_list, total_stake):
     (returns total_stake if it wins). Distribute the remainder across
     the other outcomes proportionally. All other outcomes then give profit.
 
-    The 'lowest odds' outcome is the most likely one — you hedge it to
+    The 'lowest odds' outcome is the most likely one - you hedge it to
     break even. Every other outcome pays more than your total stake.
     """
     worst_idx  = odds_list.index(min(odds_list))
     worst_odds = odds_list[worst_idx]
 
     # Stake on worst outcome = total_stake / worst_odds
-    # so:  stake_worst * worst_odds = total_stake  → break even
+    # so:  stake_worst * worst_odds = total_stake  -> break even
     stake_worst = round(total_stake / worst_odds, 2)
 
     # Remaining budget distributed proportionally among other outcomes
@@ -328,7 +342,7 @@ def arb_sum_and_pct(odds_list):
     return round(arb_sum, 4), round(profit_pct, 2)
 
 
-# ── PER-MARKET SCANNERS ─────────────────────────────────────────────────────────
+# -- PER-MARKET SCANNERS ---------------------------------------------------------
 
 def _build_outcome_list(best_odds_tuples, outcome_labels):
     """
@@ -387,7 +401,7 @@ def scan_market(pair, total_stake, market_type, outcome_keys,
     if arb_sum >= 1:
         return None  # no guaranteed profit possible
 
-    # ── BALANCED ──────────────────────────────────────────────────────────────
+    # -- BALANCED --------------------------------------------------------------
     bal_stakes  = balanced_stakes(odds_list, total_stake)
     bal_profits = compute_profits(odds_list, bal_stakes)
     balanced    = None
@@ -397,8 +411,8 @@ def scan_market(pair, total_stake, market_type, outcome_keys,
             outcomes, bal_stakes, bal_profits, 'balanced'
         )
 
-    # ── UNBALANCED ────────────────────────────────────────────────────────────
-    # Flat stakes → natural unequal profits. All legs must profit above threshold.
+    # -- UNBALANCED ------------------------------------------------------------
+    # Flat stakes -> natural unequal profits. All legs must profit above threshold.
     fl_stakes  = flat_stakes(odds_list, total_stake)
     fl_profits = compute_profits(odds_list, fl_stakes)
     unbalanced = None
@@ -416,7 +430,7 @@ def scan_market(pair, total_stake, market_type, outcome_keys,
             }
         )
 
-    # ── QUASI-ARB ─────────────────────────────────────────────────────────────
+    # -- QUASI-ARB -------------------------------------------------------------
     q_stakes = quasi_stakes(odds_list, total_stake)
     quasi    = None
     if q_stakes:
@@ -477,10 +491,10 @@ def _format_result(market_type, line_str, arb_sum, profit_pct,
     return result
 
 
-# ── FULL SCAN ──────────────────────────────────────────────────────────────────
+# -- FULL SCAN ------------------------------------------------------------------
 
 def scan_group(pair, total_stake):
-    """Run all 3 markets × 3 categories for one matched event group."""
+    """Run all 3 markets Ã— 3 categories for one matched event group."""
     results = {'balanced': [], 'unbalanced': [], 'quasi': []}
 
     # Helper: build a flat odds pair for a given market from the full match pair
@@ -507,7 +521,7 @@ def scan_group(pair, total_stake):
             if r.get(cat):
                 results[cat].append(r[cat])
 
-    # Over/Under — ALL platforms, ALL lines
+    # Over/Under - ALL platforms, ALL lines
     sb_ou  = pair['sportybet'].get('odds_ou', {})
     fc_ou  = pair['footballcom'].get('odds_ou', {})
     bw_ou  = pair['betway'].get('odds_ou', {})
@@ -570,7 +584,7 @@ def run_experimental(total_stake=None,
                      supabet_matches=None,
                      bangbet_matches=None):
     """
-    Main entry point — supports up to 10 platforms.
+    Main entry point - supports up to 10 platforms.
     Accepts pre-loaded match lists OR loads from JSON files automatically.
     Returns: (balanced_opps, unbalanced_opps, quasi_opps, num_groups)
     """
@@ -599,18 +613,41 @@ def run_experimental(total_stake=None,
     if msport_matches   is None: msport_matches   = load_json('data/msport_odds.json')
     if supabet_matches  is None: supabet_matches  = load_json('data/supabet_odds.json')
     if bangbet_matches  is None: bangbet_matches  = load_json('data/bangbet_odds.json')
+    raw_guarded, _guard_reports = sanitize_all_platform_matches({
+        'sportybet': sportybet_matches,
+        'betway': betway_matches,
+        'footballcom': footballcom_matches,
+        'onexbet': onexbet_matches,
+        'twentytwobet': twentytwobet_matches,
+        'soccabet': soccabet_matches,
+        'betpawa': betpawa_matches,
+        'msport': msport_matches,
+        'supabet': supabet_matches,
+        'bangbet': bangbet_matches,
+    })
+    sportybet_matches = raw_guarded['sportybet']
+    betway_matches = raw_guarded['betway']
+    footballcom_matches = raw_guarded['footballcom']
+    onexbet_matches = raw_guarded['onexbet']
+    twentytwobet_matches = raw_guarded['twentytwobet']
+    soccabet_matches = raw_guarded['soccabet']
+    betpawa_matches = raw_guarded['betpawa']
+    msport_matches = raw_guarded['msport']
+    supabet_matches = raw_guarded['supabet']
+    bangbet_matches = raw_guarded['bangbet']
+
 
     # Filter virtual/esports from ALL platforms
-    sportybet_matches    = [m for m in sportybet_matches    if not is_virtual_match(m) and not m.get('is_live', False)]
-    betway_matches       = [m for m in betway_matches       if not is_virtual_match(m) and not m.get('is_live', False)]
-    footballcom_matches  = [m for m in footballcom_matches  if not is_virtual_match(m) and not m.get('is_live', False)]
-    onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
-    twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m) and not m.get('is_live', False)]
-    soccabet_matches     = [m for m in soccabet_matches     if not is_virtual_match(m) and not m.get('is_live', False)]
-    betpawa_matches      = [m for m in betpawa_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
-    msport_matches       = [m for m in msport_matches       if not is_virtual_match(m) and not m.get('is_live', False)]
-    supabet_matches      = [m for m in supabet_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
-    bangbet_matches      = [m for m in bangbet_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
+    sportybet_matches    = [m for m in sportybet_matches    if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    betway_matches       = [m for m in betway_matches       if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    footballcom_matches  = [m for m in footballcom_matches  if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    soccabet_matches     = [m for m in soccabet_matches     if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    betpawa_matches      = [m for m in betpawa_matches      if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    msport_matches       = [m for m in msport_matches       if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    supabet_matches      = [m for m in supabet_matches      if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    bangbet_matches      = [m for m in bangbet_matches      if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
 
     all_matches = (
         sportybet_matches + betway_matches + footballcom_matches +
@@ -664,7 +701,7 @@ def run_experimental(total_stake=None,
     return balanced_opps, unbalanced_opps, quasi_opps, len(groups)
 
 
-# ── DISPLAY ────────────────────────────────────────────────────────────────────
+# -- DISPLAY --------------------------------------------------------------------
 
 def _print_bet_rows(bets):
     for bet in bets:
@@ -672,7 +709,7 @@ def _print_bet_rows(bets):
         # Clamp floating-point near-zero (-0.0000x) to clean 0.00
         if abs(profit) < 0.02:
             profit = 0.0
-        print(f"\n     🎯 {bet['platform']}")
+        print(f"\n     Book: {bet['platform']}")
         print(f"        Bet:   {bet['outcome']}")
         print(f"        Odds:  {bet['odds']}")
         print(f"        Stake: GHS {bet['stake']:.2f}")
@@ -681,39 +718,39 @@ def _print_bet_rows(bets):
 
 def display_balanced(opp):
     print(f"\n  {'='*55}")
-    print(f"  🏆 {opp['match']}")
-    print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
+    print(f"  Match: {opp['match']}")
+    print(f"  Date: {opp['kickoff']} | {opp['tournament']}")
     print(f"  {'='*55}")
-    print(f"  📊 Market: {opp['market']}")
-    print(f"  💰 Profit: {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f}")
-    print(f"  💵 Stake:  GHS {sum(b['stake'] for b in opp['bets']):.2f}")
-    print(f"\n  📋 BETS TO PLACE:")
+    print(f"   Market: {opp['market']}")
+    print(f"  Profit: Profit: {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f}")
+    print(f"  Stake: Stake:  GHS {sum(b['stake'] for b in opp['bets']):.2f}")
+    print(f"\n  BETS BETS TO PLACE:")
     _print_bet_rows(opp['bets'])
 
 
 def display_unbalanced(opp):
     print(f"\n  {'='*55}")
-    print(f"  🏆 {opp['match']}")
-    print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
+    print(f"  Match: {opp['match']}")
+    print(f"  Date: {opp['kickoff']} | {opp['tournament']}")
     print(f"  {'='*55}")
-    print(f"  📊 Market:      {opp['market']}")
-    print(f"  📉 Min Profit:  GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)")
-    print(f"  📈 Max Profit:  GHS {opp['max_profit_ghs']:.2f}  ← if {opp['max_outcome']} wins")
-    print(f"  💵 Stake:       GHS {sum(b['stake'] for b in opp['bets']):.2f}")
-    print(f"\n  📋 BETS TO PLACE:")
+    print(f"   Market:      {opp['market']}")
+    print(f"  Min: Min Profit:  GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)")
+    print(f"  Max: Max Profit:  GHS {opp['max_profit_ghs']:.2f}  <- if {opp['max_outcome']} wins")
+    print(f"  Stake: Stake:       GHS {sum(b['stake'] for b in opp['bets']):.2f}")
+    print(f"\n  BETS BETS TO PLACE:")
     _print_bet_rows(opp['bets'])
 
 
 def display_quasi(opp):
     print(f"\n  {'='*55}")
-    print(f"  🏆 {opp['match']}")
-    print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
+    print(f"  Match: {opp['match']}")
+    print(f"  Date: {opp['kickoff']} | {opp['tournament']}")
     print(f"  {'='*55}")
-    print(f"  📊 Market:         {opp['market']}")
-    print(f"  🛡️  Break-Even On:  {opp['break_even_outcome']} (get GHS {sum(b['stake'] for b in opp['bets']):.2f} back)")
-    print(f"  💰 Best Profit:    GHS {opp['best_profit_ghs']:.2f}  ← if {opp['best_outcome']} wins")
-    print(f"  💵 Total Stake:    GHS {sum(b['stake'] for b in opp['bets']):.2f}")
-    print(f"\n  📋 BETS TO PLACE:")
+    print(f"   Market:         {opp['market']}")
+    print(f"    Break-Even On:  {opp['break_even_outcome']} (get GHS {sum(b['stake'] for b in opp['bets']):.2f} back)")
+    print(f"  Profit: Best Profit:    GHS {opp['best_profit_ghs']:.2f}  <- if {opp['best_outcome']} wins")
+    print(f"  Stake: Total Stake:    GHS {sum(b['stake'] for b in opp['bets']):.2f}")
+    print(f"\n  BETS BETS TO PLACE:")
     _print_bet_rows(opp['bets'])
 
 
@@ -721,43 +758,49 @@ def display_all(balanced_opps, unbalanced_opps, quasi_opps, num_groups, total_st
     sep = '=' * 60
 
     print(f"\n{sep}")
-    print("⚖️  CATEGORY 1: BALANCED ARBITRAGE")
+    print("Balanced  CATEGORY 1: BALANCED ARBITRAGE")
     print(f"   Guaranteed equal profit on ALL outcomes")
     print(sep)
     if balanced_opps:
-        print(f"  ✅ {len(balanced_opps)} opportunity(s) found\n")
+        print(f"  OK {len(balanced_opps)} opportunity(s) found\n")
         for opp in balanced_opps:
             display_balanced(opp)
     else:
-        print("  💡 No balanced arb opportunities right now")
+        print("  No No balanced arb opportunities right now")
 
     print(f"\n{sep}")
-    print("📊  CATEGORY 2: UNBALANCED ARBITRAGE")
-    print(f"   All outcomes profitable — amounts differ")
+    print("  CATEGORY 2: UNBALANCED ARBITRAGE")
+    print(f"   All outcomes profitable - amounts differ")
     print(sep)
     if unbalanced_opps:
-        print(f"  ✅ {len(unbalanced_opps)} opportunity(s) found\n")
-        for opp in unbalanced_opps:
+        print(f"  OK {len(unbalanced_opps)} opportunity(s) found\n")
+        for opp in sorted(
+            unbalanced_opps,
+            key=lambda x: (x.get('min_profit_ghs', 0), x.get('max_profit_ghs', 0)),
+            reverse=True,
+        ):
             display_unbalanced(opp)
     else:
-        print("  💡 No unbalanced arb opportunities right now")
+        print("  No No unbalanced arb opportunities right now")
 
     print(f"\n{sep}")
-    print("🛡️   CATEGORY 3: QUASI-ARB (No-Loss)")
+    print("   CATEGORY 3: QUASI-ARB (No-Loss)")
     print(f"   Worst case: break even | Best case: profit")
     print(sep)
     if quasi_opps:
-        print(f"  ✅ {len(quasi_opps)} opportunity(s) found\n")
+        print(f"  OK {len(quasi_opps)} opportunity(s) found\n")
         for opp in quasi_opps:
             display_quasi(opp)
     else:
-        print("  💡 No quasi-arb opportunities right now")
+        print("  No No quasi-arb opportunities right now")
 
     print(f"\n{sep}")
-    print(f"⚽ Events scanned  : {num_groups}")
-    print(f"🌐 Platforms       : 7 active (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)")
-    print(f"⚖️  Balanced        : {len(balanced_opps)}")
-    print(f"📊 Unbalanced      : {len(unbalanced_opps)}")
-    print(f"🛡️  Quasi-Arb       : {len(quasi_opps)}")
+    print(f"Events Events scanned  : {num_groups}")
+    print(f"Scraping Platforms       : 7 active (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)")
+    print(f"Balanced  Balanced        : {len(balanced_opps)}")
+    print(f" Unbalanced      : {len(unbalanced_opps)}")
+    print(f"  Quasi-Arb       : {len(quasi_opps)}")
     print(sep)
+
+
 

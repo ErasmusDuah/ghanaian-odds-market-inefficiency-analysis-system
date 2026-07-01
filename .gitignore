@@ -59,3 +59,5 @@ football/data/quasi_arb_ml.xlsx
 football/data/quasi_arb_ml.xlsx.bak
 .requirements.install.txt
 api/
+football/data/backups/
+odibets_root.json

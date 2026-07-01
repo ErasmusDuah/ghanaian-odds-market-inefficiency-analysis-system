@@ -1,11 +1,25 @@
 import json
 import os
+import sys
 import re
 from datetime import datetime
 from difflib import SequenceMatcher
 from dotenv import dotenv_values
 
-# Absolute path to .env — read fresh on every call, never cached
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+
+try:
+    from engine.fb_market_guard import sanitize_all_platform_matches
+except ImportError:
+    from fb_market_guard import sanitize_all_platform_matches
+try:
+    from engine.fb_intensive_engine import is_pseudo_match
+except ImportError:
+    from fb_intensive_engine import is_pseudo_match
+
+
+# Absolute path to .env - read fresh on every call, never cached
 _ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
 
 MIN_ARB_PROFIT = 0.01
@@ -83,8 +97,8 @@ def smart_team_match(a, b):
 
 
 
-# ── VIRTUAL / SRL / ESPORTS KEYWORDS ──────────────────────────────────────────
-# These are simulated / virtual matches — NOT real football.
+# -- VIRTUAL / SRL / ESPORTS KEYWORDS ------------------------------------------
+# These are simulated / virtual matches - NOT real football.
 # Must NEVER be matched with real games or used in arb calculations.
 VIRTUAL_KEYWORDS = [
     'srl', 'simulated reality', 'esport', 'e-soccer', 'esoccer',
@@ -208,7 +222,7 @@ def validate_odds(odds_dict, market_type):
     - All odds must be > 1.01 (genuine odds)
     - Arb sum must be > 0.85 (real market overround)
     - Arb sum must be < 1.5 (not absurdly unbalanced)
-    - For 1X2: draw odds must be between home and away ± 3x
+    - For 1X2: draw odds must be between home and away Â± 3x
     """
     if not odds_dict:
         return False
@@ -273,7 +287,7 @@ def get_best_odds(outcome_key, market_type,
 
     CRITICAL FIX: Now validates entire odds_dict first!
     Only uses odds from platforms where the WHOLE market
-    is valid — not just one outcome in isolation.
+    is valid - not just one outcome in isolation.
 
     This prevents: using Away=5.5 from a wrong match
     where only that one outcome was grabbed incorrectly.
@@ -359,7 +373,7 @@ def scan_1x2_arb(pair, total_stake):
 
 
 def scan_ou_arb(pair, total_stake):
-    # Use ALL O/U lines from ALL platforms — no restriction.
+    # Use ALL O/U lines from ALL platforms - no restriction.
     # More lines = more chances to catch arb across different bookmaker line offerings.
     sb_ou  = pair['sportybet'].get('odds_ou', {})
     fc_ou  = pair['footballcom'].get('odds_ou', {})
@@ -482,17 +496,17 @@ def scan_gg_arb(pair, total_stake):
 
 def display_opportunity(opp):
     print(f"\n  {'='*55}")
-    print(f"  🏆 {opp['match']}")
-    print(f"  📅 {opp['kickoff']} | {opp['tournament']}")
+    print(f"  Match: {opp['match']}")
+    print(f"  Date: {opp['kickoff']} | {opp['tournament']}")
     print(f"  {'='*55}")
-    print(f"  📊 Market: {opp['market']}")
-    print(f"  💰 Profit: {opp['profit_pct']:.2f}% "
+    print(f"   Market: {opp['market']}")
+    print(f"  Profit: Profit: {opp['profit_pct']:.2f}% "
           f"= GHS {opp['profit_ghs']:.2f}")
     total_stake_used = sum(bet.get('stake', 0) for bet in opp['bets'])
-    print(f"  💵 Total Stake: GHS {total_stake_used:.2f}")
-    print(f"\n  📋 BETS TO PLACE:")
+    print(f"  Stake: Total Stake: GHS {total_stake_used:.2f}")
+    print(f"\n  BETS BETS TO PLACE:")
     for bet in opp['bets']:
-        print(f"\n     🎯 {bet['platform']}")
+        print(f"\n     Book: {bet['platform']}")
         print(f"        Bet:   {bet['outcome']}")
         print(f"        Odds:  {bet['odds']}")
         print(f"        Stake: GHS {bet['stake']:.2f}")
@@ -515,13 +529,26 @@ def scan_all(sportybet_matches,
     if footballcom_matches  is None: footballcom_matches  = []
     if onexbet_matches      is None: onexbet_matches      = []
     if twentytwobet_matches is None: twentytwobet_matches = []
+    raw_guarded, _guard_reports = sanitize_all_platform_matches({
+        'sportybet': sportybet_matches,
+        'betway': betway_matches,
+        'footballcom': footballcom_matches,
+        'onexbet': onexbet_matches,
+        'twentytwobet': twentytwobet_matches,
+    })
+    sportybet_matches = raw_guarded['sportybet']
+    betway_matches = raw_guarded['betway']
+    footballcom_matches = raw_guarded['footballcom']
+    onexbet_matches = raw_guarded['onexbet']
+    twentytwobet_matches = raw_guarded['twentytwobet']
+
 
     # CRITICAL: Filter out SRL / virtual / esports matches from ALL platforms
-    sportybet_matches    = [m for m in sportybet_matches    if not is_virtual_match(m) and not m.get('is_live', False)]
-    betway_matches       = [m for m in betway_matches       if not is_virtual_match(m) and not m.get('is_live', False)]
-    footballcom_matches  = [m for m in footballcom_matches  if not is_virtual_match(m) and not m.get('is_live', False)]
-    onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m) and not m.get('is_live', False)]
-    twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m) and not m.get('is_live', False)]
+    sportybet_matches    = [m for m in sportybet_matches    if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    betway_matches       = [m for m in betway_matches       if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    footballcom_matches  = [m for m in footballcom_matches  if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    onexbet_matches      = [m for m in onexbet_matches      if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
+    twentytwobet_matches = [m for m in twentytwobet_matches if not is_virtual_match(m) and not is_pseudo_match(m) and not m.get('is_live', False)]
 
     all_matches = (sportybet_matches   +
                    betway_matches      +
@@ -532,7 +559,7 @@ def scan_all(sportybet_matches,
     groups = match_all_platforms(all_matches)
 
     if not groups:
-        print("\n⚠️ No matching events found!")
+        print("\nWARNING No matching events found!")
         return [], 0
 
     opportunities = []
@@ -586,27 +613,27 @@ def scan_all(sportybet_matches,
 
     print(f"\n{'='*60}")
     print("SCAN COMPLETE!")
-    print(f"⚽ Events scanned    : {len(groups)}")
+    print(f"Events Events scanned    : {len(groups)}")
     
     import time
     if cycle_start_time:
         total_seconds = time.time() - cycle_start_time
         total_minutes = total_seconds / 60
-        print(f"⏱️ Total cycle time: {total_seconds:.1f} seconds ({total_minutes:.1f} minutes)")
+        print(f"â±ï¸ Total cycle time: {total_seconds:.1f} seconds ({total_minutes:.1f} minutes)")
 
-    print(f"🎯 Arb opportunities : {len(opportunities)}")
+    print(f"Book: Arb opportunities : {len(opportunities)}")
 
     if opportunities:
         total_profit = sum(o['profit_ghs'] for o in opportunities)
         best = max(opportunities, key=lambda x: x['profit_pct'])
-        print(f"💰 Total potential profit: GHS {total_profit:.2f}")
-        print(f"📈 Best: {best['profit_pct']:.2f}% on {best['match']}")
+        print(f"Profit: Total potential profit: GHS {total_profit:.2f}")
+        print(f"Max: Best: {best['profit_pct']:.2f}% on {best['match']}")
         
         # Now print all the actual opportunities
         for opp in opportunities:
             display_opportunity(opp)
     else:
-        print("💡 No arb opportunities right now")
+        print("No No arb opportunities right now")
 
     print(f"\n{'='*60}")
     print("MATCHES FETCHED PER PLATFORM:")
@@ -620,18 +647,18 @@ def scan_all(sportybet_matches,
 
 
 def run():
-    print("\n" + "🚀 " * 20)
-    print("   QUANT BET ALPHA - ARBITRAGE ENGINE")
-    print("🚀 " * 20 + "\n")
+    print("\n" + "* " * 20)
+    print("   GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM - ARBITRAGE ENGINE")
+    print("* " * 20 + "\n")
 
     def load(path, label):
         try:
             with open(path) as f:
                 data = json.load(f)
-            print(f"✅ {label}: {len(data)} matches")
+            print(f"OK {label}: {len(data)} matches")
             return data
         except FileNotFoundError:
-            print(f"❌ {path} not found!")
+            print(f"ERROR {path} not found!")
             return []
 
     sportybet_matches    = load(
@@ -648,7 +675,7 @@ def run():
     if not any([sportybet_matches, betway_matches,
                 footballcom_matches, onexbet_matches,
                 twentytwobet_matches]):
-        print("\n❌ No odds data found!")
+        print("\nERROR No odds data found!")
         return []
 
     opportunities, _ = scan_all(
@@ -662,10 +689,11 @@ def run():
     if opportunities:
         with open('engine/opportunities.json', 'w') as f:
             json.dump(opportunities, f, indent=2)
-        print(f"\n💾 Saved to engine/opportunities.json")
+        print(f"\nðŸ’¾ Saved to engine/opportunities.json")
 
     return opportunities
 
 
 if __name__ == "__main__":
     run()
+

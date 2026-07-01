@@ -37,8 +37,8 @@ EVENT_CACHE_PATH = os.path.join(_DATA_DIR, "betwinner_event_cache.json")
 OU_TOTALS: Tuple[float, ...] = (1.5, 2.5, 3.5, 4.5, 5.5)
 DEFAULT_TF_MS = 172800000
 REQUEST_TIMEOUT = 12        # seconds (curl_cffi scalar timeout)
-CHAMP_CONCURRENCY = 80
-DETAIL_CONCURRENCY = int(os.getenv("BETWINNER_DETAIL_CONCURRENCY", "120"))
+CHAMP_CONCURRENCY = int(os.getenv("LINEFEED_CHAMP_CONCURRENCY", "40"))
+DETAIL_CONCURRENCY = int(os.getenv("BETWINNER_DETAIL_CONCURRENCY", os.getenv("LINEFEED_DETAIL_CONCURRENCY", "40")))
 SESSION_MAX_CLIENTS = max(CHAMP_CONCURRENCY, DETAIL_CONCURRENCY)
 FAST_BULK_LIMIT = 50
 MIN_CACHE_STUBS = int(os.getenv("BETWINNER_MIN_CACHE_STUBS", "100"))
@@ -59,6 +59,7 @@ FAST_BULK_PARAM_SETS = [
 ]
 
 _REQUEST_NONCE = itertools.count()
+_REQUEST_FAILURE_COUNTS: Dict[str, int] = {}
 
 
 async def async_linefeed_get(
@@ -108,7 +109,9 @@ async def async_linefeed_get(
                 return data
         except Exception as e:
             if attempt == max_attempts - 1:
-                print(f"  \u26a0\ufe0f Request failed for {method} after {max_attempts} attempts: {e}")
+                _REQUEST_FAILURE_COUNTS[method] = _REQUEST_FAILURE_COUNTS.get(method, 0) + 1
+                if method != "GetGameZip":
+                    print(f"  \u26a0\ufe0f Request failed for {method} after {max_attempts} attempts: {e}")
             else:
                 await asyncio.sleep(0.5 * (attempt + 1))
     return {}
@@ -334,6 +337,11 @@ def _is_noise_match(home_team: str, away_team: str, league: str = "") -> bool:
 
 
 def _load_event_cache(target: date) -> List[Tuple[int, dict, str]]:
+    # Event-list caches can silently cap match counts when saved from a partial feed.
+    # Keep fresh discovery as the default; enable only for emergency speed.
+    use_cache = os.getenv("BETWINNER_USE_EVENT_CACHE", "0").strip().lower() in {"1", "true", "yes", "on"}
+    if not use_cache:
+        return []
     try:
         with open(EVENT_CACHE_PATH, "r", encoding="utf-8") as f:
             payload = json.load(f)
@@ -1270,6 +1278,9 @@ def run() -> List[dict]:
                 tf.write(format_match_text_block(m))
 
     elapsed = time.perf_counter() - started
+    failed_gamezip = _REQUEST_FAILURE_COUNTS.get("GetGameZip", 0)
+    if failed_gamezip:
+        print(f"  WARNING: {failed_gamezip} GetGameZip detail request(s) failed after retries; skipped unavailable detail-only markets.")
     print(f"💾 Saved to {json_path}")
     print(f"📄 Full list: {txt_path}")
     if n > 0:

@@ -1,7 +1,7 @@
-"""
-INTENSIVE ENGINE — Optimized exhaustive sports arbitrage scanner.
+﻿"""
+INTENSIVE ENGINE - Optimized exhaustive sports arbitrage scanner.
 
-For each matched game group, tests permutations across 13 platforms for 14 markets.
+For each matched game group, tests permutations across active platforms for 14 markets.
 Features:
   1. Time-window blocking (O(N) pre-filter)
   2. Set-based token guards (zero-cost rejects)
@@ -19,6 +19,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from dotenv import dotenv_values
 
+try:
+    from engine.fb_market_guard import sanitize_all_platform_matches
+    from engine.fb_opportunity_audit import audit_opportunities
+    from engine.fb_stake_limits import format_limit_warning, resolve_stake_limit
+    from engine.fb_onexbet_limits import resolve_onexbet_runtime_limit
+except ImportError:
+    from fb_market_guard import sanitize_all_platform_matches
+    from fb_opportunity_audit import audit_opportunities
+    from fb_stake_limits import format_limit_warning, resolve_stake_limit
+    from fb_onexbet_limits import resolve_onexbet_runtime_limit
+
 _ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
 _EXCLUSIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 '..', 'data', 'excluded_markets.json')
@@ -27,6 +38,8 @@ MIN_ARB_PROFIT_PCT        = 0.01
 MAX_ARB_PROFIT_PCT        = 15.0
 MIN_UNBALANCED_PROFIT_GHS = 0.10
 MIN_QUASI_PROFIT_GHS      = 0.50
+UNBALANCED_WHOLE_STAKE_STEP = int(os.getenv('UNBALANCED_WHOLE_STAKE_STEP', '1'))
+UNBALANCED_WHOLE_SEARCH_RADIUS = int(os.getenv('UNBALANCED_WHOLE_SEARCH_RADIUS', '8'))
 
 def _load_exclusions():
     try:
@@ -45,12 +58,13 @@ def _load_exclusions():
 
 _EXCLUDED = _load_exclusions()
 
-# ── PLATFORM REGISTRY (13 ACTIVE PLATFORMS) ─────────────────────────────────────
+# -- PLATFORM REGISTRY -------------------------------------
 PLATFORMS = [
     'sportybet', 'betway', 'footballcom',
     'onexbet', 'twentytwobet', 'msport',
     'bangbet', 'soccabet', 'supabet', 'betwinner',
     'paripesa', 'betpawa', 'betano', 'betika', 'onewin',
+    'mybetafrica', 'odibets',
 ]
 
 PLATFORM_DISPLAY = {
@@ -69,6 +83,8 @@ PLATFORM_DISPLAY = {
     'betano':       'Betano',
     'betika':       'Betika',
     'onewin':       '1win',
+    'mybetafrica':  'MyBet.Africa',
+    'odibets':      'Odibets',
 }
 
 SOURCE_MAP = {
@@ -87,9 +103,11 @@ SOURCE_MAP = {
     'betano':       'betano_gh',
     'betika':       'betika_gh',
     'onewin':       '1win_gh',
+    'mybetafrica':  'mybetafrica_gh',
+    'odibets':      'odibets_gh',
 }
 
-# ── FUZZY MATCHING ─────────────────────────────────────────────────────────────
+# -- FUZZY MATCHING -------------------------------------------------------------
 STOPWORDS = {
     'fk', 'fc', 'sc', 'cf', 'ac', 'bk', 'fk', 'sk', 'if', 'bfk', 'spor', 'sport',
     'united', 'city', 'town', 'reserve', 'reserves', 'u19', 'u20', 'u21', 'u23',
@@ -101,6 +119,21 @@ STOPWORDS = {
 
 ASSOCIATIONS = {'hapoel', 'maccabi', 'beitar', 'ironi'}
 GENERIC_WORDS = {'kfar', 'fc', 'sc', 'united', 'city', 'town', 'club', 'team', 'citizen', 'citizens'}
+LOCATION_WORDS = {
+    # Same-league fixtures often share city/region names. These are too weak to
+    # prove two teams are the same by themselves.
+    'adelaide', 'south', 'west', 'east', 'north', 'central', 'western', 'eastern',
+    'northern', 'southern', 'new', 'old', 'university', 'state', 'county',
+}
+
+def distinctive_tokens_from_tokens(tokens):
+    return set(tokens) - ASSOCIATIONS - GENERIC_WORDS - LOCATION_WORDS
+
+def distinctive_tokens(name):
+    return distinctive_tokens_from_tokens(clean_tokens(name))
+
+def _team_token_text(tokens):
+    return ' '.join(tokens)
 
 def clean_tokens(name):
     name = str(name).lower().strip()
@@ -118,40 +151,51 @@ def clean_tokens(name):
 def smart_team_match(a, b):
     tokens_a = clean_tokens(a)
     tokens_b = clean_tokens(b)
-    
+
     if not tokens_a or not tokens_b:
         return False
-        
-    assoc_a = set(tokens_a).intersection(ASSOCIATIONS)
-    assoc_b = set(tokens_b).intersection(ASSOCIATIONS)
-    if assoc_a and assoc_b and assoc_a != assoc_b:
-        return False
-
-    core_a = [w for w in tokens_a if w not in ASSOCIATIONS and w not in GENERIC_WORDS]
-    core_b = [w for w in tokens_b if w not in ASSOCIATIONS and w not in GENERIC_WORDS]
-    
-    if core_a and core_b:
-        core_overlap = set(core_a).intersection(set(core_b))
-        if not core_overlap:
-            return False
 
     if tokens_a == tokens_b:
         return True
-        
-    str_a = ' '.join(tokens_a)
-    str_b = ' '.join(tokens_b)
+
+    set_a = set(tokens_a)
+    set_b = set(tokens_b)
+    assoc_a = set_a & ASSOCIATIONS
+    assoc_b = set_b & ASSOCIATIONS
+    if assoc_a and assoc_b and assoc_a != assoc_b:
+        return False
+
+    core_a = set_a - ASSOCIATIONS - GENERIC_WORDS
+    core_b = set_b - ASSOCIATIONS - GENERIC_WORDS
+    distinctive_a = core_a - LOCATION_WORDS
+    distinctive_b = core_b - LOCATION_WORDS
+    core_overlap = core_a & core_b
+    distinctive_overlap = distinctive_a & distinctive_b
+
+    if core_a and core_b and not core_overlap:
+        return False
+
+    if distinctive_a and distinctive_b and not distinctive_overlap:
+        str_a = _team_token_text(tokens_a)
+        str_b = _team_token_text(tokens_b)
+        # Only allow this for near-identical spelling variants, not shared city names.
+        return SequenceMatcher(None, str_a, str_b).ratio() >= 0.90
+
+    str_a = _team_token_text(tokens_a)
+    str_b = _team_token_text(tokens_b)
     if (len(str_a) >= 4 and str_a in str_b) or (len(str_b) >= 4 and str_b in str_a):
+        if distinctive_a and distinctive_b:
+            return bool(distinctive_overlap)
         return True
-        
+
     ratio = SequenceMatcher(None, str_a, str_b).ratio()
-    if ratio >= 0.72:
+    if ratio >= 0.84:
         return True
-        
-    overlap = set(tokens_a).intersection(set(tokens_b))
-    long_overlap = [w for w in overlap if len(w) >= 5]
-    if long_overlap and ratio >= 0.50:
+
+    long_overlap = [w for w in distinctive_overlap if len(w) >= 5]
+    if long_overlap and ratio >= 0.55:
         return True
-        
+
     return False
 
 VIRTUAL_KEYWORDS = [
@@ -167,6 +211,84 @@ def is_virtual_match(match):
         match.get('tournament', ''),
     ]).lower()
     return any(kw in text for kw in VIRTUAL_KEYWORDS)
+
+
+COUNTRY_TEAM_NAMES = {
+    'afghanistan', 'albania', 'algeria', 'andorra', 'angola', 'argentina', 'armenia',
+    'australia', 'austria', 'azerbaijan', 'bahrain', 'belarus', 'belgium', 'benin',
+    'bolivia', 'bosnia', 'bosnia and herzegovina', 'brazil', 'bulgaria', 'cameroon',
+    'canada', 'chile', 'china', 'colombia', 'costa rica', 'croatia', 'cyprus',
+    'czech republic', 'denmark', 'ecuador', 'egypt', 'england', 'estonia', 'finland',
+    'france', 'georgia', 'germany', 'ghana', 'greece', 'guatemala', 'honduras',
+    'hungary', 'iceland', 'india', 'indonesia', 'iran', 'iraq', 'ireland', 'israel',
+    'italy', 'ivory coast', 'japan', 'kazakhstan', 'kenya', 'kosovo', 'latvia',
+    'lithuania', 'luxembourg', 'malaysia', 'mali', 'mexico', 'morocco', 'netherlands',
+    'new zealand', 'nigeria', 'north macedonia', 'northern ireland', 'norway', 'panama',
+    'paraguay', 'peru', 'poland', 'portugal', 'qatar', 'romania', 'saudi arabia',
+    'scotland', 'senegal', 'serbia', 'slovakia', 'slovenia', 'south africa',
+    'south korea', 'spain', 'sweden', 'switzerland', 'tunisia', 'turkey', 'ukraine',
+    'uruguay', 'usa', 'united states', 'venezuela', 'vietnam', 'wales', 'zambia',
+}
+
+TEAM_NAME_HINTS = {
+    'academy', 'afc', 'athletic', 'athletico', 'b', 'club', 'city', 'county', 'fc',
+    'fk', 'ii', 'reserve', 'reserves', 'sc', 'sporting', 'town', 'u19', 'u20', 'u21',
+    'u23', 'united', 'women', 'youth',
+}
+
+PSEUDO_MATCH_PHRASES = {
+    'alternative', 'duel of the players', 'fantasy', 'goalscorer', 'matches of the day',
+    'player duel', 'player props', 'player specials', 'player statistics', 'player to',
+    'player v team', 'player vs team', 'score anytime', 'shots on target', 'specials',
+    'team v player', 'team vs player', 'to score',
+}
+
+GENERIC_SIDE_PATTERNS = [
+    re.compile(r'^(?:1st|first|home)\s+teams?$'),
+    re.compile(r'^(?:2nd|second|away)\s+teams?$'),
+    re.compile(r'^team\s+[ab12]$'),
+]
+
+def _norm_side_name(name):
+    return re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9 ]+', ' ', str(name).lower())).strip()
+
+def _is_country_side(name):
+    return _norm_side_name(name) in COUNTRY_TEAM_NAMES
+
+def _is_generic_side(name):
+    normalized = _norm_side_name(name)
+    return any(pattern.match(normalized) for pattern in GENERIC_SIDE_PATTERNS)
+
+def _looks_like_player_name(name):
+    raw = re.sub(r'\([^)]*\)', ' ', str(name)).strip()
+    if not raw or any(ch.isdigit() for ch in raw) or '/' in raw:
+        return False
+    normalized = _norm_side_name(raw)
+    if normalized in COUNTRY_TEAM_NAMES:
+        return False
+    tokens = normalized.split()
+    if len(tokens) not in (2, 3):
+        return False
+    if any(token in TEAM_NAME_HINTS for token in tokens):
+        return False
+    if any(len(token) <= 1 for token in tokens):
+        return False
+    return True
+
+def is_pseudo_match(match):
+    home = match.get('home_team', '')
+    away = match.get('away_team', '')
+    tournament = match.get('tournament', '')
+    combined = f"{home} {away} {tournament}".lower()
+    if any(phrase in combined for phrase in PSEUDO_MATCH_PHRASES):
+        return True
+    if _is_generic_side(home) or _is_generic_side(away):
+        return True
+    if _looks_like_player_name(home) and _is_country_side(away):
+        return True
+    if _looks_like_player_name(away) and _is_country_side(home):
+        return True
+    return False
 
 def tournament_similar(a, b):
     a_n, b_n = a.lower(), b.lower()
@@ -194,7 +316,26 @@ def _same_game(a, b):
         
     return smart_team_match(ha, hb) and smart_team_match(aa, ab)
 
-# ── OPTIMIZED UNION-FIND PAIRING ENGINE ────────────────────────────────────────
+# -- OPTIMIZED UNION-FIND PAIRING ENGINE ----------------------------------------
+def _group_anchor_score(match):
+    home_score = len(distinctive_tokens(match.get('home_team', '')))
+    away_score = len(distinctive_tokens(match.get('away_team', '')))
+    name_len = len(str(match.get('home_team', ''))) + len(str(match.get('away_team', '')))
+    return (home_score + away_score, name_len)
+
+def _valid_match_group(group_matches):
+    sources = [m.get('source') for m in group_matches]
+    if len(sources) != len(set(sources)):
+        return False
+
+    anchor = max(group_matches, key=_group_anchor_score)
+    for match in group_matches:
+        if match is anchor:
+            continue
+        if not _same_game(anchor, match):
+            return False
+    return True
+
 def match_all_platforms(all_matches):
     by_kickoff = defaultdict(list)
     for m in all_matches:
@@ -229,8 +370,8 @@ def match_all_platforms(all_matches):
         core_sets = []
         for i in range(n):
             h_tok, a_tok = token_sets[i]
-            h_core = h_tok - ASSOCIATIONS - GENERIC_WORDS
-            a_core = a_tok - ASSOCIATIONS - GENERIC_WORDS
+            h_core = distinctive_tokens_from_tokens(h_tok)
+            a_core = distinctive_tokens_from_tokens(a_tok)
             core_sets.append((h_core, a_core))
 
         for i in range(n):
@@ -274,17 +415,25 @@ def match_all_platforms(all_matches):
         for indices in components.values():
             if len(indices) < 2:
                 continue
-            sources = [matches[i]['source'] for i in indices]
+            group_matches = [matches[i] for i in indices]
+            sources = [m['source'] for m in group_matches]
             if len(set(sources)) < 2:
                 continue
+            if not _valid_match_group(group_matches):
+                continue
             groups.append({
-                'matches': [matches[i] for i in indices],
+                'matches': group_matches,
                 'sources': sources,
             })
     return groups
 
-# ── HELPERS ────────────────────────────────────────────────────────────────────
+# -- HELPERS --------------------------------------------------------------------
 def _f(val):
+    if isinstance(val, dict):
+        for key in ('odds', 'odd', 'price', 'value', 'odd_value'):
+            if key in val:
+                return _f(val.get(key))
+        return 0.0
     try:
         return float(val or 0)
     except (TypeError, ValueError):
@@ -309,6 +458,58 @@ def _stakes(odds_list, total_stake):
 def _flat_stakes(odds_list, total_stake):
     per_leg = round(total_stake / len(odds_list), 2)
     return [per_leg] * len(odds_list)
+
+def _whole_unbalanced_stakes(odds_list, total_stake):
+    step = max(1, UNBALANCED_WHOLE_STAKE_STEP)
+    total_units = round(total_stake / step)
+    if abs(total_units * step - total_stake) > 0.001:
+        return None
+
+    total_units = int(total_units)
+    leg_count = len(odds_list)
+    if leg_count not in (2, 3) or total_units < leg_count:
+        return None
+
+    decimal_stakes = _stakes(odds_list, total_units * step)
+    base_units = [max(1, int(round(stake / step))) for stake in decimal_stakes]
+    radius = max(1, UNBALANCED_WHOLE_SEARCH_RADIUS)
+
+    def unit_window(index):
+        base = base_units[index]
+        lo = max(1, base - radius)
+        hi = min(total_units - (leg_count - 1), base + radius)
+        return range(lo, hi + 1)
+
+    candidates = []
+    if leg_count == 2:
+        for first in unit_window(0):
+            second = total_units - first
+            if second >= 1:
+                candidates.append([first, second])
+    else:
+        for first in unit_window(0):
+            remaining_after_first = total_units - first
+            if remaining_after_first < 2:
+                continue
+            for second in unit_window(1):
+                third = total_units - first - second
+                if third >= 1:
+                    candidates.append([first, second, third])
+
+    best = None
+    best_score = None
+    for units in candidates:
+        stakes = [u * step for u in units]
+        profits = _profits(odds_list, stakes)
+        min_profit = min(profits)
+        max_profit = max(profits)
+        spread = max_profit - min_profit
+        score = (min_profit, -spread, max_profit)
+        if best_score is None or score > best_score:
+            best_score = score
+            best = stakes
+
+    return best
 
 def _quasi_stakes(odds_list, total_stake):
     worst_idx   = odds_list.index(min(odds_list))
@@ -335,11 +536,13 @@ def _collect_odds(pair, market_key, outcome_key):
     for plat in PLATFORMS:
         if (plat, mtype, None) in _EXCLUDED:
             continue
-        market = pair[plat].get(market_key) or {}
+        match = pair[plat]
+        market = match.get(market_key) or {}
         v = _f(market.get(outcome_key, 0))
         if v <= 1.01:
             continue
-        items.append((v, plat))
+        limit = resolve_stake_limit(match, plat, PLATFORM_DISPLAY[plat], market_key, outcome_key)
+        items.append((v, plat, limit, match, market_key, outcome_key, None))
     return items
 
 def _collect_nested_odds(pair, market_key, line, outcome_key):
@@ -348,38 +551,48 @@ def _collect_nested_odds(pair, market_key, line, outcome_key):
     for plat in PLATFORMS:
         if (plat, mtype, str(line)) in _EXCLUDED or (plat, mtype, None) in _EXCLUDED:
             continue
-        nested_data = pair[plat].get(market_key) or {}
-        line_data = nested_data.get(line) or {}
+        match = pair[plat]
+        nested_data = match.get(market_key) or {}
+        line_data = nested_data.get(line) or nested_data.get(str(line)) or {}
         v = _f(line_data.get(outcome_key, 0))
         if v <= 1.01:
             continue
-        items.append((v, plat))
+        line_key = str(line)
+        limit = resolve_stake_limit(match, plat, PLATFORM_DISPLAY[plat], market_key, outcome_key, line_key)
+        items.append((v, plat, limit, match, market_key, outcome_key, line_key))
     return items
-
-# ── Permutations Output formatter ──────────────────────────────────────────────
+# -- Permutations Output formatter ----------------------------------------------
 def _format(market_label, arb_sum_f, profit_pct_f, total_stake,
             leg_tuples, stakes, profits, category, extra=None):
+    bets = []
+    for leg, s, p in zip(leg_tuples, stakes, profits):
+        label, plat, odds = leg[:3]
+        limit = leg[3] if len(leg) > 3 else None
+        if limit is None and plat == 'onexbet' and len(leg) > 6:
+            limit = resolve_onexbet_runtime_limit(
+                leg[4], leg[5], leg[6], leg[7] if len(leg) > 7 else None, odds, s
+            )
+        bets.append({
+            'outcome':        label,
+            'platform':       PLATFORM_DISPLAY[plat],
+            'platform_key':   plat,
+            'odds':           odds,
+            'stake':          s,
+            'stake_limit':    limit,
+            'profit_if_wins': p,
+        })
+
     result = {
         'category':   category,
         'market':     market_label,
         'arb_sum':    round(float(arb_sum_f), 4),
         'profit_pct': round(float(profit_pct_f), 2),
         'profit_ghs': round(total_stake * float(profit_pct_f) / 100, 2),
-        'bets': [
-            {
-                'outcome':        label,
-                'platform':       PLATFORM_DISPLAY[plat],
-                'odds':           odds,
-                'stake':          s,
-                'profit_if_wins': p,
-            }
-            for (label, plat, odds), s, p in zip(leg_tuples, stakes, profits)
-        ],
+        'bets':       bets,
     }
     if extra:
         result.update(extra)
     return result
-
 def _all_categories(market_label, arb_sum_f, profit_pct_f, total_stake, leg_tuples):
     odds_list = [t[2] for t in leg_tuples]
     results   = []
@@ -392,15 +605,33 @@ def _all_categories(market_label, arb_sum_f, profit_pct_f, total_stake, leg_tupl
                                total_stake, leg_tuples, bal_stk, bal_prf, 'balanced'))
 
     # Unbalanced
+    unbalanced_candidates = []
+
     fl_stk = _flat_stakes(odds_list, total_stake)
     fl_prf = _profits(odds_list, fl_stk)
     if all(p > MIN_UNBALANCED_PROFIT_GHS for p in fl_prf):
-        min_p   = min(fl_prf)
-        max_p   = max(fl_prf)
-        max_out = leg_tuples[fl_prf.index(max_p)][0]
+        unbalanced_candidates.append(('Flat Equal Stake', fl_stk, fl_prf))
+
+    wh_stk = _whole_unbalanced_stakes(odds_list, total_stake)
+    if wh_stk:
+        wh_prf = _profits(odds_list, wh_stk)
+        if all(p > MIN_UNBALANCED_PROFIT_GHS for p in wh_prf):
+            unbalanced_candidates.append(('Whole Cedi Optimized', wh_stk, wh_prf))
+
+    if unbalanced_candidates:
+        stake_mode, best_stk, best_prf = max(
+            unbalanced_candidates,
+            key=lambda item: (min(item[2]), -(max(item[2]) - min(item[2])), max(item[2]))
+        )
+        min_p   = min(best_prf)
+        max_p   = max(best_prf)
+        max_out = leg_tuples[best_prf.index(max_p)][0]
         r = _format(market_label, arb_sum_f, profit_pct_f,
-                    total_stake, leg_tuples, fl_stk, fl_prf, 'unbalanced')
-        r.update({'min_profit_ghs': min_p, 'max_profit_ghs': max_p, 'max_outcome': max_out})
+                    total_stake, leg_tuples, best_stk, best_prf, 'unbalanced')
+        r.update({'min_profit_ghs': min_p,
+                  'max_profit_ghs': max_p,
+                  'max_outcome': max_out,
+                  'stake_mode': stake_mode})
         results.append(r)
 
     # Quasi
@@ -424,7 +655,7 @@ def _all_categories(market_label, arb_sum_f, profit_pct_f, total_stake, leg_tupl
 
     return results
 
-# ── NUMPY BROADCAST SCANNER HELPERS ────────────────────────────────────────────
+# -- NUMPY BROADCAST SCANNER HELPERS --------------------------------------------
 def scan_3way_numpy(pair, market_key, market_label, outcomes_info, total_stake):
     o0_items = _collect_odds(pair, market_key, outcomes_info[0][0])
     o1_items = _collect_odds(pair, market_key, outcomes_info[1][0])
@@ -447,9 +678,9 @@ def scan_3way_numpy(pair, market_key, market_label, outcomes_info, total_stake):
         results.extend(_all_categories(
             market_label, arb_sum, profit_pct, total_stake,
             [
-                (outcomes_info[0][1], o0_items[idx0][1], o0_items[idx0][0]),
-                (outcomes_info[1][1], o1_items[idx1][1], o1_items[idx1][0]),
-                (outcomes_info[2][1], o2_items[idx2][1], o2_items[idx2][0]),
+                (outcomes_info[0][1], o0_items[idx0][1], o0_items[idx0][0], o0_items[idx0][2]),
+                (outcomes_info[1][1], o1_items[idx1][1], o1_items[idx1][0], o1_items[idx1][2]),
+                (outcomes_info[2][1], o2_items[idx2][1], o2_items[idx2][0], o2_items[idx2][2]),
             ]
         ))
     return results
@@ -474,8 +705,8 @@ def scan_2way_numpy(pair, market_key, market_label, outcomes_info, total_stake):
         results.extend(_all_categories(
             market_label, arb_sum, profit_pct, total_stake,
             [
-                (outcomes_info[0][1], o0_items[idx0][1], o0_items[idx0][0]),
-                (outcomes_info[1][1], o1_items[idx1][1], o1_items[idx1][0]),
+                (outcomes_info[0][1], o0_items[idx0][1], o0_items[idx0][0], o0_items[idx0][2]),
+                (outcomes_info[1][1], o1_items[idx1][1], o1_items[idx1][0], o1_items[idx1][2]),
             ]
         ))
     return results
@@ -504,8 +735,8 @@ def scan_2way_nested_numpy(pair, market_key, market_label_prefix, outcomes_info,
             results.extend(_all_categories(
                 f"{market_label_prefix} {line}", arb_sum, profit_pct, total_stake,
                 [
-                    (f"{outcomes_info[0][1]} {line}", o0_items[idx0][1], o0_items[idx0][0]),
-                    (f"{outcomes_info[1][1]} {line}", o1_items[idx1][1], o1_items[idx1][0]),
+                    (f"{outcomes_info[0][1]} {line}", o0_items[idx0][1], o0_items[idx0][0], o0_items[idx0][2]),
+                    (f"{outcomes_info[1][1]} {line}", o1_items[idx1][1], o1_items[idx1][0], o1_items[idx1][2]),
                 ]
               ))
     return results
@@ -549,13 +780,13 @@ def _scan_2way_hybrid(pair, key1, outcome1, key2, outcome2, market_label, label1
         results.extend(_all_categories(
             market_label, arb_sum, profit_pct, total_stake,
             [
-                (label1, o0_items[idx0][1], o0_items[idx0][0]),
-                (label2, o1_items[idx1][1], o1_items[idx1][0]),
+                (label1, o0_items[idx0][1], o0_items[idx0][0], o0_items[idx0][2]),
+                (label2, o1_items[idx1][1], o1_items[idx1][0], o1_items[idx1][2]),
             ]
         ))
     return results
 
-# ── SCANS ONE GROUP ────────────────────────────────────────────────────────────
+# -- SCANS ONE GROUP ------------------------------------------------------------
 def _scan_one_group(group, total_stake, empty):
     matches = group['matches']
     first   = matches[0]
@@ -633,7 +864,7 @@ def _scan_one_group(group, total_stake, empty):
 
     return [{**meta, **arb} for arb in opps]
 
-# ── RUN INTENSIVE ENGINE ───────────────────────────────────────────────────────
+# -- RUN INTENSIVE ENGINE -------------------------------------------------------
 def run_intensive(total_stake=None,
                   sportybet_matches=None,
                   betway_matches=None,
@@ -649,7 +880,9 @@ def run_intensive(total_stake=None,
                   betpawa_matches=None,
                   betano_matches=None,
                   betika_matches=None,
-                  onewin_matches=None):
+                  onewin_matches=None,
+                  mybetafrica_matches=None,
+                  odibets_matches=None):
     if total_stake is None:
         _env = dotenv_values(_ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -676,6 +909,8 @@ def run_intensive(total_stake=None,
     if betano_matches       is None: betano_matches       = _load('data/betano_odds.json')
     if betika_matches       is None: betika_matches       = _load('data/betika_odds.json')
     if onewin_matches       is None: onewin_matches       = _load('data/onewin_odds.json')
+    if mybetafrica_matches  is None: mybetafrica_matches  = _load('data/mybetafrica_odds.json')
+    if odibets_matches      is None: odibets_matches      = _load('data/odibets_odds.json')
 
     raw = {
         'sportybet':    sportybet_matches,
@@ -693,7 +928,11 @@ def run_intensive(total_stake=None,
         'betano':       betano_matches,
         'betika':       betika_matches,
         'onewin':       onewin_matches,
+        'mybetafrica':  mybetafrica_matches,
+        'odibets':      odibets_matches,
     }
+    raw, _guard_reports = sanitize_all_platform_matches(raw)
+
 
     # Normalize nested market line keys across all platforms/matches
     nested_keys = ['odds_ou', 'odds_asian_ou', 'odds_fh_ou', 'odds_sh_ou', 'odds_bookings_ou']
@@ -709,7 +948,10 @@ def run_intensive(total_stake=None,
                         normalized_dict[norm_k] = v
                     m[n_key] = normalized_dict
 
-    filtered_lists = {k: [m for m in v if not is_virtual_match(m) and not m.get('is_live', False)]
+    filtered_lists = {k: [m for m in v
+                          if not is_virtual_match(m)
+                          and not is_pseudo_match(m)
+                          and not m.get('is_live', False)]
                       for k, v in raw.items()}
 
     all_matches = [m for v in filtered_lists.values() for m in v]
@@ -736,9 +978,13 @@ def run_intensive(total_stake=None,
         for future in as_completed(futures):
             opportunities.extend(future.result())
 
+    opportunities, audit_report = audit_opportunities(opportunities)
+    if audit_report.dropped_count:
+        print(f"  WARNING: Arb audit dropped {audit_report.dropped_count} invalid/suspicious opportunity(s): {audit_report.reasons}")
+
     return opportunities, len(groups)
 
-# ── DISPLAY ────────────────────────────────────────────────────────────────────
+# -- DISPLAY --------------------------------------------------------------------
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
 
 def _write_opportunity_to_file(f, opp):
@@ -748,42 +994,45 @@ def _write_opportunity_to_file(f, opp):
         from fb_stake_tracker_helper import get_opp_id, load_staked_history
 
     cat = opp.get('category', 'balanced')
-    cat_icons = {'balanced': '⚖️ ', 'unbalanced': '📊', 'quasi': '🛡️ '}
+    cat_icons = {'balanced': 'Balanced ', 'unbalanced': '', 'quasi': ' '}
     
     opp_id = get_opp_id(opp)
     staked_history = load_staked_history()
     if opp_id in staked_history:
-        status_line = f"  ✅ [x] STAKED (ID: {opp_id})"
+        status_line = f"  OK [s] STAKED (ID: {opp_id})"
     else:
-        status_line = f"  🚨 [ ] STAKE THIS OPP (ID: {opp_id})"
+        status_line = f"  [ ] STAKE THIS OPP (ID: {opp_id})"
 
     f.write(f"\n  {'='*55}\n")
     f.write(f"{status_line}\n")
-    f.write(f"  🏆 {opp['match']}\n")
-    f.write(f"  📅 {opp['kickoff']} | {opp['tournament']}\n")
+    f.write(f"  Match: {opp['match']}\n")
+    f.write(f"  Date: {opp['kickoff']} | {opp['tournament']}\n")
     f.write(f"  {'='*55}\n")
-    f.write(f"  📊 Market:   {opp['market']}\n")
+    f.write(f"   Market:   {opp['market']}\n")
     f.write(f"  {cat_icons.get(cat, '')} Category: {cat.upper()}\n")
 
     if cat == 'balanced':
-        f.write(f"  💰 Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f} (guaranteed on all outcomes)\n")
+        f.write(f"  Profit:   {opp['profit_pct']:.2f}% = GHS {opp['profit_ghs']:.2f} (guaranteed on all outcomes)\n")
     elif cat == 'unbalanced':
-        f.write(f"  📉 Min:      GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)\n")
-        f.write(f"  📈 Max:      GHS {opp['max_profit_ghs']:.2f}  ← if {opp['max_outcome']} wins\n")
+        f.write(f"  Min:      GHS {opp['min_profit_ghs']:.2f}  (guaranteed floor)\n")
+        f.write(f"  Max:      GHS {opp['max_profit_ghs']:.2f}  <- if {opp['max_outcome']} wins\n")
+        if opp.get('stake_mode'):
+            f.write(f"  Stake Mode: {opp['stake_mode']}\n")
     elif cat == 'quasi':
-        f.write(f"  🛡️  Break-Even: {opp['break_even_outcome']} (get stake back)\n")
-        f.write(f"  💰 Best:       GHS {opp['best_profit_ghs']:.2f} ← if {opp['best_outcome']} wins\n")
+        f.write(f"    Break-Even: {opp['break_even_outcome']} (get stake back)\n")
+        f.write(f"  Best:       GHS {opp['best_profit_ghs']:.2f} <- if {opp['best_outcome']} wins\n")
 
-    f.write(f"  💵 Stake:    GHS {sum(b['stake'] for b in opp['bets']):.2f}\n")
-    f.write(f"\n  📋 BETS TO PLACE:\n")
+    f.write(f"  Stake:    GHS {sum(b['stake'] for b in opp['bets']):.2f}\n")
+    f.write(f"\n  BETS TO PLACE:\n")
     for bet in opp['bets']:
         profit = bet['profit_if_wins']
         if abs(profit) < 0.02:
             profit = 0.0
-        f.write(f"\n     🎯 {bet['platform']}\n")
+        f.write(f"\n     Book: {bet['platform']}\n")
         f.write(f"        Bet:   {bet['outcome']}\n")
         f.write(f"        Odds:  {bet['odds']}\n")
-        f.write(f"        Stake: GHS {bet['stake']:.2f}\n")
+        limit_note = format_limit_warning(bet.get('stake'), bet.get('stake_limit'))
+        f.write(f"        Stake: GHS {bet['stake']:.2f}{limit_note}\n")
         f.write(f"        Win:   GHS {profit:.2f}\n")
 
 def display_all(opportunities, num_groups, total_stake,
@@ -808,65 +1057,64 @@ def display_all(opportunities, num_groups, total_stake,
 
     bal_path = os.path.join(_DATA_DIR, 'intensive_balanced.txt')
     with open(bal_path, 'w', encoding='utf-8') as f:
-        f.write(f"⚖️  BALANCED ARBITRAGE — {len(balanced)} opportunities\n")
+        f.write(f"Balanced  BALANCED ARBITRAGE - {len(balanced)} opportunities\n")
         f.write(f"Guaranteed equal profit on ALL outcomes\n")
-        f.write(f"💡 TIP: If a match is hidden on Sportybet, switch their filter from 'Popular' to 'All' or search for it!\n")
         f.write(f"{sep}\n")
         if balanced:
             for opp in sorted(balanced, key=lambda x: x['profit_pct'], reverse=True):
                 _write_opportunity_to_file(f, opp)
         else:
-            f.write("  💡 No balanced arb opportunities right now\n")
+            f.write("  No balanced arb opportunities right now\n")
 
     unb_path = os.path.join(_DATA_DIR, 'intensive_unbalanced.txt')
     with open(unb_path, 'w', encoding='utf-8') as f:
-        f.write(f"📊 UNBALANCED ARBITRAGE — {len(unbalanced)} opportunities\n")
-        f.write(f"All outcomes profitable — amounts differ\n")
-        f.write(f"💡 TIP: If a match is hidden on Sportybet, switch their filter from 'Popular' to 'All' or search for it!\n")
+        f.write(f" UNBALANCED ARBITRAGE - {len(unbalanced)} opportunities\n")
+        f.write(f"All outcomes profitable - amounts differ\n")
         f.write(f"{sep}\n")
         if unbalanced:
-            for opp in sorted(unbalanced, key=lambda x: x['max_profit_ghs'], reverse=True):
+            for opp in sorted(unbalanced, key=lambda x: x.get('min_profit_ghs', 0), reverse=True):
                 _write_opportunity_to_file(f, opp)
         else:
-            f.write("  💡 No unbalanced arb opportunities right now\n")
+            f.write("  No unbalanced arb opportunities right now\n")
 
     qua_path = os.path.join(_DATA_DIR, 'intensive_quasi.txt')
     with open(qua_path, 'w', encoding='utf-8') as f:
-        f.write(f"🛡️  QUASI-ARB (No-Loss) — {len(quasi)} opportunities\n")
+        f.write(f"  QUASI-ARB (No-Loss) - {len(quasi)} opportunities\n")
         f.write(f"Worst case: break even | Best case: profit\n")
-        f.write(f"💡 TIP: If a match is hidden on Sportybet, switch their filter from 'Popular' to 'All' or search for it!\n")
         f.write(f"{sep}\n")
         if quasi:
             for opp in sorted(quasi, key=lambda x: x['best_profit_ghs'], reverse=True):
                 _write_opportunity_to_file(f, opp)
         else:
-            f.write("  💡 No quasi-arb opportunities right now\n")
+            f.write("  No quasi-arb opportunities right now\n")
 
-    quasi_summary = "  📊 [Quasi ML] No new opportunities found at this time of the scan"
+    quasi_summary = "   [Quasi ML] No new opportunities found at this time of the scan"
     try:
         from engine.fb_quasi_arb_logger import log_quasi_opportunities
         quasi_summary = log_quasi_opportunities(quasi, total_stake, quiet=True)
     except Exception as _qml_err:
-        print(f"  ⚠️  [Quasi ML] Logger error (non-fatal): {_qml_err}")
+        print(f"  WARNING  [Quasi ML] Logger error (non-fatal): {_qml_err}")
 
     print(f"\n{sep}")
-    print(f"⚽ Events scanned  : {num_groups}")
+    print(f"Events scanned   : {num_groups}")
     platform_names = ', '.join(PLATFORM_DISPLAY[p] for p in PLATFORMS)
-    print(f"?? Platforms       : {len(PLATFORMS)} ({platform_names})")
-    print(f"⚖️  Balanced        : {len(balanced)} → {bal_path}")
-    print(f"📊 Unbalanced      : {len(unbalanced)} → {unb_path}")
-    print(f"🛡️  Quasi-Arb       : {len(quasi)} → {qua_path}")
+    print(f"Platforms        : {len(PLATFORMS)} ({platform_names})")
+    print(f"Balanced         : {len(balanced)} -> {bal_path}")
+    print(f"Unbalanced       : {len(unbalanced)} -> {unb_path}")
+    print(f"Quasi-Arb        : {len(quasi)} -> {qua_path}")
     if opportunities:
         best = max(opportunities, key=lambda x: x['profit_pct'])
         best_cat = best.get('category', 'balanced').capitalize()
-        print(f"💰 Total profit    : GHS {sum(o['profit_ghs'] for o in opportunities):.2f}")
-        print(f"📈 Best            : {best['profit_pct']:.2f}% on {best['match']} ({best_cat})")
+        print(f"Total profit     : GHS {sum(o['profit_ghs'] for o in opportunities):.2f}")
+        print(f"Best             : {best['profit_pct']:.2f}% on {best['match']} ({best_cat})")
     if scrape_time is not None and scan_time is not None and total_time is not None:
-        print(f"🌐 Scraping        : {scrape_time:.2f}s  ({scrape_time/60:.3f} min)")
+        print(f"Scraping         : {scrape_time:.2f}s  ({scrape_time/60:.3f} min)")
         calc_suffix = f"  (Finished calculations at {calc_end_str})" if calc_end_str else ""
-        print(f"🔍 Scanning        : {scan_time:.2f}s  ({scan_time/60:.3f} min){calc_suffix}")
-        print(f"🕐 TOTAL           : {total_time:.2f}s  ({total_time/60:.3f} min)")
+        print(f"Scanning         : {scan_time:.2f}s  ({scan_time/60:.3f} min){calc_suffix}")
+        print(f"TOTAL            : {total_time:.2f}s  ({total_time/60:.3f} min)")
         if next_run_str:
             print(f"\n[Scheduled] Next run is at {next_run_str}")
     print(sep)
     return quasi_summary
+
+

@@ -143,6 +143,48 @@ async def scrape_betway():
     return parse_betway_data(raw_data, today, tomorrow)
 
 
+def _flag_false(value):
+    return value is False or str(value).strip().lower() in {'false', '0', 'no'}
+
+
+def _flag_true(value):
+    return value is True or str(value).strip().lower() in {'true', '1', 'yes'}
+
+
+def _event_is_bettable(event):
+    if _flag_false(event.get('isActive')) or _flag_false(event.get('shouldDisplay')):
+        return False
+    if _flag_true(event.get('isSuspended')) or _flag_true(event.get('isFinished')):
+        return False
+    if _flag_true(event.get('isOutright')) or _flag_true(event.get('isLive')):
+        return False
+    if str(event.get('sportId', 'soccer')).lower() != 'soccer':
+        return False
+    state = event.get('gameStateTimeScore') or {}
+    comments = str(state.get('comments') or '').strip().lower()
+    if comments and comments not in {'notstarted', 'not started'}:
+        return False
+    return True
+
+
+def _market_is_bettable(market):
+    if _flag_false(market.get('isActive')) or _flag_false(market.get('shouldDisplay')):
+        return False
+    if _flag_true(market.get('isSuspended')):
+        return False
+    return True
+
+
+def _outcome_is_bettable(outcome):
+    if _flag_false(outcome.get('isActive')) or _flag_false(outcome.get('shouldDisplay')):
+        return False
+    if _flag_false(outcome.get('isTradingActive')):
+        return False
+    if _flag_true(outcome.get('isSuspended')):
+        return False
+    return True
+
+
 def parse_betway_data(raw_data, today, tomorrow):
 
     events = raw_data.get('events', [])
@@ -187,11 +229,8 @@ def parse_betway_data(raw_data, today, tomorrow):
         if not home_team or not away_team:
             continue
 
-        # CRITICAL: Skip events that are locked/padlocked (isActive=False)
-        # The padlock on the website means the entire event is deactivated
-        if event.get('isActive') is False:
-            continue
-        if event.get('isSuspended', False):
+        # Keep only prematch events Betway marks as displayable and bettable.
+        if not _event_is_bettable(event):
             continue
 
         # Skip esports/virtual matches
@@ -212,6 +251,7 @@ def parse_betway_data(raw_data, today, tomorrow):
             'tournament': league,
             'is_live': is_live,
             'source': 'betway_gh',
+            'source_event_id': str(event_id),
             'odds_1x2': {},
             'odds_1x2_one_up': {},
             'odds_1x2_two_up': {},
@@ -232,13 +272,18 @@ def parse_betway_data(raw_data, today, tomorrow):
         }
 
         event_markets = market_map.get(event_id, [])
+        visible_child_market_ids = {
+            str(m.get('marketId'))
+            for m in event_markets
+            if _market_is_bettable(m) and not _flag_true(m.get('isSquashedParent'))
+        }
 
         for market in event_markets:
             market_name = market.get('name', '').lower()
             market_id = market.get('marketId', '')
 
-            # Skip suspended/inactive markets
-            if market.get('isSuspended', False):
+            # Skip markets that Betway marks hidden, inactive, or suspended.
+            if not _market_is_bettable(market):
                 continue
 
             market_outcomes = outcomes_by_market.get(
@@ -250,8 +295,7 @@ def parse_betway_data(raw_data, today, tomorrow):
             # Filter out suspended/inactive outcomes
             market_outcomes = [
                 o for o in market_outcomes
-                if not o.get('isSuspended', False)
-                and o.get('isActive', True)
+                if _outcome_is_bettable(o)
             ]
             
             if not market_outcomes:
@@ -283,12 +327,29 @@ def parse_betway_data(raw_data, today, tomorrow):
                             'away': away_price
                         }
 
-            # Over/Under dynamically
+            # Over/Under dynamically. Betway sends hidden squashed lines on
+            # the parent market; only keep outcomes whose original child market
+            # is visible on the event page.
             if '[total goals]' in market_name or \
                     'total=' in market_id.lower() or \
                     'total' in market_name:
                 import re
+                allowed_original_ids = set()
+                if _flag_true(market.get('isSquashedParent')):
+                    allowed_original_ids = {
+                        str(mid) for mid in market.get('squashedMarketIds', [])
+                        if str(mid) in visible_child_market_ids
+                    }
+                    default_line = market.get('defaultLine')
+                    if default_line and str(default_line) in visible_child_market_ids:
+                        allowed_original_ids.add(str(default_line))
+                    if not allowed_original_ids:
+                        continue
+
                 for o in market_outcomes:
+                    original_market_id = str(o.get('originalMarketId') or o.get('marketId') or '')
+                    if allowed_original_ids and original_market_id not in allowed_original_ids:
+                        continue
                     o_id = str(o.get('outcomeId', ''))
                     m = re.search(r'total=(\d+(?:\.\d+)?)', o_id)
                     if not m:
