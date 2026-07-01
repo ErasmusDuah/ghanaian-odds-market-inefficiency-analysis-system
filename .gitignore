@@ -57,3 +57,4 @@ table_tennis/
 football/data/arbitrage_tracker.csv
 football/data/quasi_arb_ml.xlsx
 football/data/quasi_arb_ml.xlsx.bak
+.requirements.install.txt

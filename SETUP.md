@@ -1,129 +1,270 @@
 # Setup Guide
 
-This guide explains how to set up and run the football system on a new PC.
+This guide explains how to install and run the football analysis system on a new computer.
 
-The main README explains the research purpose of the project. This file focuses on practical setup, local configuration and run instructions.
+The main README explains the research purpose of the project. This file focuses on practical setup, local configuration and running the intensive engine.
 
-## Requirements
+## Quick Setup Flow
 
-Install these before running the system:
+1. Install Python manually.
+2. Clone or download the repository.
+3. Run one setup/run command.
+4. The system creates a virtual environment.
+5. The system installs the required Python packages.
+6. The system creates `football/.env` with a default stake amount of `800` cedis.
+7. The system creates the needed local folders and analysis tracker files.
+8. Optional: add Telegram details if you want alerts.
+9. Run the intensive system.
 
-- Python 3.11 or newer
-- Git
-- Google Chrome or a Chromium-compatible browser
-- A stable internet connection
+The default setup uses:
 
-The project was developed on Windows, so the examples below use PowerShell.
+```env
+STAKE_AMOUNT=800
+```
 
-## Clone The Repository
+You can change this later in `football/.env` if you want a different amount.
+
+## 1. Install Python
+
+Install Python 3.11 or newer from:
+
+```text
+https://www.python.org/downloads/
+```
+
+On Windows, tick this option during installation:
+
+```text
+Add python.exe to PATH
+```
+
+After installation, open a new terminal and check Python.
+
+Windows PowerShell:
 
 ```powershell
+python --version
+```
+
+macOS or Linux:
+
+```bash
+python3 --version
+```
+
+## 2. Get The Project
+
+### Option A: Clone With Git
+
+Git is useful for cloning and updating the project, but the system itself does not require Git to run after the files are on your computer.
+
+Windows PowerShell, macOS or Linux:
+
+```bash
 git clone https://github.com/ErasmusDuah/ghanaian-odds-market-inefficiency-analysis-system.git
 cd ghanaian-odds-market-inefficiency-analysis-system
 ```
 
-If you already have the project locally at `C:\quant_bet_alpha`, you can continue using that folder.
+### Option B: Download Without Git
 
-## Create A Virtual Environment
+If Git is not installed:
 
-From the project root:
+1. Open the GitHub repository in your browser.
+2. Click `Code`.
+3. Click `Download ZIP`.
+4. Extract the ZIP file.
+5. Open a terminal inside the extracted folder.
+
+The system can run normally without Git.
+
+## 3. Run The One-Command Setup
+
+The first run installs dependencies and then starts the intensive engine.
+
+Windows PowerShell:
 
 ```powershell
-python -m venv .venv
+.\run.ps1
 ```
 
-Activate it:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks activation, run:
+If PowerShell blocks scripts, run this once:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
 
-Then activate the virtual environment again.
-
-## Install Python Dependencies
+Then run again:
 
 ```powershell
-pip install -r requirements.txt
+.\run.ps1
 ```
 
-Some scrapers or supporting tools may use Playwright, so install the browser runtime too:
+macOS or Linux:
 
-```powershell
-playwright install chromium
+```bash
+chmod +x run.sh
+./run.sh
 ```
 
-## Create The Local Environment File
+The run command does the following automatically:
 
-The football system reads local settings from:
+- creates `.venv` if it does not exist
+- installs packages from `requirements.txt`
+- skips Windows-only packages on macOS/Linux
+- installs the Playwright Chromium runtime when possible
+- creates `football/.env` if it does not exist
+- creates `football/data/` if it does not exist
+- starts `football/fb_run_intensive.py`
+
+## 4. Change The Stake Amount
+
+The setup creates `football/.env` with this default value:
+
+```env
+STAKE_AMOUNT=800
+```
+
+To use a different amount, open:
 
 ```text
 football/.env
 ```
 
-A safe template is included:
-
-```text
-football/.env.example
-```
-
-Copy the example file:
-
-```powershell
-Copy-Item football\.env.example football\.env
-```
-
-Then open `football/.env` and fill in your local values.
-
-Example:
+Then change the value:
 
 ```env
-STARTING_CAPITAL=500
-CURRENCY=GHS
-
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-TELEGRAM_CHAT_ID=your_telegram_chat_id_here
-
-MAX_PARALLEL_SCRAPERS=8
-SCRAPER_GLOBAL_TIMEOUT=90
+STAKE_AMOUNT=1000
 ```
 
-The Telegram values are optional unless notification features are being used.
+Keep `STARTING_CAPITAL` aligned if you use older helper scripts:
 
-The `.env` file is ignored by Git and should never be committed because it may contain private credentials.
+```env
+STARTING_CAPITAL=1000
+```
 
-## Configuration Values
+The intensive runner prefers `STAKE_AMOUNT` and falls back to `STARTING_CAPITAL` for compatibility.
 
-`STARTING_CAPITAL` controls the allocation amount used by the analysis engine.
+If the stake value is missing, zero or not a number, the system stops with a clear message so the run does not continue with a bad configuration.
 
-`CURRENCY` controls the displayed currency label.
+## 5. Telegram Alerts Are Optional
 
-`TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are only needed if Telegram notification features are enabled.
+Telegram is not required. If the Telegram fields are blank, the system runs normally without alerts.
 
-`MAX_PARALLEL_SCRAPERS` controls how many scraper modules can run at the same time. For example, `MAX_PARALLEL_SCRAPERS=8` means the system can run up to 8 platform scrapers concurrently. A higher value may be faster but can increase timeouts or connection resets. A lower value may be slower but smoother.
+The config can stay like this:
 
-`SCRAPER_GLOBAL_TIMEOUT` controls the maximum time, in seconds, allowed for a scraping cycle before slow platforms are excluded from that scan.
+```env
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+```
 
-## Run The Football System
+If you want Telegram alerts, follow the steps below.
 
-The active football runner is:
+## 6. Create A Telegram Bot
+
+1. Open Telegram.
+2. Search for `@BotFather`.
+3. Open the verified BotFather chat.
+4. Send:
+
+```text
+/start
+```
+
+5. Send:
+
+```text
+/newbot
+```
+
+6. BotFather will ask for a bot name. This can be any display name, for example:
+
+```text
+Odds Analysis Alerts
+```
+
+7. BotFather will ask for a username. It must end with `bot`, for example:
+
+```text
+ghanaian_odds_alert_bot
+```
+
+8. BotFather will send a bot token. It looks like this:
+
+```text
+123456789:ABCDEF_your_token_here
+```
+
+9. Copy that token into `football/.env`:
+
+```env
+TELEGRAM_BOT_TOKEN=123456789:ABCDEF_your_token_here
+```
+
+Do not commit `football/.env` to Git. It is private and already ignored by `.gitignore`.
+
+## 7. Get Your Telegram Chat ID
+
+Your bot needs your chat ID before it can send alerts.
+
+1. Open your new bot in Telegram.
+2. Press `Start` or send:
+
+```text
+/start
+```
+
+3. In the project folder, run this after setup has installed the packages.
+
+Windows PowerShell:
 
 ```powershell
-python football\fb_run_intensive.py
+.\.venv\Scripts\python.exe football\fb_get_group_id.py
 ```
 
-If you want to run it with the project virtual environment explicitly:
+macOS or Linux:
+
+```bash
+./.venv/bin/python football/fb_get_group_id.py
+```
+
+4. Follow the message printed in the terminal.
+5. Copy the chat ID into `football/.env`:
+
+```env
+TELEGRAM_CHAT_ID=123456789
+```
+
+For some groups, Telegram chat IDs can be negative. That is normal.
+
+## 8. Run The Intensive Engine Again
+
+After the first setup, future runs use the existing virtual environment.
+
+Windows PowerShell:
 
 ```powershell
-C:\quant_bet_alpha\.venv\Scripts\python.exe C:\quant_bet_alpha\football\fb_run_intensive.py
+.\run.ps1
 ```
 
-The intensive runner collects fresh market snapshots, applies validation checks, compares equivalent markets and writes local output files.
+macOS or Linux:
+
+```bash
+./run.sh
+```
+
+You can also run the engine directly.
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe football\fb_run_intensive.py
+```
+
+macOS or Linux:
+
+```bash
+./.venv/bin/python football/fb_run_intensive.py
+```
 
 ## Generated Local Outputs
 
@@ -149,7 +290,7 @@ These should stay local and should not be committed:
 - `football/.env`
 - generated odds JSON files
 - generated match TXT files
-- private tracker workbooks
+- private local tracker files
 - local scan histories
 - raw debug captures
 
@@ -161,16 +302,42 @@ Each intensive run is designed to work from a fresh market snapshot.
 
 The normal cycle is:
 
-1. Clear old generated odds and match files
-2. Collect fresh odds from supported platforms
-3. Normalize platform data into a shared structure
-4. Apply market validation checks
-5. Run the intensive comparison engine
-6. Write new local outputs
+1. Clear old generated odds and match files.
+2. Collect fresh odds from supported platforms.
+3. Normalize platform data into a shared structure.
+4. Apply market validation checks.
+5. Run the intensive comparison engine.
+6. Write new local outputs.
 
-This reduces stale-data risk, although market values can still change after a snapshot is collected.
+This reduces stale-data risk because the analysis starts from a new snapshot on each scan.
 
 ## Troubleshooting
+
+If `python` is not recognized on Windows, reinstall Python and tick `Add python.exe to PATH`.
+
+If `python3` is not found on macOS/Linux, install Python 3.11 or newer through Python.org or your system package manager.
+
+If PowerShell blocks `run.ps1`, run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+If dependency installation fails, check your internet connection and run the setup command again.
+
+If Playwright browser installation fails, retry later with:
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -m playwright install chromium
+```
+
+macOS or Linux:
+
+```bash
+./.venv/bin/python -m playwright install chromium
+```
 
 If no matches are returned, check your internet connection first. Then rerun the system because a platform may have timed out or returned an incomplete response.
 
@@ -179,14 +346,6 @@ If a scraper is slow, reduce `MAX_PARALLEL_SCRAPERS` in `football/.env`.
 If scans are too slow and your connection is stable, increase `MAX_PARALLEL_SCRAPERS` carefully.
 
 If a platform repeatedly times out, increase `SCRAPER_GLOBAL_TIMEOUT` slightly.
-
-If Python cannot find packages, make sure the virtual environment is activated and run `pip install -r requirements.txt` again.
-
-If Playwright-related errors appear, run:
-
-```powershell
-playwright install chromium
-```
 
 ## Responsible Use
 

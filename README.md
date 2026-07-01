@@ -123,11 +123,21 @@ The future goal is to build a model that helps estimate which quasi-arbitrage op
 
 ## System Overview
 
-The active football system is run through:
+The active football system is run through the intensive engine. For the easiest setup, use the helper scripts:
+
+Windows:
+
+```powershell
+.\run.ps1
+```
+
+macOS or Linux:
 
 ```bash
-python football/fb_run_intensive.py
+./run.sh
 ```
+
+The setup guide explains the first-run installation flow and the direct Python command for advanced users.
 
 The intensive runner performs the full workflow:
 

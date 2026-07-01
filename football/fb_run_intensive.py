@@ -54,6 +54,37 @@ from engine.fb_verifier       import verify_opportunities
 ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 
 
+def _read_total_stake(env_values):
+    raw_value = env_values.get('STAKE_AMOUNT') or env_values.get('STARTING_CAPITAL') or '800'
+    try:
+        stake = int(float(str(raw_value).strip()))
+    except (TypeError, ValueError):
+        raise ValueError(
+            "Invalid STAKE_AMOUNT in football/.env. Use a whole number like STAKE_AMOUNT=800."
+        )
+    if stake <= 0:
+        raise ValueError(
+            "Invalid STAKE_AMOUNT in football/.env. The value must be greater than zero."
+        )
+    return stake
+
+
+def _read_int_env(env_values, key, default):
+    raw_value = env_values.get(key) or os.getenv(key) or str(default)
+    try:
+        return int(str(raw_value).strip())
+    except (TypeError, ValueError):
+        print(f"  WARNING: Invalid {key} value {raw_value!r}; using {default}.")
+        return default
+
+
+def _apply_runtime_env(env_values):
+    for key in ('MAX_PARALLEL_SCRAPERS', 'SCRAPER_GLOBAL_TIMEOUT'):
+        value = env_values.get(key)
+        if value not in (None, ''):
+            os.environ[key] = str(value)
+
+
 def _ensure_analysis_trackers():
     """Create local research/analysis trackers on fresh installs."""
     try:
@@ -168,7 +199,8 @@ def run_scan():
     
     try:
         _env        = dotenv_values(ENV_PATH)
-        total_stake = int(_env.get('STARTING_CAPITAL', 500))
+        _apply_runtime_env(_env)
+        total_stake = _read_total_stake(_env)
 
         print("\n" + "🔬 " * 20)
         print(f"   QUANT BET ALPHA — INTENSIVE ENGINE (SCAN #{scan_count})")
