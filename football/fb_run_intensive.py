@@ -42,7 +42,6 @@ from scrapers.fb_bangbet      import run as fetch_bangbet
 from scrapers.fb_soccabet     import run as fetch_soccabet
 from scrapers.fb_supabet      import run as fetch_supabet
 from scrapers.fb_betwinner    import run as fetch_betwinner
-from scrapers.fb_paripesa     import run as fetch_paripesa
 from scrapers.fb_betpawa      import run as fetch_betpawa
 from scrapers.fb_betano       import run as fetch_betano
 from scrapers.fb_betika       import run as fetch_betika
@@ -154,7 +153,6 @@ ACTIVE_SCRAPERS = [
     ('Soccabet',     fetch_soccabet),
     ('Supabet',      fetch_supabet),
     ('Betwinner',    fetch_betwinner),
-    ('Paripesa',     fetch_paripesa),
     ('BetPawa',      fetch_betpawa),
     ('Betano',       fetch_betano),
     ('Betika',       fetch_betika),
@@ -175,7 +173,6 @@ PLATFORM_TXT_FILES = {
     'Soccabet': 'soccabet_matches.txt',
     'Supabet': 'supabet_matches.txt',
     'Betwinner': 'betwinner_matches.txt',
-    'Paripesa': 'paripesa_matches.txt',
     'BetPawa': 'betpawa_matches.txt',
     'Betano': 'betano_matches.txt',
     'Betika': 'betika_matches.txt',
@@ -201,7 +198,6 @@ PLATFORM_JSON_FILES = {
     'Soccabet': 'soccabet_odds.json',
     'Supabet': 'supabet_odds.json',
     'Betwinner': 'betwinner_odds.json',
-    'Paripesa': 'paripesa_odds.json',
     'BetPawa': 'betpawa_odds.json',
     'Betano': 'betano_odds.json',
     'Betika': 'betika_odds.json',
@@ -458,7 +454,7 @@ def run_scan():
             soccabet_matches     = fetched.get('Soccabet',     []),
             supabet_matches      = fetched.get('Supabet',      []),
             betwinner_matches    = fetched.get('Betwinner',    []),
-            paripesa_matches     = fetched.get('Paripesa',     []),
+            paripesa_matches     = [],
             betpawa_matches      = fetched.get('BetPawa',      []),
             betano_matches       = fetched.get('Betano',       []),
             betika_matches       = fetched.get('Betika',       []),

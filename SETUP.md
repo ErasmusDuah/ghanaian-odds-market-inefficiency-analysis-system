@@ -67,15 +67,21 @@ cd ghanaian-odds-market-inefficiency-analysis-system
 
 ### Option B: Download Without Git
 
-If Git is not installed:
+If Git is not installed, download the project through your browser:
 
-1. Open the GitHub repository in your browser.
-2. Click `Code`.
+1. Open this GitHub link in Chrome, Edge, Firefox or any browser:
+
+```text
+https://github.com/ErasmusDuah/ghanaian-odds-market-inefficiency-analysis-system
+```
+
+2. Click the green `Code` button near the top-right of the project page.
 3. Click `Download ZIP`.
-4. Extract the ZIP file.
-5. Open a terminal inside the extracted folder.
+4. Go to your Downloads folder.
+5. Right-click the downloaded ZIP file and extract it.
+6. Open a terminal inside the extracted project folder.
 
-The system can run normally without Git.
+The system can run normally without Git after the files are on your computer.
 
 ## 3. Run The One-Command Setup
 
