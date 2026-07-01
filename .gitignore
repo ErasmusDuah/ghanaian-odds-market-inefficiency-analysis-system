@@ -45,3 +45,7 @@ scratch/
 
 # ── Virtual environment ──
 .venv/
+# Private local trackers and personal analysis workbooks
+football/data/*stake_tracker*.xlsx
+football/data/*stake_tracker*.csv
+football/data/staked_history.json
