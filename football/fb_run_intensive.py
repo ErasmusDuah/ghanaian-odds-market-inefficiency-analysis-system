@@ -48,6 +48,7 @@ from scrapers.fb_betika       import run as fetch_betika
 from scrapers.fb_1win        import run as fetch_1win
 from scrapers.fb_mybetafrica import run as fetch_mybetafrica
 from scrapers.fb_odibets     import run as fetch_odibets
+from scrapers.fb_mulasport   import run as fetch_mulasport
 
 from engine.fb_intensive_engine import run_intensive, display_all
 from engine.fb_verifier       import verify_opportunities
@@ -159,6 +160,7 @@ ACTIVE_SCRAPERS = [
     ('1win',         fetch_1win),
     ('MyBet.Africa', fetch_mybetafrica),
     ('Odibets',      fetch_odibets),
+    ('MulaSport',    fetch_mulasport),
 ]
 
 PLATFORM_ORDER = [name for name, _ in ACTIVE_SCRAPERS]
@@ -179,6 +181,7 @@ PLATFORM_TXT_FILES = {
     '1win': 'onewin_matches.txt',
     'MyBet.Africa': 'mybetafrica_matches.txt',
     'Odibets': 'odibets_matches.txt',
+    'MulaSport': 'mulasport_matches.txt',
 }
 
 
@@ -204,6 +207,7 @@ PLATFORM_JSON_FILES = {
     '1win': 'onewin_odds.json',
     'MyBet.Africa': 'mybetafrica_odds.json',
     'Odibets': 'odibets_odds.json',
+    'MulaSport': 'mulasport_odds.json',
 }
 
 
@@ -461,6 +465,7 @@ def run_scan():
             onewin_matches       = fetched.get('1win',         []),
             mybetafrica_matches  = fetched.get('MyBet.Africa', []),
             odibets_matches      = fetched.get('Odibets',      []),
+            mulasport_matches    = fetched.get('MulaSport',    []),
         )
 
         # Lock in next run time exactly 2 minutes after calculations complete

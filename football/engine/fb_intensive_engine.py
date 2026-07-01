@@ -64,7 +64,7 @@ PLATFORMS = [
     'onexbet', 'twentytwobet', 'msport',
     'bangbet', 'soccabet', 'supabet', 'betwinner',
     'paripesa', 'betpawa', 'betano', 'betika', 'onewin',
-    'mybetafrica', 'odibets',
+    'mybetafrica', 'odibets', 'mulasport',
 ]
 
 PLATFORM_DISPLAY = {
@@ -85,6 +85,7 @@ PLATFORM_DISPLAY = {
     'onewin':       '1win',
     'mybetafrica':  'MyBet.Africa',
     'odibets':      'Odibets',
+    'mulasport':    'MulaSport',
 }
 
 SOURCE_MAP = {
@@ -105,6 +106,7 @@ SOURCE_MAP = {
     'onewin':       '1win_gh',
     'mybetafrica':  'mybetafrica_gh',
     'odibets':      'odibets_gh',
+    'mulasport':    'mulasport_gh',
 }
 
 # -- FUZZY MATCHING -------------------------------------------------------------
@@ -882,7 +884,8 @@ def run_intensive(total_stake=None,
                   betika_matches=None,
                   onewin_matches=None,
                   mybetafrica_matches=None,
-                  odibets_matches=None):
+                  odibets_matches=None,
+                  mulasport_matches=None):
     if total_stake is None:
         _env = dotenv_values(_ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -911,6 +914,7 @@ def run_intensive(total_stake=None,
     if onewin_matches       is None: onewin_matches       = _load('data/onewin_odds.json')
     if mybetafrica_matches  is None: mybetafrica_matches  = _load('data/mybetafrica_odds.json')
     if odibets_matches      is None: odibets_matches      = _load('data/odibets_odds.json')
+    if mulasport_matches    is None: mulasport_matches    = _load('data/mulasport_odds.json')
 
     raw = {
         'sportybet':    sportybet_matches,
@@ -930,6 +934,7 @@ def run_intensive(total_stake=None,
         'onewin':       onewin_matches,
         'mybetafrica':  mybetafrica_matches,
         'odibets':      odibets_matches,
+        'mulasport':    mulasport_matches,
     }
     raw, _guard_reports = sanitize_all_platform_matches(raw)
 
