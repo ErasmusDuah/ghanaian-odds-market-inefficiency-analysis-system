@@ -123,23 +123,9 @@ The future goal is to build a model that helps estimate which quasi-arbitrage op
 
 ## System Overview
 
-The active football system is run through the intensive engine. For the easiest setup, use the helper scripts:
+The active football system is organized around the intensive engine, which coordinates collection, normalization, validation, comparison and logging.
 
-Windows:
-
-```powershell
-.\run.ps1
-```
-
-macOS or Linux:
-
-```bash
-./run.sh
-```
-
-The setup guide explains the first-run installation flow and the direct Python command for advanced users.
-
-The intensive runner performs the full workflow:
+The intensive engine performs the full workflow:
 
 1. Collect current football odds from multiple Ghana-facing platforms
 2. Normalize different platform formats into a shared structure
@@ -149,12 +135,6 @@ The intensive runner performs the full workflow:
 6. Calculate implied probabilities
 7. Classify opportunities as true arbitrage, unbalanced arbitrage or quasi-arbitrage
 8. Write structured outputs for analysis and future modelling
-
-## Setup Guide
-
-Detailed installation, configuration and run instructions are available in [SETUP.md](SETUP.md).
-
-The setup guide explains how to install dependencies, create the local `.env` file, run the intensive football system and understand the generated local outputs.
 
 ## Fresh Data Collection
 
