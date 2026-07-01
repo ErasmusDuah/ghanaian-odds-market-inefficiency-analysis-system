@@ -209,7 +209,14 @@ def _active(row: Dict[str, Any]) -> bool:
     if row.get("is_active") is False or row.get("is_enabled") is False:
         return False
     status = str(row.get("market_status_label") or "open").lower()
-    return status in {"", "open", "active"} and _price(row.get("odds")) is not None
+    if status not in {"", "open", "active"}:
+        return False
+    # Details may include live-only markets for the same event. Keep prematch/all
+    # markets and drop InPlay rows so unplaceable pregame markets do not leak in.
+    group_name = str(row.get("market_group_name") or "").lower()
+    if group_name == "inplay" or group_name.startswith("inplay|"):
+        return False
+    return _price(row.get("odds")) is not None
 
 
 def _norm(text: Any) -> str:
@@ -290,7 +297,10 @@ def _group_markets(rows: List[Dict[str, Any]]) -> Dict[tuple[str, str], List[Dic
     for row in rows:
         if not _active(row):
             continue
-        key = (str(row.get("market_name") or ""), str(row.get("mark_ins_id") or row.get("specifiers") or ""))
+        # mark_ins_id can differ per outcome on this feed. Group by the actual
+        # market identity and line specifier so Home/Draw/Away or Over/Under
+        # outcomes stay together.
+        key = (str(row.get("market_name") or ""), str(row.get("specifiers") or ""))
         grouped.setdefault(key, []).append(row)
     return grouped
 
@@ -309,10 +319,10 @@ def _parse_markets(match: Dict[str, Any], rows: List[Dict[str, Any]]) -> None:
         elif name == "both teams to score 2 or more goals yes/no":
             _put_complete_gg(match["odds_gg_2plus"], market_rows)
         elif name.startswith("over/under") and line:
-            if line.endswith(".25") or line.endswith(".75"):
-                _put_complete_ou(match["odds_asian_ou"], line, market_rows)
-            else:
+            if line.endswith(".5"):
                 _put_complete_ou(match["odds_ou"], line, market_rows)
+            else:
+                _put_complete_ou(match["odds_asian_ou"], line, market_rows)
         elif name == "half-time result":
             _put_complete_3way(match["odds_fh_1x2"], market_rows)
         elif name == "half-time double chance":
