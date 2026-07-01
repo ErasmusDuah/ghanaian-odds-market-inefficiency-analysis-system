@@ -1,5 +1,5 @@
 """
-Quant Bet Alpha — FastAPI Backend Server
+Ghanaian Odds Market Inefficiency Analysis System — FastAPI Backend Server
 Runs the scrapers, serves arb opportunities, and manages the ledger.
 """
 
@@ -27,7 +27,7 @@ from api.database import (
     get_stats, update_capital
 )
 
-app = FastAPI(title="Quant Bet Alpha API", version="1.0.0")
+app = FastAPI(title="Ghanaian Odds Market Inefficiency Analysis System API", version="1.0.0")
 
 # Allow the Next.js frontend to talk to this API
 app.add_middleware(

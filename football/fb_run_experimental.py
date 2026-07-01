@@ -164,7 +164,7 @@ def main():
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
 
         print("\n" + "🧪 " * 20)
-        print("   QUANT BET ALPHA — EXPERIMENTAL ENGINE")
+        print("   GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM — EXPERIMENTAL ENGINE")
         print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
         print(f"   Stake: GHS {total_stake}")
         print(f"   Platforms: {len(ACTIVE_SCRAPERS)} active — running in parallel")

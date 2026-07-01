@@ -1,5 +1,5 @@
 """
-Quant Bet Alpha — SQLite Ledger Database
+Ghanaian Odds Market Inefficiency Analysis System — SQLite Ledger Database
 Handles all bet tracking, profit history and stats.
 """
 

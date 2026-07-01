@@ -1,5 +1,5 @@
 """
-Quant Bet Alpha — Bet Tracker
+Ghanaian Odds Market Inefficiency Analysis System — Bet Tracker
 Simple ledger to document every arb stake and track your profit.
 
 Usage:
@@ -219,7 +219,7 @@ def show_summary():
     current_bal   = STARTING_CAPITAL + net_profit
 
     print(f"\n{SEP}")
-    print("  QUANT BET ALPHA — PROFIT SUMMARY")
+    print("  GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM — PROFIT SUMMARY")
     print(SEP)
     print(f"  Starting Capital : GHS {STARTING_CAPITAL:.2f}")
     print(f"  Current Balance  : GHS {current_bal:.2f}")

@@ -188,7 +188,7 @@ def main():
 
     prevent_sleep()
     print("\n" + "* " * 20)
-    print("   QUANT BET ALPHA - LIVE SYSTEM")
+    print("   GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM - LIVE SYSTEM")
     print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
     print("* " * 20)
 

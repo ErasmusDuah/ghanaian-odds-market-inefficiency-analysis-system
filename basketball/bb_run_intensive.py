@@ -137,7 +137,7 @@ def run_scan():
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
 
         print("\n" + "🏀 " * 20)
-        print(f"   QUANT BET ALPHA (BASKETBALL) — SCAN #{scan_count}")
+        print(f"   GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM (BASKETBALL) — SCAN #{scan_count}")
         print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
         print(f"   Stake: GHS {total_stake}")
         print(f"   Platforms: {len(ACTIVE_SCRAPERS)} active — running in parallel")
