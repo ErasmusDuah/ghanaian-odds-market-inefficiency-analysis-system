@@ -49,3 +49,7 @@ scratch/
 football/data/*stake_tracker*.xlsx
 football/data/*stake_tracker*.csv
 football/data/staked_history.json
+# Local-only modules and private research notes
+research/
+basketball/
+table_tennis/
