@@ -133,7 +133,12 @@ Generated files are written mainly under:
 football/data/
 ```
 
-These outputs are local analysis artifacts. They may include JSON snapshots, TXT summaries, logs and private tracker workbooks.
+These outputs are local analysis artifacts. They may include JSON snapshots, TXT summaries and analysis logs.
+
+On a fresh PC, the system automatically creates these local analysis trackers when needed:
+
+- `football/data/arbitrage_tracker.csv` for balanced and unbalanced opportunity history
+- `football/data/quasi_arb_ml.xlsx` for quasi-arbitrage research data and repetition handling
 
 Most generated outputs are ignored by Git because they are rebuilt during normal use and may contain private or time-sensitive data.
 

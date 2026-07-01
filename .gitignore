@@ -53,3 +53,7 @@ football/data/staked_history.json
 research/
 basketball/
 table_tennis/
+# Generated local analysis trackers
+football/data/arbitrage_tracker.csv
+football/data/quasi_arb_ml.xlsx
+football/data/quasi_arb_ml.xlsx.bak

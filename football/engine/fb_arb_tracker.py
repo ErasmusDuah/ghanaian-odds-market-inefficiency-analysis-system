@@ -23,38 +23,42 @@ HEADERS = [
 ]
 
 def ensure_tracker():
-    if not os.path.exists(TRACKER_FILE):
-        os.makedirs(os.path.dirname(TRACKER_FILE), exist_ok=True)
+    """Create or migrate the local arbitrage analysis CSV tracker."""
+    os.makedirs(os.path.dirname(TRACKER_FILE), exist_ok=True)
+
+    if not os.path.exists(TRACKER_FILE) or os.path.getsize(TRACKER_FILE) == 0:
         with open(TRACKER_FILE, 'w', newline='', encoding='utf-8') as f:
             csv.writer(f).writerow(HEADERS)
-    else:
-        # Check if the header contains 'Category'
-        with open(TRACKER_FILE, 'r', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            header = next(reader, None)
-        if header and 'Category' not in header:
-            # We need to migrate the existing file
-            print("  🔄 [Migration] Migrating data/arbitrage_tracker.csv to include the 'Category' column...")
-            temp_file = TRACKER_FILE + '.tmp'
-            with open(TRACKER_FILE, 'r', encoding='utf-8') as f_in:
-                reader = csv.DictReader(f_in)
-                # Create a temp file with new headers
-                with open(temp_file, 'w', newline='', encoding='utf-8') as f_out:
-                    writer = csv.DictWriter(f_out, fieldnames=HEADERS)
-                    writer.writeheader()
-                    for row in reader:
-                        # Map old keys to new rows, setting default Category to 'balanced'
-                        new_row = {k: row.get(k, '') for k in HEADERS}
-                        new_row['Category'] = 'balanced'
-                        writer.writerow(new_row)
-            try:
-                os.replace(temp_file, TRACKER_FILE)
-                print("  ✅ [Migration] Migration completed successfully.")
-            except Exception as e:
-                print(f"  ⚠️ [Migration] Error renaming migrated file: {e}")
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+        return
 
+    with open(TRACKER_FILE, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f)
+        header = next(reader, None)
+
+    if not header:
+        with open(TRACKER_FILE, 'w', newline='', encoding='utf-8') as f:
+            csv.writer(f).writerow(HEADERS)
+        return
+
+    if 'Category' not in header:
+        print("  [Migration] Migrating data/arbitrage_tracker.csv to include the 'Category' column...")
+        temp_file = TRACKER_FILE + '.tmp'
+        with open(TRACKER_FILE, 'r', encoding='utf-8') as f_in:
+            reader = csv.DictReader(f_in)
+            with open(temp_file, 'w', newline='', encoding='utf-8') as f_out:
+                writer = csv.DictWriter(f_out, fieldnames=HEADERS)
+                writer.writeheader()
+                for row in reader:
+                    new_row = {k: row.get(k, '') for k in HEADERS}
+                    new_row['Category'] = 'balanced'
+                    writer.writerow(new_row)
+        try:
+            os.replace(temp_file, TRACKER_FILE)
+            print("  [Migration] Migration completed successfully.")
+        except Exception as e:
+            print(f"  [Migration] Error renaming migrated file: {e}")
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
 def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update arbitrage tracker", quiet=False):
     """Automatically commit and push updated files to GitHub."""
     if isinstance(filepaths, str):
