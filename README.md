@@ -140,38 +140,12 @@ The intensive runner performs the full workflow:
 7. Classify opportunities as true arbitrage, unbalanced arbitrage or quasi-arbitrage
 8. Write structured outputs for analysis and future modelling
 
-## Configuration
+## Setup Guide
 
-The project uses environment variables for local configuration.
+Detailed installation, configuration and run instructions are available in [SETUP.md](SETUP.md).
 
-Create a file named `.env` inside the `football/` folder:
+The setup guide explains how to install dependencies, create the local `.env` file, run the intensive football system and understand the generated local outputs.
 
-```text
-football/.env
-```
-
-A safe template is provided at:
-
-```text
-football/.env.example
-```
-
-Copy the example file to `football/.env` and fill in your local values.
-
-Example:
-
-```env
-STARTING_CAPITAL=500
-CURRENCY=GHS
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-TELEGRAM_CHAT_ID=your_telegram_chat_id_here
-MAX_PARALLEL_SCRAPERS=8
-SCRAPER_GLOBAL_TIMEOUT=90
-```
-
-The Telegram values are optional unless notification features are being used.
-
-The `.env` file is ignored by Git and should not be committed because it may contain private credentials.
 ## Fresh Data Collection
 
 Because odds can change quickly, the system is designed to refresh market data every two minutes.
