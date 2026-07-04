@@ -43,7 +43,6 @@ WS_URL = "wss://www.soccabet.com/ws/"
 SPORT_ID_SOCCER = "77"
 OU_LINES = ("0.5", "1.5", "2.5", "3.5", "4.5", "5.5")
 MIN_GOOD_MATCHES = int(os.getenv("SOCCABET_MIN_GOOD_MATCHES", "50"))
-SOCCABET_ALLOW_STALE_SNAPSHOT = str(os.getenv("SOCCABET_ALLOW_STALE_SNAPSHOT", "0")).lower() in {"1", "true", "yes", "on"}
 MAX_WS_ATTEMPTS = int(os.getenv("SOCCABET_WS_ATTEMPTS", "3"))
 GOOD_SNAPSHOT = "soccabet_last_good.json"
 
@@ -611,16 +610,9 @@ async def _async_scrape() -> list[dict]:
 
     matches = best_matches
     if _is_suspiciously_low(matches, baseline):
-        if SOCCABET_ALLOW_STALE_SNAPSHOT:
-            print(f"  [Soccabet] WARNING: using opt-in stale snapshot instead of partial feed ({len(matches)} < {len(baseline)})")
-            matches = baseline
-            best_raw_count = len(matches)
-            best_market_count = 0
-        else:
-            print(f"  [Soccabet] WARNING: partial fresh feed kept ({len(matches)} matches); stale snapshot ignored to avoid locked/old odds.")
+        print(f"  [Soccabet] WARNING: partial fresh feed kept ({len(matches)} matches); stale snapshot ignored to avoid locked/old odds.")
     else:
         _save_last_good(output_dir, matches)
-
     json_path, txt_path = save_outputs(matches, output_dir)
 
     elapsed = time.perf_counter() - started

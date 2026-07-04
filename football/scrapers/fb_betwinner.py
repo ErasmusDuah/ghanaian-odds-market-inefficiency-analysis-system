@@ -24,6 +24,7 @@ from curl_cffi.requests import AsyncSession
 # Domain fallback list — tried in order until one succeeds
 # Betwinner uses the same LineFeed family as 1xBet, with its own public domain.
 DOMAIN_FALLBACKS = [
+    "https://betwinner.com.gh",
     "https://betwinner.com",
 ]
 DEFAULT_SITE = DOMAIN_FALLBACKS[0]
@@ -42,6 +43,11 @@ DETAIL_CONCURRENCY = int(os.getenv("BETWINNER_DETAIL_CONCURRENCY", os.getenv("LI
 SESSION_MAX_CLIENTS = max(CHAMP_CONCURRENCY, DETAIL_CONCURRENCY)
 FAST_BULK_LIMIT = 50
 MIN_CACHE_STUBS = int(os.getenv("BETWINNER_MIN_CACHE_STUBS", "100"))
+# Public Ghana frontend params observed from betwinner.com.gh. These must match
+# the visible website feed; generic LineFeed params can return stale/different odds.
+FRONTEND_COUNTRY_ID = 48
+FRONTEND_PARTNER_ID = 152
+FRONTEND_GROUP_ID = 541
 FAST_BULK_PARAM_SETS = [
     {
         "sports": 1,
@@ -212,11 +218,18 @@ def build_odds_block(entries: Iterable[dict]) -> Dict[str, Any]:
 async def fetch_champs_async(session: AsyncSession, site: str, tf_ms: int, referer: str) -> List[dict]:
     data = await async_linefeed_get(
         session, site, "GetChampsZip",
-        {"sport": 1, "lng": "en", "tf": tf_ms, "tz": 0, "country": 80},
+        {
+            "sport": 1,
+            "lng": "en",
+            "tf": tf_ms,
+            "tz": 0,
+            "country": FRONTEND_COUNTRY_ID,
+            "partner": FRONTEND_PARTNER_ID,
+            "gr": FRONTEND_GROUP_ID,
+        },
         referer,
     )
     return list(data.get("Value") or [])
-
 
 async def fetch_champ_games_async(session: AsyncSession, site: str, li: int, tf_ms: int, referer: str) -> Optional[dict]:
     return await async_linefeed_get(
@@ -228,7 +241,9 @@ async def fetch_champ_games_async(session: AsyncSession, site: str, li: int, tf_
             "afterDays": 0,
             "tz": 0,
             "sport": 1,
-            "country": 80,
+            "country": FRONTEND_COUNTRY_ID,
+            "partner": FRONTEND_PARTNER_ID,
+            "gr": FRONTEND_GROUP_ID,
         },
         referer,
     )
@@ -237,8 +252,19 @@ async def fetch_champ_games_async(session: AsyncSession, site: str, li: int, tf_
 async def fetch_game_zip_async(session: AsyncSession, site: str, game_id: int, referer: str) -> Optional[dict]:
     data = await async_linefeed_get(
         session, site, "GetGameZip",
-        {"id": game_id, "lng": "en", "cfview": 0, "isSubGames": "true",
-         "GroupEvents": "true", "countevents": 250, "country": 80},
+        {
+            "id": game_id,
+            "lng": "en",
+            "isSubGames": "true",
+            "GroupEvents": "true",
+            "countevents": 250,
+            "grMode": 4,
+            "partner": FRONTEND_PARTNER_ID,
+            "topGroups": "",
+            "country": FRONTEND_COUNTRY_ID,
+            "marketType": 1,
+            "isNewBuilder": "true",
+        },
         referer,
     )
     return data.get("Value") if isinstance(data.get("Value"), dict) else None

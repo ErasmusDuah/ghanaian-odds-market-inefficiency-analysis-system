@@ -46,6 +46,7 @@ from scrapers.fb_betwinner    import run as fetch_betwinner
 from scrapers.fb_betpawa      import run as fetch_betpawa
 from scrapers.fb_betano       import run as fetch_betano
 from scrapers.fb_betfox       import run as fetch_betfox
+from scrapers.fb_betbooker    import run as fetch_betbooker
 from scrapers.fb_betika       import run as fetch_betika
 from scrapers.fb_1win        import run as fetch_1win
 from scrapers.fb_mybetafrica import run as fetch_mybetafrica
@@ -57,7 +58,16 @@ from engine.fb_market_guard   import sanitize_all_platform_matches, report_has_c
 
 ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-SCRAPER_OUTPUT_PATTERNS = ('*_odds.json', '*_matches.txt')
+SCRAPER_OUTPUT_PATTERNS = (
+    '*_odds.json',
+    '*_matches.txt',
+    '*_event_cache.json',
+    '*_last_good.json',
+    '*_snapshot.json',
+)
+SCRAPER_OUTPUT_DIRS = (
+    'soccabet_cache',
+)
 INTENSIVE_OUTPUT_FILES = (
     'intensive_balanced.txt',
     'intensive_unbalanced.txt',
@@ -119,8 +129,13 @@ def _ensure_analysis_trackers():
 
 def _delete_old_scraper_outputs():
     import glob
+    import shutil
+
     removed = 0
     failed = []
+
+    # Fresh-scan rule: remove generated scraper outputs and discovery snapshots
+    # before collecting odds. Trackers and analysis files are intentionally kept.
     for pattern in SCRAPER_OUTPUT_PATTERNS:
         for path in glob.glob(os.path.join(DATA_DIR, pattern)):
             try:
@@ -130,8 +145,20 @@ def _delete_old_scraper_outputs():
                 pass
             except OSError as exc:
                 failed.append((path, exc))
+
+    for dirname in SCRAPER_OUTPUT_DIRS:
+        path = os.path.join(DATA_DIR, dirname)
+        try:
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+                removed += 1
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            failed.append((path, exc))
+
     if removed:
-        print(f"  Cleared {removed} old scraper JSON/TXT output file(s) before fresh scrape.")
+        print(f"  Cleared {removed} old scraper output/cache file(s) before fresh scrape.")
     if failed:
         for path, exc in failed[:8]:
             print(f"  ERROR: Could not remove stale scraper output {path}: {exc}")
@@ -169,6 +196,7 @@ ACTIVE_SCRAPERS = [
     ('BetPawa',      fetch_betpawa),
     ('Betano',       fetch_betano),
     ('Betfox',       fetch_betfox),
+    ('Betbooker',    fetch_betbooker),
     ('Betika',       fetch_betika),
     ('1win',         fetch_1win),
     ('MyBet.Africa', fetch_mybetafrica),
@@ -190,6 +218,7 @@ PLATFORM_TXT_FILES = {
     'BetPawa': 'betpawa_matches.txt',
     'Betano': 'betano_matches.txt',
     'Betfox': 'betfox_matches.txt',
+    'Betbooker': 'betbooker_matches.txt',
     'Betika': 'betika_matches.txt',
     '1win': 'onewin_matches.txt',
     'MyBet.Africa': 'mybetafrica_matches.txt',
@@ -216,6 +245,7 @@ PLATFORM_JSON_FILES = {
     'BetPawa': 'betpawa_odds.json',
     'Betano': 'betano_odds.json',
     'Betfox': 'betfox_odds.json',
+    'Betbooker': 'betbooker_odds.json',
     'Betika': 'betika_odds.json',
     '1win': 'onewin_odds.json',
     'MyBet.Africa': 'mybetafrica_odds.json',
@@ -435,6 +465,10 @@ def run_scan():
         print(f"   Scan mode: EXHAUSTIVE (all platform pairings per market)")
         print("* " * 20)
 
+        _clear_intensive_outputs(
+            'Scan in progress; previous opportunities cleared to prevent stale odds.'
+        )
+
         if not _delete_old_scraper_outputs():
             _clear_intensive_outputs('Stale scraper output could not be removed safely; scan aborted to prevent stale odds.')
             return
@@ -490,6 +524,7 @@ def run_scan():
             betpawa_matches      = fetched.get('BetPawa',      []),
             betano_matches       = fetched.get('Betano',       []),
             betfox_matches       = fetched.get('Betfox',       []),
+            betbooker_matches    = fetched.get('Betbooker',    []),
             betika_matches       = fetched.get('Betika',       []),
             onewin_matches       = fetched.get('1win',         []),
             mybetafrica_matches  = fetched.get('MyBet.Africa', []),

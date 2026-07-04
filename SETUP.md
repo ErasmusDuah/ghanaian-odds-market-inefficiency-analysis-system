@@ -19,7 +19,7 @@ The main README explains the research purpose of the project. This file focuses 
 The default setup uses:
 
 ```env
-STAKE_AMOUNT=800
+STARTING_CAPITAL=800
 ```
 
 You can change this later in `football/.env` if you want a different amount.
@@ -127,7 +127,7 @@ The run command does the following automatically:
 The setup creates `football/.env` with this default value:
 
 ```env
-STAKE_AMOUNT=800
+STARTING_CAPITAL=800
 ```
 
 To use a different amount, open:
@@ -139,16 +139,10 @@ football/.env
 Then change the value:
 
 ```env
-STAKE_AMOUNT=1000
-```
-
-Keep `STARTING_CAPITAL` aligned if you use older helper scripts:
-
-```env
 STARTING_CAPITAL=1000
 ```
 
-The intensive runner prefers `STAKE_AMOUNT` and falls back to `STARTING_CAPITAL` for compatibility.
+The intensive runner uses `STARTING_CAPITAL` as the main stake setting. `STAKE_AMOUNT` is still accepted only as a legacy fallback for older local config files.
 
 If the stake value is missing, zero or not a number, the system stops with a clear message so the run does not continue with a bad configuration.
 

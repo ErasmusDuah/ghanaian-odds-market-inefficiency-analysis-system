@@ -1,15 +1,15 @@
-# ── Environment & Secrets — NEVER commit these ──
+﻿# â”€â”€ Environment & Secrets â€” NEVER commit these â”€â”€
 .env
 football/.env
 table_tennis/.env
 basketball/.env
 
-# ── Python cache ──
+# â”€â”€ Python cache â”€â”€
 __pycache__/
 *.pyc
 *.pyo
 
-# ── Generated odds data (per sport, rebuilt on every run) ──
+# â”€â”€ Generated odds data (per sport, rebuilt on every run) â”€â”€
 football/data/*.json
 football/data/*.txt
 football/data/soccabet_cache/
@@ -18,19 +18,19 @@ table_tennis/data/*.txt
 basketball/data/*.json
 basketball/data/*.txt
 
-# ── Legacy root data (no longer used) ──
+# â”€â”€ Legacy root data (no longer used) â”€â”€
 data/*.json
 data/*.txt
 
-# ── Ledger databases ──
+# â”€â”€ Ledger databases â”€â”€
 data/ledger.db
 
-# ── Engine artifacts ──
+# â”€â”€ Engine artifacts â”€â”€
 football/engine/opportunities.json
 engine/arb_*.json
 engine/opportunities.json
 
-# ── Debug & scratch files ──
+# â”€â”€ Debug & scratch files â”€â”€
 *.html
 1x_debug.html
 captured_*.json
@@ -43,7 +43,7 @@ matches_*.json
 matches_*.txt
 scratch/
 
-# ── Virtual environment ──
+# â”€â”€ Virtual environment â”€â”€
 .venv/
 # Private local trackers and personal analysis workbooks
 football/data/*stake_tracker*.xlsx
@@ -61,3 +61,5 @@ football/data/quasi_arb_ml.xlsx.bak
 api/
 football/data/backups/
 odibets_root.json
+football/data/*.wasm
+

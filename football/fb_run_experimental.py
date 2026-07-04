@@ -199,7 +199,7 @@ def main():
             soccabet_matches     = [],
             betpawa_matches      = [],
             supabet_matches      = [],
-            bangbet_matches      = fetched.get('Bangbet', []),
+            bangbet_matches      = [],  # Bangbet temporarily disabled
         )
 
         display_all(balanced, unbalanced, quasi, num_groups, total_stake)

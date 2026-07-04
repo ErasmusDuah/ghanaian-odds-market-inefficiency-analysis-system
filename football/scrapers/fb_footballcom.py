@@ -13,7 +13,6 @@ from urllib.parse import quote
 FOOTBALLCOM_URL = 'https://www.football.com/gh/sport/football'
 API_URL = ('https://www.football.com/api/gh/factsCenter/'
            'wapConfigurableEventsByOrder')
-RECENT_FALLBACK_MAX_AGE_SECONDS = 20 * 60
 DETAIL_URL = 'https://www.football.com/api/gh/factsCenter/event'
 DETAIL_CONCURRENCY = int(os.getenv('FOOTBALLCOM_DETAIL_CONCURRENCY', '40'))
 
@@ -701,30 +700,6 @@ try:
 except ImportError:
     from fb_output_formatter import format_match_text_block
 
-def _load_recent_fallback(output_dir):
-    path = os.path.join(output_dir, 'footballcom_odds.json')
-    try:
-        if not os.path.exists(path):
-            return []
-        age = _time.time() - os.path.getmtime(path)
-        if age > RECENT_FALLBACK_MAX_AGE_SECONDS:
-            return []
-        with open(path, 'r', encoding='utf-8') as f:
-            rows = json.load(f)
-    except Exception:
-        return []
-
-    now = datetime.now()
-    fresh = []
-    for match in rows if isinstance(rows, list) else []:
-        try:
-            kickoff = datetime.strptime(str(match.get('kickoff', '')), '%Y-%m-%d %H:%M')
-        except Exception:
-            continue
-        if kickoff > now and match.get('odds_1x2'):
-            fresh.append(match)
-    return fresh
-
 def run():
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
     os.makedirs(output_dir, exist_ok=True)
@@ -737,11 +712,7 @@ def run():
         matches = []
 
     if not matches:
-        fallback = _load_recent_fallback(output_dir)
-        if fallback:
-            print(f"WARNING: Using recent Football.com snapshot ({len(fallback)} matches) instead of empty scrape")
-            matches = fallback
-
+        print("WARNING: Football.com returned no fresh matches; stale snapshot fallback is disabled.")
     if matches:
         display_matches(matches)
 

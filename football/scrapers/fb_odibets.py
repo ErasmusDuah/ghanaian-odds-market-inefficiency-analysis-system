@@ -1,9 +1,8 @@
 """
 Odibets Ghana football prematch odds scraper.
 
-Uses Odibets' own sportsbook PAL API.  The scraper fetches the daily
-prematch bundle (``/api/sb/pal/daily/mobile/en/…``) which returns all
-today's soccer events, then fetches full market details per event.
+Uses Odibets' own sportsbook PAL API. The scraper fetches market-level weekly
+bundles and filters them down to today's visible prematch football events.
 """
 from __future__ import annotations
 
@@ -12,6 +11,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -40,11 +40,12 @@ API_BASE = "https://gh.api.odibets.com.gh"
 SITE_URL = "https://odibets.com.gh/gh/"
 TIMEZONE = "Africa/Accra"
 SOURCE = "odibets_gh"
-REQUEST_TIMEOUT = min(8.0, max(4.0, float(os.getenv('ODIBETS_REQUEST_TIMEOUT', '6'))))
-MAX_WORKERS = 1
-MAX_DETAIL_WORKERS = min(4, max(1, int(os.getenv('ODIBETS_DETAIL_WORKERS', '4'))))
-RATE_LIMIT_COOLDOWN = max(60, int(os.getenv('ODIBETS_RATE_LIMIT_COOLDOWN', '600')))
+REQUEST_TIMEOUT = min(12.0, max(5.0, float(os.getenv('ODIBETS_REQUEST_TIMEOUT', '8'))))
+MAX_BUNDLE_WORKERS = min(8, max(1, int(os.getenv('ODIBETS_BUNDLE_WORKERS', '6'))))
+BUNDLE_MARKET_IDS = (1, 10, 27, 1043, 1044, 17, 53, 60)
+RATE_LIMIT_COOLDOWN = max(30, int(os.getenv('ODIBETS_RATE_LIMIT_COOLDOWN', '90')))
 _RATE_LIMITED_UNTIL = 0.0
+_THREAD_LOCAL = threading.local()
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 
 _EMPTY_MARKETS = {
@@ -161,6 +162,13 @@ def _retry_after_from_exception(exc: Exception) -> Optional[int]:
         return None
 
 
+def _thread_session() -> requests.Session:
+    session = getattr(_THREAD_LOCAL, "odibets_session", None)
+    if session is None:
+        session = requests.Session(impersonate="chrome120")
+        _THREAD_LOCAL.odibets_session = session
+    return session
+
 def _get_json(session: Optional[requests.Session], path: str, *, retries: int = 2) -> Dict[str, Any]:
     remaining = _rate_limit_remaining()
     if remaining > 0:
@@ -197,7 +205,15 @@ def _get_json(session: Optional[requests.Session], path: str, *, retries: int = 
 
 
 def _odd_group(odds: Dict[str, Any], market_id: int) -> Dict[str, Any]:
-    return odds.get(f"1_{market_id}") or {}
+    nested = odds.get(f"1_{market_id}")
+    prefix = f"{market_id}_"
+    if isinstance(nested, dict) and any(str(key).startswith(prefix) for key in nested):
+        return nested
+    return {
+        str(key): value
+        for key, value in (odds or {}).items()
+        if str(key).startswith(prefix)
+    }
 
 
 def _selection_price(group: Dict[str, Any], market_id: int, selection_id: int) -> Optional[float]:
@@ -303,102 +319,125 @@ def _parse_event_detail(detail: Dict[str, Any], tournaments: Dict[int, str],
     return match
 
 
-def _collect_event_ids(session: requests.Session, tz: ZoneInfo, today) -> tuple[List[int], Dict[int, str]]:
-    """Collect today's prematch soccer event IDs."""
-    root = _get_json(session, "/api/sb/pal/sports/en/0", retries=3)
-    tournaments = {
+def _event_list(raw: Any) -> List[Dict[str, Any]]:
+    if isinstance(raw, dict):
+        raw = list(raw.values())
+    if not isinstance(raw, list):
+        return []
+    return [item for item in raw if isinstance(item, dict)]
+
+
+def _load_tournaments(session: requests.Session) -> Dict[int, str]:
+    root = _get_json(session, "/api/sb/pal/sports/en/0", retries=2)
+    return {
         int(k): str(v.get("d") or "Football")
         for k, v in (root.get("TOUR") or {}).items()
         if str(k).isdigit()
     }
 
+
+def _bundle_path(market_id: int, tz: ZoneInfo) -> str:
     now = datetime.now(tz)
-    event_ids: Dict[int, None] = {}
-    daily_seen = 0
-    root_seen = 0
-
-    try:
-        tz_offset = int(-now.utcoffset().total_seconds() // 3600) if now.utcoffset() else 0
-        daily = _get_json(session, f"/api/sb/pal/daily/mobile/en/1/0/{tz_offset}", retries=1)
-        daily_events = daily.get("E") or []
-        if isinstance(daily_events, dict):
-            daily_events = list(daily_events.values())
-        daily_seen = len(daily_events)
-        for event in daily_events:
-            _maybe_add_event_id(event_ids, event, tz, today, now)
-    except OdibetsRateLimited:
-        print("  WARNING: Odibets daily bundle rate-limited; using root fallback events.")
-    except Exception as exc:
-        print(f"  WARNING: Odibets daily bundle unavailable: {exc}")
-
-    # The root endpoint is only featured events, but it can rescue matches
-    # when the daily bundle is unavailable.
-    if not event_ids:
-        root_events = root.get("E") or {}
-        if isinstance(root_events, dict):
-            root_events = list(root_events.values())
-        root_seen = len(root_events)
-        for event in root_events:
-            _maybe_add_event_id(event_ids, event, tz, today, now)
-
-    if not event_ids and (daily_seen or root_seen):
-        print(
-            f"  WARNING: Odibets saw daily={daily_seen}, root={root_seen}, "
-            "but none passed today's prematch filter."
-        )
-
-    return list(event_ids.keys()), tournaments
+    tz_offset = int(-now.utcoffset().total_seconds() // 3600) if now.utcoffset() else 0
+    return (
+        "/api/sb/pal/weekly-bundle/"
+        f"?language=en&timezone={tz_offset}&sportId=1&timefilter=0&marketId={market_id}"
+    )
 
 
-def _maybe_add_event_id(event_ids: Dict[int, None], event: Dict[str, Any],
-                        tz: ZoneInfo, today, now: datetime) -> None:
-    kickoff_dt = _dt(event.get("std") or event.get("evd"), tz)
-    event_id = event.get("id") or event.get("i")
-    home = event.get("h") or event.get("hn") or event.get("home") or ""
-    away = event.get("a") or event.get("an") or event.get("away") or ""
-    if not home or not away:
-        home, away = _split_teams(event.get("n", ""))
-    tournament = event.get("cn") or event.get("tn") or event.get("tournament") or ""
-    if (
-        event_id
-        and str(event.get("s", event.get("st"))) == "1"
-        and not event.get("l")
-        and kickoff_dt
-        and kickoff_dt.date() == today
-        and kickoff_dt > now
-        and not _is_pseudo(str(home), str(away), str(tournament))
-    ):
-        event_ids[int(event_id)] = None
+def _fetch_market_bundle(market_id: int, tz: ZoneInfo) -> tuple[int, Dict[str, Any]]:
+    return market_id, _get_json(_thread_session(), _bundle_path(market_id, tz), retries=1)
 
 
 def _fetch_matches() -> List[Dict[str, Any]]:
     tz = ZoneInfo(TIMEZONE)
     today = datetime.now(tz).date()
     session = requests.Session(impersonate="chrome120")
-    event_ids, tournaments = _collect_event_ids(session, tz, today)
-    if not event_ids:
-        return []
-    matches: List[Dict[str, Any]] = []
-    failed_details = 0
+    tournaments = _load_tournaments(session)
 
-    def fetch_detail(event_id: int) -> Optional[Dict[str, Any]]:
-        try:
-            detail = _get_json(None, f"/api/sb/pal/event/en/{event_id}", retries=0)
-            return _parse_event_detail(detail, tournaments, tz, today)
-        except Exception:
-            return None
+    events_by_id: Dict[int, Dict[str, Any]] = {}
+    odds_by_id: Dict[int, Dict[str, Any]] = {}
+    request_errors = 0
+    error_samples: List[str] = []
 
-    with ThreadPoolExecutor(max_workers=MAX_DETAIL_WORKERS) as executor:
-        futures = [executor.submit(fetch_detail, event_id) for event_id in event_ids]
+    worker_count = min(MAX_BUNDLE_WORKERS, len(BUNDLE_MARKET_IDS))
+    print(
+        f"  Fetching Odibets market bundles: {len(BUNDLE_MARKET_IDS)} market(s) "
+        f"with {worker_count} worker(s)..."
+    )
+
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        futures = {
+            executor.submit(_fetch_market_bundle, market_id, tz): market_id
+            for market_id in BUNDLE_MARKET_IDS
+        }
         for future in as_completed(futures):
-            parsed = future.result()
-            if parsed:
-                matches.append(parsed)
-            else:
-                failed_details += 1
+            market_id = futures[future]
+            try:
+                _, data = future.result()
+            except OdibetsRateLimited:
+                for pending in futures:
+                    if not pending.done():
+                        pending.cancel()
+                raise
+            except Exception as exc:
+                request_errors += 1
+                if len(error_samples) < 5:
+                    error_samples.append(f"market {market_id}: {exc}")
+                continue
 
-    if failed_details:
-        print(f"  WARNING: Odibets skipped {failed_details} unavailable detail event(s) this scan.")
+            for event in _event_list(data.get("E") or []):
+                event_id = event.get("id") or event.get("i")
+                if event_id is not None:
+                    try:
+                        events_by_id[int(event_id)] = event
+                    except (TypeError, ValueError):
+                        pass
+
+            odds_table = data.get("O") or {}
+            if isinstance(odds_table, dict):
+                for event_id, odds in odds_table.items():
+                    if not isinstance(odds, dict):
+                        continue
+                    try:
+                        numeric_id = int(event_id)
+                    except (TypeError, ValueError):
+                        continue
+                    odds_by_id.setdefault(numeric_id, {}).update(odds)
+
+    if request_errors:
+        print(f"  WARNING: Odibets bundle request errors: {request_errors}/{len(BUNDLE_MARKET_IDS)}")
+        for sample in error_samples:
+            print(f"    - {sample}")
+
+    if request_errors > max(1, int(len(BUNDLE_MARKET_IDS) * 0.25)):
+        raise RuntimeError(
+            f"Odibets bundle feed too incomplete ({request_errors}/{len(BUNDLE_MARKET_IDS)} bundle errors); "
+            "skipping this platform for the scan instead of using partial odds."
+        )
+
+    matches: List[Dict[str, Any]] = []
+    parse_rejects = 0
+    for event_id, odds in odds_by_id.items():
+        event = events_by_id.get(event_id)
+        if not event:
+            parse_rejects += 1
+            continue
+        parsed = _parse_event_detail({"E": event, "O": odds}, tournaments, tz, today)
+        if parsed:
+            matches.append(parsed)
+        else:
+            parse_rejects += 1
+
+    if parse_rejects:
+        print(f"  INFO: Odibets bundle events ignored after today/pseudo/visibility filters: {parse_rejects}")
+
+    if not matches and odds_by_id:
+        raise RuntimeError(
+            "Odibets bundle feed returned odds but none passed today's visibility filters; "
+            "skipping this platform for the scan."
+        )
+
     matches.sort(key=lambda item: (item["kickoff"], item["tournament"], item["home_team"], item["away_team"]))
     return matches
 
@@ -418,8 +457,8 @@ def _save_outputs(matches: List[Dict[str, Any]], elapsed: float) -> None:
             f.write(format_match_text_block(match))
             f.write("\n")
         f.write(f"\nScraping completed in {elapsed:.1f}s\n")
-    print(f"💾 Saved to {json_path}")
-    print(f"📄 Full list: {txt_path}")
+    print(f"Saved to {json_path}")
+    print(f"Full list: {txt_path}")
 
 
 def run() -> List[Dict[str, Any]]:
@@ -441,16 +480,19 @@ def run() -> List[Dict[str, Any]]:
 
     elapsed = time.time() - start
     if not matches:
-        print("⚠️  No prematch matches found for today.")
+        print("WARNING: No prematch matches found for today.")
     print(f"ODIBETS GHANA\nTotal matches fetched: {len(matches)}")
     print(f"With 1X2 odds: {sum(1 for m in matches if m.get('odds_1x2'))}")
     print(f"With O/U odds: {sum(1 for m in matches if m.get('odds_ou'))}")
     print(f"With DC odds:  {sum(1 for m in matches if m.get('odds_dc'))}")
     print(f"With GG odds:  {sum(1 for m in matches if m.get('odds_gg'))}")
-    print(f"⏱️  Scraping completed in {elapsed:.1f}s")
+    print(f"Scraping completed in {elapsed:.1f}s")
     _save_outputs(matches, elapsed)
     return matches
 
 
 if __name__ == "__main__":
     run()
+
+
+

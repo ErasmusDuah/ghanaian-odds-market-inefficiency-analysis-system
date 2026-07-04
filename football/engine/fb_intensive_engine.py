@@ -64,7 +64,7 @@ PLATFORMS = [
     'onexbet', 'twentytwobet', 'msport',
     # 'bangbet',  # Temporarily disabled
     'soccabet', 'supabet', 'betwinner',
-    'betpawa', 'betano', 'betfox', 'betika', 'onewin',
+    'betpawa', 'betano', 'betfox', 'betbooker', 'betika', 'onewin',
     'mybetafrica', 'odibets',
 ]
 
@@ -83,6 +83,7 @@ PLATFORM_DISPLAY = {
     'betpawa':      'BetPawa',
     'betano':       'Betano',
     'betfox':       'Betfox',
+    'betbooker':    'Betbooker',
     'betika':       'Betika',
     'onewin':       '1win',
     'mybetafrica':  'MyBet.Africa',
@@ -104,6 +105,7 @@ SOURCE_MAP = {
     'betpawa':      'betpawa_gh',
     'betano':       'betano_gh',
     'betfox':       'betfox_gh',
+    'betbooker':    'betbooker_gh',
     'betika':       'betika_gh',
     'onewin':       '1win_gh',
     'mybetafrica':  'mybetafrica_gh',
@@ -883,6 +885,7 @@ def run_intensive(total_stake=None,
                   betpawa_matches=None,
                   betano_matches=None,
                   betfox_matches=None,
+                  betbooker_matches=None,
                   betika_matches=None,
                   onewin_matches=None,
                   mybetafrica_matches=None,
@@ -891,13 +894,14 @@ def run_intensive(total_stake=None,
         _env = dotenv_values(_ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
 
-    def _load(path):
-        try:
-            with open(path, encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return []
+    warned_disk_blocked = False
 
+    def _load(path):
+        nonlocal warned_disk_blocked
+        if not warned_disk_blocked:
+            print("  WARNING: Disk odds fallback is disabled; missing platform data is treated as empty to prevent stale odds.")
+            warned_disk_blocked = True
+        return []
     if sportybet_matches    is None: sportybet_matches    = _load('data/sportybet_odds.json')
     if betway_matches       is None: betway_matches       = _load('data/betway_odds.json')
     if footballcom_matches  is None: footballcom_matches  = _load('data/footballcom_odds.json')
@@ -912,6 +916,7 @@ def run_intensive(total_stake=None,
     if betpawa_matches      is None: betpawa_matches      = _load('data/betpawa_odds.json')
     if betano_matches       is None: betano_matches       = _load('data/betano_odds.json')
     if betfox_matches       is None: betfox_matches       = _load('data/betfox_odds.json')
+    if betbooker_matches    is None: betbooker_matches    = _load('data/betbooker_odds.json')
     if betika_matches       is None: betika_matches       = _load('data/betika_odds.json')
     if onewin_matches       is None: onewin_matches       = _load('data/onewin_odds.json')
     if mybetafrica_matches  is None: mybetafrica_matches  = _load('data/mybetafrica_odds.json')
@@ -932,6 +937,7 @@ def run_intensive(total_stake=None,
         'betpawa':      betpawa_matches,
         'betano':       betano_matches,
         'betfox':       betfox_matches,
+        'betbooker':    betbooker_matches,
         'betika':       betika_matches,
         'onewin':       onewin_matches,
         'mybetafrica':  mybetafrica_matches,

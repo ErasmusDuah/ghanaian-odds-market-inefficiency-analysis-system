@@ -612,7 +612,7 @@ def run_experimental(total_stake=None,
     if betpawa_matches  is None: betpawa_matches  = load_json('data/betpawa_odds.json')
     if msport_matches   is None: msport_matches   = load_json('data/msport_odds.json')
     if supabet_matches  is None: supabet_matches  = load_json('data/supabet_odds.json')
-    if bangbet_matches  is None: bangbet_matches  = load_json('data/bangbet_odds.json')
+    if bangbet_matches  is None: bangbet_matches  = []  # Bangbet temporarily disabled
     raw_guarded, _guard_reports = sanitize_all_platform_matches({
         'sportybet': sportybet_matches,
         'betway': betway_matches,
@@ -623,7 +623,7 @@ def run_experimental(total_stake=None,
         'betpawa': betpawa_matches,
         'msport': msport_matches,
         'supabet': supabet_matches,
-        'bangbet': bangbet_matches,
+        # 'bangbet': bangbet_matches,  # Temporarily disabled
     })
     sportybet_matches = raw_guarded['sportybet']
     betway_matches = raw_guarded['betway']
@@ -634,7 +634,7 @@ def run_experimental(total_stake=None,
     betpawa_matches = raw_guarded['betpawa']
     msport_matches = raw_guarded['msport']
     supabet_matches = raw_guarded['supabet']
-    bangbet_matches = raw_guarded['bangbet']
+    bangbet_matches = []  # Bangbet temporarily disabled
 
 
     # Filter virtual/esports from ALL platforms
@@ -652,7 +652,7 @@ def run_experimental(total_stake=None,
     all_matches = (
         sportybet_matches + betway_matches + footballcom_matches +
         onexbet_matches + twentytwobet_matches + soccabet_matches +
-        betpawa_matches + msport_matches + supabet_matches + bangbet_matches
+        betpawa_matches + msport_matches + supabet_matches
     )
 
     groups = match_all_platforms(all_matches)
@@ -685,7 +685,7 @@ def run_experimental(total_stake=None,
             'betpawa':      next((m for m in matches if m['source'] == 'betpawa_gh'),      empty),
             'msport':       next((m for m in matches if m['source'] == 'msport_gh'),       empty),
             'supabet':      next((m for m in matches if m['source'] == 'supabet_gh'),      empty),
-            'bangbet':      next((m for m in matches if m['source'] == 'bangbet_gh'),      empty),
+            'bangbet':      empty,  # Bangbet temporarily disabled
         }
 
         results = scan_group(pair, total_stake)
@@ -796,7 +796,7 @@ def display_all(balanced_opps, unbalanced_opps, quasi_opps, num_groups, total_st
 
     print(f"\n{sep}")
     print(f"Events Events scanned  : {num_groups}")
-    print(f"Scraping Platforms       : 7 active (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport, Bangbet)")
+    print(f"Scraping Platforms       : 6 active (Sportybet, Betway, Football.com, 1xBet, 22Bet, MSport)")
     print(f"Balanced  Balanced        : {len(balanced_opps)}")
     print(f" Unbalanced      : {len(unbalanced_opps)}")
     print(f"  Quasi-Arb       : {len(quasi_opps)}")

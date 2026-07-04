@@ -35,6 +35,9 @@ FETCH_SUBGAMES = os.getenv("ONEXBET_FETCH_SUBGAMES", "0").strip().lower() in {"1
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 EVENT_CACHE_PATH = os.path.join(_DATA_DIR, "onexbet_event_cache.json")
 MIN_EVENT_CACHE_STUBS = int(os.getenv("ONEXBET_MIN_EVENT_CACHE_STUBS", "100"))
+# Verified against the visible 1xbet.com.gh event page. Do not reuse Betwinner
+# partner params here; they return a different price set for some 1x events.
+ONEXBET_VISIBLE_COUNTRY_ID = 80
 
 OU_TOTALS: Tuple[float, ...] = (1.5, 2.5, 3.5, 4.5, 5.5)
 DEFAULT_TF_MS = 172800000
@@ -213,7 +216,7 @@ def build_odds_block(entries: Iterable[dict]) -> Dict[str, Any]:
 async def fetch_champs_async(session: AsyncSession, site: str, tf_ms: int, referer: str) -> List[dict]:
     data = await async_linefeed_get(
         session, site, "GetChampsZip",
-        {"sport": 1, "lng": "en", "tf": tf_ms, "tz": 0, "country": 80},
+        {"sport": 1, "lng": "en", "tf": tf_ms, "tz": 0, "country": ONEXBET_VISIBLE_COUNTRY_ID},
         referer,
     )
     return list(data.get("Value") or [])
@@ -229,7 +232,7 @@ async def fetch_champ_games_async(session: AsyncSession, site: str, li: int, tf_
             "afterDays": 0,
             "tz": 0,
             "sport": 1,
-            "country": 80,
+            "country": ONEXBET_VISIBLE_COUNTRY_ID,
         },
         referer,
     )
@@ -239,7 +242,7 @@ async def fetch_game_zip_async(session: AsyncSession, site: str, game_id: int, r
     data = await async_linefeed_get(
         session, site, "GetGameZip",
         {"id": game_id, "lng": "en", "cfview": 0, "isSubGames": "true",
-         "GroupEvents": "true", "countevents": 250, "country": 80},
+         "GroupEvents": "true", "countevents": 250, "country": ONEXBET_VISIBLE_COUNTRY_ID},
         referer,
     )
     return data.get("Value") if isinstance(data.get("Value"), dict) else None
