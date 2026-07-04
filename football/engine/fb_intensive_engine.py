@@ -64,8 +64,8 @@ PLATFORMS = [
     'onexbet', 'twentytwobet', 'msport',
     # 'bangbet',  # Temporarily disabled
     'soccabet', 'supabet', 'betwinner',
-    'betpawa', 'betano', 'betfox', 'betbooker', 'betika', 'onewin',
-    'mybetafrica', 'odibets',
+    'betpawa', 'betano', 'betfox', 'betbooker', 'betika',
+    'mybetafrica', 'odibets', 'ilotbet', 'keedbet',
 ]
 
 PLATFORM_DISPLAY = {
@@ -85,9 +85,10 @@ PLATFORM_DISPLAY = {
     'betfox':       'Betfox',
     'betbooker':    'Betbooker',
     'betika':       'Betika',
-    'onewin':       '1win',
     'mybetafrica':  'MyBet.Africa',
     'odibets':      'Odibets',
+    'ilotbet':      'Ilotbet',
+    'keedbet':      'Keedbet',
 }
 
 SOURCE_MAP = {
@@ -107,9 +108,10 @@ SOURCE_MAP = {
     'betfox':       'betfox_gh',
     'betbooker':    'betbooker_gh',
     'betika':       'betika_gh',
-    'onewin':       '1win_gh',
     'mybetafrica':  'mybetafrica_gh',
     'odibets':      'odibets_gh',
+    'ilotbet':      'ilotbet_gh',
+    'keedbet':      'keedbet_gh',
 }
 
 # -- FUZZY MATCHING -------------------------------------------------------------
@@ -887,9 +889,10 @@ def run_intensive(total_stake=None,
                   betfox_matches=None,
                   betbooker_matches=None,
                   betika_matches=None,
-                  onewin_matches=None,
                   mybetafrica_matches=None,
-                  odibets_matches=None):
+                  odibets_matches=None,
+                  ilotbet_matches=None,
+                  keedbet_matches=None):
     if total_stake is None:
         _env = dotenv_values(_ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
@@ -918,9 +921,10 @@ def run_intensive(total_stake=None,
     if betfox_matches       is None: betfox_matches       = _load('data/betfox_odds.json')
     if betbooker_matches    is None: betbooker_matches    = _load('data/betbooker_odds.json')
     if betika_matches       is None: betika_matches       = _load('data/betika_odds.json')
-    if onewin_matches       is None: onewin_matches       = _load('data/onewin_odds.json')
     if mybetafrica_matches  is None: mybetafrica_matches  = _load('data/mybetafrica_odds.json')
     if odibets_matches      is None: odibets_matches      = _load('data/odibets_odds.json')
+    if ilotbet_matches      is None: ilotbet_matches      = _load('data/ilotbet_odds.json')
+    if keedbet_matches      is None: keedbet_matches      = _load('data/keedbet_odds.json')
 
     raw = {
         'sportybet':    sportybet_matches,
@@ -939,9 +943,10 @@ def run_intensive(total_stake=None,
         'betfox':       betfox_matches,
         'betbooker':    betbooker_matches,
         'betika':       betika_matches,
-        'onewin':       onewin_matches,
         'mybetafrica':  mybetafrica_matches,
         'odibets':      odibets_matches,
+        'ilotbet':      ilotbet_matches,
+        'keedbet':      keedbet_matches,
     }
     raw, _guard_reports = sanitize_all_platform_matches(raw)
 
@@ -1067,10 +1072,14 @@ def display_all(opportunities, num_groups, total_stake,
     unbalanced = [o for o in opportunities if o.get('category') == 'unbalanced']
     quasi      = [o for o in opportunities if o.get('category') == 'quasi']
 
+    os.makedirs(_DATA_DIR, exist_ok=True)
     bal_path = os.path.join(_DATA_DIR, 'intensive_balanced.txt')
-    with open(bal_path, 'w', encoding='utf-8') as f:
+    unb_path = os.path.join(_DATA_DIR, 'intensive_unbalanced.txt')
+    qua_path = os.path.join(_DATA_DIR, 'intensive_quasi.txt')
+
+    def _write_balanced(f):
         f.write(f"Balanced  BALANCED ARBITRAGE - {len(balanced)} opportunities\n")
-        f.write(f"Guaranteed equal profit on ALL outcomes\n")
+        f.write("Guaranteed equal profit on ALL outcomes\n")
         f.write(f"{sep}\n")
         if balanced:
             for opp in sorted(balanced, key=lambda x: x['profit_pct'], reverse=True):
@@ -1078,10 +1087,9 @@ def display_all(opportunities, num_groups, total_stake,
         else:
             f.write("  No balanced arb opportunities right now\n")
 
-    unb_path = os.path.join(_DATA_DIR, 'intensive_unbalanced.txt')
-    with open(unb_path, 'w', encoding='utf-8') as f:
+    def _write_unbalanced(f):
         f.write(f" UNBALANCED ARBITRAGE - {len(unbalanced)} opportunities\n")
-        f.write(f"All outcomes profitable - amounts differ\n")
+        f.write("All outcomes profitable - amounts differ\n")
         f.write(f"{sep}\n")
         if unbalanced:
             for opp in sorted(unbalanced, key=lambda x: x.get('min_profit_ghs', 0), reverse=True):
@@ -1089,16 +1097,37 @@ def display_all(opportunities, num_groups, total_stake,
         else:
             f.write("  No unbalanced arb opportunities right now\n")
 
-    qua_path = os.path.join(_DATA_DIR, 'intensive_quasi.txt')
-    with open(qua_path, 'w', encoding='utf-8') as f:
+    def _write_quasi(f):
         f.write(f"  QUASI-ARB (No-Loss) - {len(quasi)} opportunities\n")
-        f.write(f"Worst case: break even | Best case: profit\n")
+        f.write("Worst case: break even | Best case: profit\n")
         f.write(f"{sep}\n")
         if quasi:
             for opp in sorted(quasi, key=lambda x: x['best_profit_ghs'], reverse=True):
                 _write_opportunity_to_file(f, opp)
         else:
             f.write("  No quasi-arb opportunities right now\n")
+
+    tmp_paths = []
+    try:
+        for output_path, writer in (
+            (bal_path, _write_balanced),
+            (unb_path, _write_unbalanced),
+            (qua_path, _write_quasi),
+        ):
+            tmp_path = output_path + '.tmp'
+            with open(tmp_path, 'w', encoding='utf-8') as f:
+                writer(f)
+            tmp_paths.append((tmp_path, output_path))
+
+        for tmp_path, output_path in tmp_paths:
+            os.replace(tmp_path, output_path)
+    except Exception:
+        for tmp_path, _output_path in tmp_paths:
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+        raise
 
     quasi_summary = "   [Quasi ML] No new opportunities found at this time of the scan"
     try:
@@ -1128,5 +1157,7 @@ def display_all(opportunities, num_groups, total_stake,
             print(f"\n[Scheduled] Next run is at {next_run_str}")
     print(sep)
     return quasi_summary
+
+
 
 

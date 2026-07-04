@@ -48,9 +48,11 @@ from scrapers.fb_betano       import run as fetch_betano
 from scrapers.fb_betfox       import run as fetch_betfox
 from scrapers.fb_betbooker    import run as fetch_betbooker
 from scrapers.fb_betika       import run as fetch_betika
-from scrapers.fb_1win        import run as fetch_1win
+
 from scrapers.fb_mybetafrica import run as fetch_mybetafrica
 from scrapers.fb_odibets     import run as fetch_odibets
+from scrapers.fb_ilotbet     import run as fetch_ilotbet
+from scrapers.fb_keedbet     import run as fetch_keedbet
 
 from engine.fb_intensive_engine import run_intensive, display_all
 from engine.fb_verifier       import verify_opportunities
@@ -67,11 +69,6 @@ SCRAPER_OUTPUT_PATTERNS = (
 )
 SCRAPER_OUTPUT_DIRS = (
     'soccabet_cache',
-)
-INTENSIVE_OUTPUT_FILES = (
-    'intensive_balanced.txt',
-    'intensive_unbalanced.txt',
-    'intensive_quasi.txt',
 )
 
 def _read_total_stake(env_values):
@@ -168,18 +165,6 @@ def _delete_old_scraper_outputs():
     return True
 
 
-def _clear_intensive_outputs(reason):
-    headers = {
-        'intensive_balanced.txt': 'BALANCED ARBITRAGE - 0 opportunities',
-        'intensive_unbalanced.txt': 'UNBALANCED ARBITRAGE - 0 opportunities',
-        'intensive_quasi.txt': 'QUASI-ARB (No-Loss) - 0 opportunities',
-    }
-    os.makedirs(DATA_DIR, exist_ok=True)
-    for filename in INTENSIVE_OUTPUT_FILES:
-        path = os.path.join(DATA_DIR, filename)
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write(headers.get(filename, filename) + '\n')
-            f.write(reason + '\n')
 
 
 ACTIVE_SCRAPERS = [
@@ -198,9 +183,10 @@ ACTIVE_SCRAPERS = [
     ('Betfox',       fetch_betfox),
     ('Betbooker',    fetch_betbooker),
     ('Betika',       fetch_betika),
-    ('1win',         fetch_1win),
     ('MyBet.Africa', fetch_mybetafrica),
     ('Odibets',      fetch_odibets),
+    ('Ilotbet',      fetch_ilotbet),
+    ('Keedbet',      fetch_keedbet),
 ]
 
 PLATFORM_ORDER = [name for name, _ in ACTIVE_SCRAPERS]
@@ -220,9 +206,10 @@ PLATFORM_TXT_FILES = {
     'Betfox': 'betfox_matches.txt',
     'Betbooker': 'betbooker_matches.txt',
     'Betika': 'betika_matches.txt',
-    '1win': 'onewin_matches.txt',
     'MyBet.Africa': 'mybetafrica_matches.txt',
     'Odibets': 'odibets_matches.txt',
+    'Ilotbet': 'ilotbet_matches.txt',
+    'Keedbet': 'keedbet_matches.txt',
 }
 
 
@@ -247,9 +234,10 @@ PLATFORM_JSON_FILES = {
     'Betfox': 'betfox_odds.json',
     'Betbooker': 'betbooker_odds.json',
     'Betika': 'betika_odds.json',
-    '1win': 'onewin_odds.json',
     'MyBet.Africa': 'mybetafrica_odds.json',
     'Odibets': 'odibets_odds.json',
+    'Ilotbet': 'ilotbet_odds.json',
+    'Keedbet': 'keedbet_odds.json',
 }
 
 
@@ -464,13 +452,10 @@ def run_scan():
         print(f"   Platforms: {len(ACTIVE_SCRAPERS)} active - running up to {min(len(ACTIVE_SCRAPERS), max_parallel)} in parallel")
         print(f"   Scan mode: EXHAUSTIVE (all platform pairings per market)")
         print("* " * 20)
-
-        _clear_intensive_outputs(
-            'Scan in progress; previous opportunities cleared to prevent stale odds.'
-        )
+        print('  Keeping previous arb txt files until fresh results are ready.')
 
         if not _delete_old_scraper_outputs():
-            _clear_intensive_outputs('Stale scraper output could not be removed safely; scan aborted to prevent stale odds.')
+            print('ERROR Stale scraper output could not be removed safely; scan aborted. Previous arb txt files were kept unchanged.')
             return
 
         # -- PARALLEL SCRAPE ----------------------------------------------------
@@ -501,7 +486,7 @@ def run_scan():
 
         if total_fetched == 0:
             print("\nERROR No data fetched from any platform.")
-            _clear_intensive_outputs('No fresh platform data was fetched on this scan; old opportunities were cleared to prevent stale odds.')
+            print('Previous arb txt files were kept unchanged because no fresh arb results were produced.')
             return
 
         # -- INTENSIVE ENGINE ---------------------------------------------------
@@ -526,9 +511,10 @@ def run_scan():
             betfox_matches       = fetched.get('Betfox',       []),
             betbooker_matches    = fetched.get('Betbooker',    []),
             betika_matches       = fetched.get('Betika',       []),
-            onewin_matches       = fetched.get('1win',         []),
             mybetafrica_matches  = fetched.get('MyBet.Africa', []),
             odibets_matches      = fetched.get('Odibets',      []),
+            ilotbet_matches      = fetched.get('Ilotbet',      []),
+            keedbet_matches      = fetched.get('Keedbet',      []),
         )
 
         # Lock in next run time exactly 2 minutes after calculations complete
@@ -624,3 +610,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
