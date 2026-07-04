@@ -134,9 +134,9 @@ def ou_json_key(total: float) -> str:
 
 
 def _outcome_price(e: dict) -> Any:
-    if e.get("CV") is not None and e.get("CV") != "":
-        return e.get("CV")
-    return e.get("C")
+    if e.get("C") is not None and e.get("C") != "":
+        return e.get("C")
+    return e.get("CV")
 
 
 def iter_linefeed_outcomes(game: dict) -> List[dict]:

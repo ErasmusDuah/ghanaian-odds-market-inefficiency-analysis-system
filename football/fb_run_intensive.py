@@ -38,7 +38,8 @@ from scrapers.fb_footballcom  import run as fetch_footballcom
 from scrapers.fb_onexbet      import run as fetch_onexbet
 from scrapers.fb_twentytwobet import run as fetch_twentytwobet
 from scrapers.fb_msport       import run as fetch_msport
-from scrapers.fb_bangbet      import run as fetch_bangbet
+# Bangbet temporarily disabled; uncomment this import and ACTIVE_SCRAPERS entry to restore.
+# from scrapers.fb_bangbet      import run as fetch_bangbet
 from scrapers.fb_soccabet     import run as fetch_soccabet
 from scrapers.fb_supabet      import run as fetch_supabet
 from scrapers.fb_betwinner    import run as fetch_betwinner
@@ -64,19 +65,30 @@ INTENSIVE_OUTPUT_FILES = (
 )
 
 def _read_total_stake(env_values):
-    raw_value = env_values.get('STAKE_AMOUNT') or env_values.get('STARTING_CAPITAL') or '800'
+    starting_capital = env_values.get('STARTING_CAPITAL')
+    stake_amount = env_values.get('STAKE_AMOUNT')
+
+    starting_capital = str(starting_capital).strip() if starting_capital not in (None, '') else None
+    stake_amount = str(stake_amount).strip() if stake_amount not in (None, '') else None
+
+    if starting_capital and stake_amount and starting_capital != stake_amount:
+        print(
+            f"  WARNING: STARTING_CAPITAL={starting_capital} overrides "
+            f"legacy STAKE_AMOUNT={stake_amount}."
+        )
+
+    raw_value = starting_capital or stake_amount or '800'
     try:
         stake = int(float(str(raw_value).strip()))
     except (TypeError, ValueError):
         raise ValueError(
-            "Invalid STAKE_AMOUNT in football/.env. Use a whole number like STAKE_AMOUNT=800."
+            "Invalid STARTING_CAPITAL in football/.env. Use a whole number like STARTING_CAPITAL=800."
         )
     if stake <= 0:
         raise ValueError(
-            "Invalid STAKE_AMOUNT in football/.env. The value must be greater than zero."
+            "Invalid STARTING_CAPITAL in football/.env. The value must be greater than zero."
         )
     return stake
-
 
 def _read_int_env(env_values, key, default):
     raw_value = env_values.get(key) or os.getenv(key) or str(default)
@@ -150,7 +162,7 @@ ACTIVE_SCRAPERS = [
     ('1xBet',        fetch_onexbet),
     ('22Bet',        fetch_twentytwobet),
     ('MSport',       fetch_msport),
-    ('Bangbet',      fetch_bangbet),
+    # ('Bangbet',      fetch_bangbet),  # Temporarily disabled
     ('Soccabet',     fetch_soccabet),
     ('Supabet',      fetch_supabet),
     ('Betwinner',    fetch_betwinner),
@@ -171,7 +183,7 @@ PLATFORM_TXT_FILES = {
     '1xBet': 'onexbet_matches.txt',
     '22Bet': 'twentytwobet_matches.txt',
     'MSport': 'msport_matches.txt',
-    'Bangbet': 'bangbet_matches.txt',
+    # 'Bangbet': 'bangbet_matches.txt',  # Temporarily disabled
     'Soccabet': 'soccabet_matches.txt',
     'Supabet': 'supabet_matches.txt',
     'Betwinner': 'betwinner_matches.txt',
@@ -197,7 +209,7 @@ PLATFORM_JSON_FILES = {
     '1xBet': 'onexbet_odds.json',
     '22Bet': 'twentytwobet_odds.json',
     'MSport': 'msport_odds.json',
-    'Bangbet': 'bangbet_odds.json',
+    # 'Bangbet': 'bangbet_odds.json',  # Temporarily disabled
     'Soccabet': 'soccabet_odds.json',
     'Supabet': 'supabet_odds.json',
     'Betwinner': 'betwinner_odds.json',
@@ -210,6 +222,17 @@ PLATFORM_JSON_FILES = {
     'Odibets': 'odibets_odds.json',
 }
 
+
+def _clear_platform_outputs(name):
+    """Remove one platform's previous JSON/TXT before its fresh scraper starts."""
+    for filename in (PLATFORM_JSON_FILES.get(name), PLATFORM_TXT_FILES.get(name)):
+        if not filename:
+            continue
+        path = os.path.join(DATA_DIR, filename)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
 
 def _write_empty_platform_outputs(name, reason):
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -313,6 +336,7 @@ def _safe_fetch(name, fetch_fn):
     error  = None
     result = []
     try:
+        _clear_platform_outputs(name)
         result = fetch_fn() or []
         elapsed = time.time() - start
     except Exception as e:
@@ -355,7 +379,11 @@ def fetch_all_parallel(scrapers):
                 _write_empty_platform_outputs(name, f"Scraper failed: {error}")
             except Exception as write_err:
                 print(f"  WARNING: Could not write empty output files for {name}: {write_err}")
-
+        elif not data:
+            try:
+                _write_empty_platform_outputs(name, "Scraper returned 0 fresh matches")
+            except Exception as write_err:
+                print(f"  WARNING: Could not write empty output files for {name}: {write_err}")
     for future in pending:
         name = futures[future]
         failures[name] = TimeoutError(f"Exceeded SCRAPER_GLOBAL_TIMEOUT={deadline}s")
@@ -454,11 +482,11 @@ def run_scan():
             onexbet_matches      = fetched.get('1xBet',        []),
             twentytwobet_matches = fetched.get('22Bet',        []),
             msport_matches       = fetched.get('MSport',       []),
-            bangbet_matches      = fetched.get('Bangbet',      []),
+            bangbet_matches      = [],  # Bangbet temporarily disabled
             soccabet_matches     = fetched.get('Soccabet',     []),
             supabet_matches      = fetched.get('Supabet',      []),
             betwinner_matches    = fetched.get('Betwinner',    []),
-            paripesa_matches     = [],
+
             betpawa_matches      = fetched.get('BetPawa',      []),
             betano_matches       = fetched.get('Betano',       []),
             betfox_matches       = fetched.get('Betfox',       []),
@@ -561,4 +589,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

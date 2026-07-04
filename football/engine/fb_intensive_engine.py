@@ -1,4 +1,4 @@
-﻿"""
+"""
 INTENSIVE ENGINE - Optimized exhaustive sports arbitrage scanner.
 
 For each matched game group, tests permutations across active platforms for 14 markets.
@@ -62,8 +62,9 @@ _EXCLUDED = _load_exclusions()
 PLATFORMS = [
     'sportybet', 'betway', 'footballcom',
     'onexbet', 'twentytwobet', 'msport',
-    'bangbet', 'soccabet', 'supabet', 'betwinner',
-    'paripesa', 'betpawa', 'betano', 'betfox', 'betika', 'onewin',
+    # 'bangbet',  # Temporarily disabled
+    'soccabet', 'supabet', 'betwinner',
+    'betpawa', 'betano', 'betfox', 'betika', 'onewin',
     'mybetafrica', 'odibets',
 ]
 
@@ -74,11 +75,11 @@ PLATFORM_DISPLAY = {
     'onexbet':      '1xBet',
     'twentytwobet': '22Bet',
     'msport':       'MSport',
-    'bangbet':      'Bangbet',
+    # 'bangbet':      'Bangbet',  # Temporarily disabled
     'soccabet':     'Soccabet',
     'supabet':      'Supabet',
     'betwinner':    'Betwinner',
-    'paripesa':     'Paripesa',
+
     'betpawa':      'BetPawa',
     'betano':       'Betano',
     'betfox':       'Betfox',
@@ -95,11 +96,11 @@ SOURCE_MAP = {
     'onexbet':      '1xbet_gh',
     'twentytwobet': 'twentytwobet_gh',
     'msport':       'msport_gh',
-    'bangbet':      'bangbet_gh',
+    # 'bangbet':      'bangbet_gh',  # Temporarily disabled
     'soccabet':     'soccabet_gh',
     'supabet':      'supabet_gh',
     'betwinner':    'betwinner',
-    'paripesa':     'paripesa',
+
     'betpawa':      'betpawa_gh',
     'betano':       'betano_gh',
     'betfox':       'betfox_gh',
@@ -878,7 +879,7 @@ def run_intensive(total_stake=None,
                   soccabet_matches=None,
                   supabet_matches=None,
                   betwinner_matches=None,
-                  paripesa_matches=None,
+
                   betpawa_matches=None,
                   betano_matches=None,
                   betfox_matches=None,
@@ -903,11 +904,11 @@ def run_intensive(total_stake=None,
     if onexbet_matches      is None: onexbet_matches      = _load('data/onexbet_odds.json')
     if twentytwobet_matches is None: twentytwobet_matches = _load('data/twentytwobet_odds.json')
     if msport_matches       is None: msport_matches       = _load('data/msport_odds.json')
-    if bangbet_matches      is None: bangbet_matches      = _load('data/bangbet_odds.json')
+    if bangbet_matches      is None: bangbet_matches      = []  # Bangbet temporarily disabled
     if soccabet_matches     is None: soccabet_matches     = _load('data/soccabet_odds.json')
     if supabet_matches      is None: supabet_matches      = _load('data/supabet_odds.json')
     if betwinner_matches    is None: betwinner_matches    = _load('data/betwinner_odds.json')
-    if paripesa_matches     is None: paripesa_matches     = _load('data/paripesa_odds.json')
+
     if betpawa_matches      is None: betpawa_matches      = _load('data/betpawa_odds.json')
     if betano_matches       is None: betano_matches       = _load('data/betano_odds.json')
     if betfox_matches       is None: betfox_matches       = _load('data/betfox_odds.json')
@@ -923,11 +924,11 @@ def run_intensive(total_stake=None,
         'onexbet':      onexbet_matches,
         'twentytwobet': twentytwobet_matches,
         'msport':       msport_matches,
-        'bangbet':      bangbet_matches,
+        # 'bangbet':      bangbet_matches,  # Temporarily disabled
         'soccabet':     soccabet_matches,
         'supabet':      supabet_matches,
         'betwinner':    betwinner_matches,
-        'paripesa':     paripesa_matches,
+
         'betpawa':      betpawa_matches,
         'betano':       betano_matches,
         'betfox':       betfox_matches,
