@@ -6,6 +6,8 @@ The project uses the Ghanaian football odds market as a practical data environme
 
 This project is not intended to be presented as a gambling product or betting recommendation system. It is a research and learning project motivated by my interest in mathematics, with a focus on probability, financial mathematics and data science.
 
+---
+
 ## Motivation
 
 My long-term academic interest is in mathematics, especially probability, financial mathematics and data science. I built this project to explore how mathematical ideas used in financial markets can also appear in other pricing environments.
@@ -14,15 +16,17 @@ The Ghanaian odds market provides a useful real-world case study because odds ch
 
 The project helped me connect abstract mathematical ideas to a working system involving:
 
-- implied probability
-- market inefficiency detection
-- price dispersion
-- optimization under constraints
-- real-time data collection
-- data validation
-- data science preparation
-- machine learning preparation
-- decision-making under uncertainty
+- Implied probability
+- Market inefficiency detection
+- Price dispersion
+- Optimization under constraints
+- Real-time data collection
+- Data validation
+- Historical data analysis
+- Machine learning preparation
+- Decision-making under uncertainty
+
+---
 
 ## What "Price" Means In This Project
 
@@ -50,25 +54,15 @@ This helps the system compare how different platforms estimate the chance of the
 
 When this README refers to price movement, pricing differences or market prices, it means changes or differences in quoted odds across platforms.
 
+---
+
 ## Core Mathematical Ideas
 
 ### Odds As Implied Probabilities
 
-Decimal odds can be converted into implied probability by dividing 1 by the odd.
+The system converts decimal odds into implied probabilities so that different bookmaker quotes can be compared mathematically.
 
-For example, odds of `2.00` imply a probability of 50 percent because:
-
-```text
-1 / 2.00 = 0.50
-```
-
-Odds of `4.00` imply a probability of 25 percent because:
-
-```text
-1 / 4.00 = 0.25
-```
-
-This helps the system compare how different platforms estimate the chance of the same outcome.
+This allows the project to treat odds comparison as a problem in probability, optimization and market analysis.
 
 ### Market Inefficiency Detection
 
@@ -76,11 +70,9 @@ A market inefficiency occurs when different platforms quote odds that are incons
 
 The system studies these differences by comparing equivalent outcomes across platforms. It does not assume that every difference is useful. Instead, it checks whether the difference satisfies a defined mathematical condition.
 
-The project therefore treats odds comparison as a problem in probability, optimization and data quality.
+### Balanced Arbitrage / True Arbitrage
 
-### True Arbitrage
-
-True arbitrage means the system detects conditions where capital can theoretically be allocated across all possible outcomes so that the return is positive regardless of the final result.
+Balanced arbitrage, also called true arbitrage in this project, means the system detects conditions where capital can theoretically be allocated across all possible outcomes so that the return is positive regardless of the final result.
 
 For a three-outcome football market, the condition can be written as:
 
@@ -115,11 +107,25 @@ Quasi-arbitrage refers to opportunities that are structured to produce either:
 - a positive return if one side occurs
 - stake recovery or near no-loss exposure if another side occurs
 
-These opportunities are not the same as true arbitrage because the full profit is not guaranteed across all outcomes.
+These opportunities are not the same as balanced arbitrage because the full profit is not guaranteed across all outcomes.
 
 They are still important for research because they create a decision-making problem under uncertainty. The system logs these opportunities so they can later be studied using data science and machine learning.
 
 The future goal is to build a model that helps estimate which quasi-arbitrage opportunities are more likely to result in the profitable outcome rather than only stake recovery.
+
+---
+
+## Opportunity Classification
+
+The system classifies detected market inefficiency structures into three main groups:
+
+| Type | Meaning | Research Purpose |
+|---|---|---|
+| Balanced Arbitrage | Returns are structured to remain positive across all outcomes | Studies clean mathematical arbitrage conditions |
+| Unbalanced Arbitrage | Returns remain uneven across outcomes | Studies optimization and risk/reward structure |
+| Quasi-Arbitrage | Outcome may produce profit or stake recovery | Supports future machine learning decision analysis |
+
+---
 
 ## System Overview
 
@@ -133,8 +139,10 @@ The intensive engine performs the full workflow:
 4. Match equivalent fixtures across platforms
 5. Compare equivalent markets across available sources
 6. Calculate implied probabilities
-7. Classify opportunities as true arbitrage, unbalanced arbitrage or quasi-arbitrage
+7. Classify opportunities as balanced arbitrage, unbalanced arbitrage or quasi-arbitrage
 8. Write structured outputs for analysis and future modelling
+
+---
 
 ## Fresh Data Collection
 
@@ -152,6 +160,8 @@ The refresh cycle follows this pattern:
 6. Write new analysis outputs and logs
 
 This design reduces the chance of analysing stale odds. However, because odds can still move after collection, the system treats each scan as a time-specific market snapshot rather than a permanent truth.
+
+---
 
 ## Architecture
 
@@ -183,7 +193,7 @@ Examples include:
 - Over/Under
 - Both Teams To Score
 - Half-time markets
-- selected special markets
+- Selected special markets
 
 This makes it possible to compare equivalent markets across platforms even when the platforms label them differently.
 
@@ -211,6 +221,8 @@ It calculates implied probabilities, checks arbitrage conditions and classifies 
 
 The engine also supports exhaustive comparison, meaning it does not only compare one best source against another. It compares available outcome combinations so that the analysis is broader and more complete.
 
+---
+
 ## Data Logging And Analysis
 
 The system logs detected opportunities into structured files so they can be reviewed and studied later.
@@ -229,6 +241,30 @@ The balanced and unbalanced logs can be used to study:
 The quasi-arbitrage log is used for a different purpose. Since quasi-arbitrage depends on uncertain outcomes, it is designed to support future data science and machine learning analysis.
 
 These logs allow the project to move beyond real-time detection into historical analysis. They make it possible to study patterns in pricing disagreement, market behaviour and opportunity formation over time.
+
+---
+
+## Validation Examples
+
+The repository includes selected validation examples showing how the system detects and records market inefficiency structures from real Ghanaian football odds data.
+
+Each validation example is intended to show the evidence chain:
+
+```text
+Live Ghanaian odds snapshot -> system detection -> opportunity classification -> logged output -> final outcome review
+```
+
+Validation materials may include:
+
+- bookmaker odds screenshots
+- system output screenshots
+- logged data rows
+- final match result screenshots
+- selected screen recordings
+
+Sensitive information such as account details, phone numbers, balances, transaction IDs, private tokens and platform login details is removed before any material is included in the repository.
+
+---
 
 ## Machine Learning Extension
 
@@ -249,6 +285,8 @@ Possible features include:
 
 The future machine learning goal is to build a decision-support model that estimates which quasi-arbitrage opportunities are more likely to produce the profitable side.
 
+---
+
 ## Research Purpose
 
 This project is part of my preparation for advanced study in mathematics, with particular interest in probability, financial mathematics and data science.
@@ -266,7 +304,9 @@ It demonstrates applied work in:
 - machine learning preparation
 - decision-making under uncertainty
 
-The project uses sports odds only as an accessible example of dynamic market pricing. The main purpose is to study mathematical structure, not to promote gambling.
+The project uses sports odds only as an accessible example of dynamic market pricing. The main purpose is to study mathematical structure, market behaviour and data-driven decision-making, not to promote gambling.
+
+---
 
 ## Limitations
 
@@ -312,8 +352,55 @@ For example, platform rules, currency handling, account restrictions, settlement
 
 For this reason, the project should be understood as an educational and research system. It is not financial advice, betting advice or a guaranteed-profit tool.
 
+---
+
 ## Responsible Use
 
 Ghanaian Odds Market Inefficiency Analysis System is intended for educational, mathematical and research purposes only.
 
 The project uses sports odds as a real-world example of dynamic market pricing. Its main value is in studying probability, pricing disagreement, optimization, automation and data-driven decision-making.
+
+The project should not be interpreted as betting advice, financial advice or a guaranteed-profit system. Any examples involving odds, stake allocation or market outcomes are used only to demonstrate quantitative modelling concepts.
+
+---
+
+## Technologies Used
+
+- Python
+- Pandas
+- NumPy
+- OpenPyXL
+- Excel / CSV logging
+- Web scraping and data parsing tools
+- GitHub for documentation and version control
+
+---
+
+## Future Improvements
+
+Planned improvements include:
+
+- Expanding historical data analysis
+- Improving fixture matching and validation logic
+- Adding more visual summaries of logged opportunities
+- Building supervised learning models for quasi-arbitrage outcomes
+- Improving documentation for reproducibility
+- Adding more validation examples and screen recordings
+- Developing a dashboard for market behaviour analysis
+
+---
+
+## Author
+
+**Duah Erasmus Gyamfi**  
+BSc Mathematics, Kwame Nkrumah University of Science and Technology  
+
+Research interests: Applied Mathematics, Data Science, Financial Mathematics, Machine Learning, Optimization and Graph Theory
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+Copyright (c) 2026 Duah Erasmus Gyamfi.
