@@ -395,7 +395,6 @@ Planned improvements include:
 **Duah Erasmus Gyamfi**  
 BSc Mathematics, Kwame Nkrumah University of Science and Technology  
 
-Research interests: Applied Mathematics, Data Science, Financial Mathematics, Machine Learning, Optimization and Graph Theory
 
 ---
 
