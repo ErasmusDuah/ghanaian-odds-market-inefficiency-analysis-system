@@ -11,17 +11,17 @@ The project is meant to be simple to run: download or clone the files, open the 
 3. Open a terminal in the project folder.
 4. Run `setup_environment.py` or use the runner script.
 5. The system creates `.venv` and installs the required libraries.
-6. The system creates `football/.env` with a default stake amount.
+6. The repository includes `football/.env` with a default stake amount.
 7. The system creates `football/data/` for local runtime output.
 8. Run `football/fb_run_intensive.py` through the virtual environment.
 
 The default stake setting is:
 
 ```env
-STARTING_CAPITAL=800
+STARTING_CAPITAL=1700
 ```
 
-You can change this in `football/.env` after setup.
+You can change this in `football/.env`.
 
 ## 1. Install Python
 
@@ -82,7 +82,7 @@ Setup does the following automatically:
 - installs packages from `requirements.txt`
 - skips Windows-only packages on macOS/Linux
 - installs the Playwright Chromium runtime when possible
-- creates `football/.env` if it does not exist
+- keeps `football/.env` available; if it is missing, setup recreates it with default values
 - creates `football/data/` if it does not exist
 
 ## 4. Run The Intensive Engine
@@ -139,10 +139,7 @@ Generated outputs are kept out of Git because they are rebuilt during normal use
 
 ## Private Local Files
 
-These should stay local and should not be committed:
-
-- `football/.env`
-- `football/data/`
+These generated/private files should stay local and should not be committed:`r`n`r`n- `football/data/`
 - generated odds JSON files
 - generated match TXT files
 - local tracker files

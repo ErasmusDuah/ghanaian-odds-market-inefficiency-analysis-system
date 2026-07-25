@@ -88,7 +88,7 @@ def _read_total_stake(env_values):
         stake = int(float(str(raw_value).strip()))
     except (TypeError, ValueError):
         raise ValueError(
-            "Invalid STARTING_CAPITAL in football/.env. Use a whole number like STARTING_CAPITAL=800."
+            "Invalid STARTING_CAPITAL in football/.env. Use a whole number like STARTING_CAPITAL=1700."
         )
     if stake <= 0:
         raise ValueError(
@@ -664,4 +664,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

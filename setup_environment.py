@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parent
 FOOTBALL_DIR = ROOT / "football"
 DATA_DIR = FOOTBALL_DIR / "data"
 ENV_FILE = FOOTBALL_DIR / ".env"
-ENV_EXAMPLE = FOOTBALL_DIR / ".env.example"
 VENV_DIR = ROOT / ".venv"
 INSTALL_STAMP = VENV_DIR / ".requirements.stamp"
 
@@ -24,7 +23,7 @@ DEFAULT_ENV = """# Local football system configuration.
 # STARTING_CAPITAL is the analysis stake used by the intensive engine.
 # You can change this value to any amount you want.
 
-STARTING_CAPITAL=800
+STARTING_CAPITAL=1700
 CURRENCY=GHS
 
 
@@ -126,11 +125,8 @@ def _ensure_env_file() -> None:
         print("football/.env already exists.")
         return
 
-    source = ENV_EXAMPLE.read_text(encoding="utf-8") if ENV_EXAMPLE.exists() else DEFAULT_ENV
-    if "STARTING_CAPITAL" not in source:
-        source = DEFAULT_ENV
-    ENV_FILE.write_text(source, encoding="utf-8")
-    print("Created football/.env with default STARTING_CAPITAL=800.")
+    ENV_FILE.write_text(DEFAULT_ENV, encoding="utf-8")
+    print("Created football/.env with default STARTING_CAPITAL=1700.")
 
 
 def _ensure_local_dirs() -> None:
