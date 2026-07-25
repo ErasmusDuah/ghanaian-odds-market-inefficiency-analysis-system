@@ -1,21 +1,31 @@
-MIT License
+RESEARCH AND EDUCATIONAL USE LICENSE
 
-Copyright (c) 2026 Duah Erasmus Gyamfi
+Copyright (c) 2026 Erasmus Gyamfi Duah
 
-Permission is hereby granted free of charge to any person obtaining a copy
-of this software and associated documentation files (the "Software") to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense and/or sell
-copies of the Software and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is granted, free of charge, to any person obtaining a copy of this software and its associated documentation files (the “Software”) to use, copy and modify the Software solely for non-commercial educational, academic and research purposes.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The Software may be used to study probability, optimization, data science, financial mathematics, machine learning, pricing systems, betting markets and related subjects through academic analysis, experimentation or simulation.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+The following activities are strictly prohibited without prior written permission from the copyright holder:
+
+1. Using the Software for any commercial, revenue-generating or business purpose.
+
+2. Selling, licensing, sublicensing, renting or otherwise commercially exploiting the Software or any modified version of it.
+
+3. Incorporating the Software into any paid product, service, platform or commercial research activity.
+
+4. Using the Software to place, automate, facilitate, recommend or optimize real-money wagers.
+
+5. Using the Software to operate, support or promote a gambling, betting or bookmaker service.
+
+6. Distributing, publishing or making the Software or any modified version available to third parties.
+
+Non-commercial academic analysis, classroom study and simulated research involving betting-market data are permitted, provided that the Software is not used to support or facilitate actual wagering.
+
+The above copyright notice and this licence notice must be included in every copy or modified copy of the Software.
+
+All rights not expressly granted under this licence are reserved by the copyright holder. Any use of the Software outside the permissions granted above requires prior written permission from the copyright holder.
+
+Any violation of these terms automatically terminates the permissions granted under this licence.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGE OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
