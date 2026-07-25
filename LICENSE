@@ -1,31 +1,146 @@
 RESEARCH AND EDUCATIONAL USE LICENSE
 
 Copyright (c) 2026 Erasmus Gyamfi Duah
+All rights reserved.
 
-Permission is granted, free of charge, to any person obtaining a copy of this software and its associated documentation files (the “Software”) to use, copy and modify the Software solely for non-commercial educational, academic and research purposes.
+1. OWNERSHIP
 
-The Software may be used to study probability, optimization, data science, financial mathematics, machine learning, pricing systems, betting markets and related subjects through academic analysis, experimentation or simulation.
+The software, source code, documentation and associated files provided under this repository, collectively referred to as the “Software,” were originally created by Erasmus Gyamfi Duah, who remains the original author and copyright holder.
 
-The following activities are strictly prohibited without prior written permission from the copyright holder:
+This License does not transfer ownership of the Software or its copyright to any other person.
 
-1. Using the Software for any commercial, revenue-generating or business purpose.
+2. LIMITED PERMISSION
 
-2. Selling, licensing, sublicensing, renting or otherwise commercially exploiting the Software or any modified version of it.
+Permission is granted, free of charge, to access, run, copy and modify the Software solely for non-commercial educational, academic and research purposes, subject to all the terms of this License.
 
-3. Incorporating the Software into any paid product, service, platform or commercial research activity.
+Permitted purposes include:
 
-4. Using the Software to place, automate, facilitate, recommend or optimize real-money wagers.
+a. Personal learning and independent study.
 
-5. Using the Software to operate, support or promote a gambling, betting or bookmaker service.
+b. Coursework and classroom demonstrations.
 
-6. Distributing, publishing or making the Software or any modified version available to third parties.
+c. Non-commercial academic research.
 
-Non-commercial academic analysis, classroom study and simulated research involving betting-market data are permitted, provided that the Software is not used to support or facilitate actual wagering.
+d. Mathematical analysis, experimentation and simulation.
 
-The above copyright notice and this licence notice must be included in every copy or modified copy of the Software.
+e. Research involving probability and statistics, optimization, data science, financial mathematics, machine learning, pricing systems and related fields.
 
-All rights not expressly granted under this licence are reserved by the copyright holder. Any use of the Software outside the permissions granted above requires prior written permission from the copyright holder.
+3. NON-COMMERCIAL USE ONLY
 
-Any violation of these terms automatically terminates the permissions granted under this licence.
+The Software and any modified version of it must not be used for any commercial, revenue-generating or business purpose without the prior written permission of the copyright holder.
 
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGE OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+Prohibited commercial uses include, but are not limited to:
+
+a. Selling, licensing, sublicensing, renting or commercially distributing the Software.
+
+b. Incorporating the Software into a paid product, service, platform or subscription.
+
+c. Using the Software for paid consulting, client work or commercial research.
+
+d. Using the Software as part of the internal operations of a business or commercial organization.
+
+e. Using the Software or its results to obtain direct or indirect commercial advantage or monetary compensation.
+
+4. NO REAL-MONEY GAMBLING USE
+
+The Software is intended strictly for education, mathematical analysis and research. It must not be used to:
+
+a. Place or automate real-money wagers.
+
+b. Recommend, facilitate or optimize actual betting decisions.
+
+c. Generate gambling profits for any person or organization.
+
+d. Operate, support, improve or promote a bookmaker, sportsbook, gambling platform or betting service.
+
+e. Provide paid betting tips, signals, predictions or related services.
+
+Non-commercial academic analysis, simulation and retrospective research involving betting-market data are permitted, provided that the Software is not used to support or facilitate actual wagering.
+
+5. COPYING AND MODIFICATION
+
+A person may copy and modify the Software only for the educational, academic and research purposes permitted under this License.
+
+Any modified version must:
+
+a. Retain the original copyright notice and this complete License.
+
+b. Clearly identify Erasmus Gyamfi Duah as the original author of the Software.
+
+c. Clearly state that the Software has been modified.
+
+d. Identify the person responsible for the modifications.
+
+e. Not suggest that the person who made the modifications created the original Software.
+
+Modification of the Software does not transfer ownership of the original Software or any substantial portion of it.
+
+6. ATTRIBUTION AND AUTHORSHIP
+
+No person may remove, conceal or alter the copyright notice, authorship information or License included with the Software.
+
+No person may falsely claim to be the original author, creator or copyright holder of the Software or any substantial portion of it.
+
+A person who modifies the Software may claim authorship only over their original modifications. Any such claim must clearly distinguish those modifications from the original work created by Erasmus Gyamfi Duah.
+
+The name of Erasmus Gyamfi Duah may not be used to endorse or promote a modified version, product, service or organization without prior written permission.
+
+7. DISTRIBUTION AND PUBLICATION
+
+The Software or any modified version may not be sold, relicensed, sublicensed, republished or distributed as a separate product, service or independent project without prior written permission from the copyright holder.
+
+A GitHub fork may be created solely for a permitted non-commercial educational or research purpose, provided that:
+
+a. The fork retains the complete copyright notice and this License.
+
+b. The fork clearly identifies Erasmus Gyamfi Duah as the original author.
+
+c. The fork is not presented as an independently created or original project.
+
+d. The fork is not used for any commercial or gambling-related purpose.
+
+e. Any modifications are clearly identified.
+
+8. THIRD-PARTY USE
+
+A person receiving a copy or permitted fork of the Software receives only the limited permissions expressly provided by this License.
+
+No person may grant another person broader rights to the Software than those granted under this License.
+
+9. TERMINATION
+
+Any permission granted under this License automatically terminates immediately when a person violates any of its terms.
+
+After termination, the person must stop using the Software and delete all copies and modified versions in their possession or control, except where retention is required by applicable law.
+
+Termination does not prevent the copyright holder from pursuing any available legal remedy for copyright infringement, false attribution, unauthorized commercial use or other violations.
+
+10. RESERVATION OF RIGHTS
+
+All rights not expressly granted under this License are reserved by Erasmus Gyamfi Duah.
+
+Any commercial use, gambling-related use, redistribution, relicensing or other use outside the permissions expressly granted by this License requires prior written permission from the copyright holder.
+
+11. DISCLAIMER OF WARRANTY
+
+THE SOFTWARE IS PROVIDED “AS IS,” WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, ACCURACY, RELIABILITY AND NONINFRINGEMENT.
+
+THE COPYRIGHT HOLDER DOES NOT GUARANTEE THAT THE SOFTWARE WILL BE ERROR-FREE, UNINTERRUPTED, SUITABLE FOR ANY PARTICULAR PURPOSE OR CAPABLE OF PRODUCING ANY PARTICULAR RESULT.
+
+12. LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY CLAIM, LOSS, DAMAGE OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE, ITS RESULTS OR ITS USE, WHETHER IN CONTRACT, TORT OR OTHERWISE.
+
+13. ACCEPTANCE
+
+By accessing, copying, modifying, forking or using the Software, the user acknowledges that they have read, understood and agreed to comply with this License.
+
+
+## Contact
+
+For research collaboration, academic enquiries or permission requests concerning this software, contact:
+
+**Erasmus Gyamfi Duah**
+Email: erasmusduah@gmail.com
+
+For technical questions or bug reports, you may also open an issue in this repository.
