@@ -170,11 +170,10 @@ football/
 |-- fb_run_intensive.py          # Active system runner
 |-- scrapers/                    # Platform-specific data collection
 |-- engine/                      # Quantitative analysis and classification logic
-|-- monitoring/                  # Optional monitoring utilities
-`-- data/                        # Generated local outputs
+`|-- data/                        # Generated local outputs
 ```
 
-The system is organized around four main layers.
+The system is organized around three main layers.
 
 ### 1. Data Collection
 

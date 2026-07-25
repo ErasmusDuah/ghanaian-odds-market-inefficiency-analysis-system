@@ -27,10 +27,6 @@ DEFAULT_ENV = """# Local football system configuration.
 STARTING_CAPITAL=800
 CURRENCY=GHS
 
-# Optional Telegram alerts.
-# Leave these blank if you do not want Telegram alerts.
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
 
 # Optional scraper/runtime controls.
 MAX_PARALLEL_SCRAPERS=8
@@ -151,9 +147,9 @@ def main() -> int:
     print("\nSetup complete.")
     print("Run the intensive engine with:")
     if os.name == "nt":
-        print("  .\\run.ps1")
+        print("  .\\.venv\\Scripts\\python.exe football\\fb_run_intensive.py")
     else:
-        print("  ./run.sh")
+        print("  ./.venv/bin/python football/fb_run_intensive.py")
     return 0
 
 
