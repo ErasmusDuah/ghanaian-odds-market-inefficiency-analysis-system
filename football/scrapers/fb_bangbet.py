@@ -27,6 +27,8 @@ SOURCE = "bangbet_gh"
 SPORT_ID_SOCCER = "sr:sport:1"
 MARKET_GROUPS = {
     "1x2": 0,
+    "1x2_one_up": 1,
+    "1x2_two_up": 2,
     "ou": 3,
     "dc": 4,
     "gg": 5,
@@ -148,9 +150,13 @@ def flatten_markets(event: dict[str, Any]) -> list[dict[str, Any]]:
     return markets
 
 
-def parse_1x2(event: dict[str, Any]) -> dict[str, float] | None:
+def parse_1x2(
+    event: dict[str, Any],
+    market_names: tuple[str, ...] = ("1x2",),
+) -> dict[str, float] | None:
+    expected_names = {name.lower() for name in market_names}
     for market in flatten_markets(event):
-        if str(market.get("name") or "").lower() != "1x2" or not active_market(market):
+        if str(market.get("name") or "").lower() not in expected_names or not active_market(market):
             continue
         values: dict[str, float] = {}
         for outcome in market.get("outcomes") or []:
@@ -331,6 +337,14 @@ def scrape_market_group(
                 odds = parse_1x2(event)
                 if odds:
                     records[event_id]["odds_1x2"] = odds
+            elif market_name == "1x2_one_up":
+                odds = parse_1x2(event, ("1x2 (1up)",))
+                if odds:
+                    records[event_id]["odds_1x2_one_up"] = odds
+            elif market_name == "1x2_two_up":
+                odds = parse_1x2(event, ("1x2 (2up)",))
+                if odds:
+                    records[event_id]["odds_1x2_two_up"] = odds
             elif market_name == "ou":
                 ou, asian_ou = parse_ou(event)
                 records[event_id]["odds_ou"].update(ou)
@@ -380,7 +394,13 @@ def scrape_today(config: ScrapeConfig) -> ScrapeResult:
                 continue
             records[event_id]["odds_ou"].update(group_match.get("odds_ou") or {})
             records[event_id]["odds_asian_ou"].update(group_match.get("odds_asian_ou") or {})
-            for key in ("odds_1x2", "odds_dc", "odds_gg"):
+            for key in (
+                "odds_1x2",
+                "odds_1x2_one_up",
+                "odds_1x2_two_up",
+                "odds_dc",
+                "odds_gg",
+            ):
                 value = group_match.get(key)
                 if value:
                     records[event_id][key] = value
@@ -397,40 +417,40 @@ def scrape_today(config: ScrapeConfig) -> ScrapeResult:
 # BOX-DRAWING FORMAT HELPERS
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = 80 - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = 80 - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 def fmt_box_bottom():
-    return "└" + "─" * 78 + "┘"
+    return "+" + "-" * 78 + "+"
 
 def fmt_box_subheading(sub_title):
     content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
+    return f"| {content:<76} |"
 
 def fmt_box_divider():
-    line = "─" * 76
-    return f"│ {line} │"
+    line = "-" * 76
+    return f"| {line} |"
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 def fmt_ou_section(ou_dict):
     if not ou_dict:
@@ -451,7 +471,7 @@ def fmt_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     if not rows:
         return fmt_row("", "(No Over/Under lines available)")
@@ -471,7 +491,7 @@ def fmt_asian_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     if not rows:
         return fmt_row("", "(No Asian Over/Under lines available)")
@@ -480,10 +500,10 @@ def fmt_asian_ou_section(ou_dict):
 
 def format_match_text_block(m):
     # Header
-    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    title = f"Football {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+        title += " (LIVE)"
+    meta = f"League {m['tournament']} | Time {m['kickoff']}"
 
     # Border width
     w = 80
@@ -497,10 +517,10 @@ def format_match_text_block(m):
 
     # Construct the block
     lines = []
-    lines.append("═" * w)
+    lines.append("=" * w)
     lines.append(f"{title}")
     lines.append(f"{meta}")
-    lines.append("═" * w)
+    lines.append("=" * w)
 
     # Main Markets
     lines.append(fmt_box_top("MAIN MARKETS"))
@@ -526,7 +546,7 @@ def format_match_text_block(m):
     return "\n".join(lines)
 
 
-# ── OUTPUT WRITERS ─────────────────────────────────────────────────────────────
+# -- OUTPUT WRITERS -------------------------------------------------------------
 
 def write_outputs(matches: list[dict[str, Any]], output_dir: Path) -> tuple[Path, Path]:
     os.makedirs(output_dir, exist_ok=True)
@@ -568,7 +588,14 @@ def print_summary(result: ScrapeResult, json_path: Path, txt_path: Path, elapsed
     print()
     print("[INFO] Fetching today's matches...")
     for market, page, count, total in result.page_logs:
-        label = {"1x2": "1X2", "ou": "O/U", "dc": "DC", "gg": "GG/NG"}.get(market, market)
+        label = {
+            "1x2": "1X2",
+            "1x2_one_up": "1Up",
+            "1x2_two_up": "2Up",
+            "ou": "O/U",
+            "dc": "DC",
+            "gg": "GG/NG",
+        }.get(market, market)
         print(f"  [OK] {label} Page {page}: {count} matches (Total API rows: {total})")
     print()
     print(f"[INFO] Total matches fetched: {result.total_fetched}")
@@ -635,7 +662,7 @@ except ImportError:
 def run() -> list[dict]:
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
     os.makedirs(output_dir, exist_ok=True)
-    """Entry point for the experimental engine — returns match list."""
+    """Entry point for the experimental engine - returns match list."""
     import time as _time
     started = _time.perf_counter()
     print(banner(datetime.now()))

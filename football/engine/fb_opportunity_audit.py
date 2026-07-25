@@ -1,4 +1,4 @@
-﻿"""Pre-output audit for football arbitrage opportunities."""
+"""Pre-output audit for football arbitrage opportunities."""
 
 from __future__ import annotations
 

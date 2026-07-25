@@ -1,5 +1,5 @@
 """
-Football Telegram Alerts — Sends arb notifications to the Football Telegram group.
+Football Telegram Alerts - Sends arb notifications to the Football Telegram group.
 Reads credentials from football/.env
 """
 import requests
@@ -17,7 +17,7 @@ load_dotenv(os.path.join(_SPORT_DIR, '.env'))
 BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-SPORT_TAG = "⚽ FOOTBALL"
+SPORT_TAG = "FOOTBALL"
 
 
 def send_message(message, reply_markup=None, silent=False):
@@ -39,10 +39,10 @@ def send_message(message, reply_markup=None, silent=False):
             if response.status_code == 200:
                 return True
             else:
-                print(f"❌ Telegram API Error {response.status_code}: {response.text}")
+                print(f"ERROR Telegram API Error {response.status_code}: {response.text}")
                 time.sleep(2)
         except requests.exceptions.RequestException as e:
-            print(f"❌ Telegram request error (attempt {attempt+1}/3): {e}")
+            print(f"ERROR Telegram request error (attempt {attempt+1}/3): {e}")
             time.sleep(2)
             
     return False
@@ -76,8 +76,8 @@ def send_arb_alert(opportunity):
         platform_url = PLATFORM_URLS.get(bet['platform'], '#')
         safe_outcome = html.escape(bet['outcome'])
         bet_lines += (
-            f"\n\n🎯 <b>{bet['platform']}</b>"
-            f"\n   🔗 <a href=\"{platform_url}\">Open {bet['platform']}</a>"
+            f"\n\nTarget <b>{bet['platform']}</b>"
+            f"\n   Link <a href=\"{platform_url}\">Open {bet['platform']}</a>"
             f"\n   Bet:   {safe_outcome}"
             f"\n   Odds:  {bet['odds']}"
             f"\n   Stake: GHS {bet['stake']:.2f}"
@@ -87,18 +87,18 @@ def send_arb_alert(opportunity):
     total_stake_used = sum(bet.get('stake', 0) for bet in bets)
 
     message = (
-        f"⚡ <b>{SPORT_TAG} — ARB OPPORTUNITY FOUND!</b>\n"
+        f"Fast <b>{SPORT_TAG} - ARB OPPORTUNITY FOUND!</b>\n"
         f"==================================\n"
-        f"🏆 <b>{safe_match}</b>\n"
-        f"📅 {opportunity['kickoff']} | {safe_tournament}\n"
-        f"🔎 Search: <code>{safe_home} vs {safe_away}</code>\n"
+        f"League <b>{safe_match}</b>\n"
+        f"Date {opportunity['kickoff']} | {safe_tournament}\n"
+        f"Search Search: <code>{safe_home} vs {safe_away}</code>\n"
         f"==================================\n"
-        f"📊 Market: {safe_market}\n"
-        f"💰 Profit: {opportunity['profit_pct']:.2f}% = GHS {opportunity['profit_ghs']:.2f}\n"
-        f"💵 Total Stake: GHS {total_stake_used:.2f}\n\n"
-        f"📋 <b>BETS TO PLACE:</b>"
+        f"Stats Market: {safe_market}\n"
+        f"Profit Profit: {opportunity['profit_pct']:.2f}% = GHS {opportunity['profit_ghs']:.2f}\n"
+        f"Stake Total Stake: GHS {total_stake_used:.2f}\n\n"
+        f"LIST <b>BETS TO PLACE:</b>"
         f"{bet_lines}\n\n"
-        f"⏰ <i>Act fast — odds shift quickly!</i>"
+        f"Time <i>Act fast - odds shift quickly!</i>"
     )
 
     return send_message(message)
@@ -115,19 +115,19 @@ def send_scan_summary(opportunities, events_scanned, cycle_time_seconds):
         safe_best_match = html.escape(best['match'])
         
         message = (
-            f"<b>🚨🚨 {SPORT_TAG} ARB FOUND!! SCAN COMPLETE!! 🚨🚨</b>\n"
-            f"⚽ Events scanned    : {events_scanned}\n"
-            f"⏱️ Total cycle time: {cycle_time_seconds:.1f} seconds ({total_minutes:.1f} minutes)\n"
-            f"🎯 Arb opportunities : {len(opportunities)}!!\n"
-            f"💰 Total potential profit: GHS {total_profit:.2f}!!\n"
-            f"📈 Best: {best['profit_pct']:.2f}% on {safe_best_match}!!"
+            f"<b>ALERTALERT {SPORT_TAG} ARB FOUND!! SCAN COMPLETE!! ALERTALERT</b>\n"
+            f"Football Events scanned    : {events_scanned}\n"
+            f"Time Total cycle time: {cycle_time_seconds:.1f} seconds ({total_minutes:.1f} minutes)\n"
+            f"Target Arb opportunities : {len(opportunities)}!!\n"
+            f"Profit Total potential profit: GHS {total_profit:.2f}!!\n"
+            f"Best Best: {best['profit_pct']:.2f}% on {safe_best_match}!!"
         )
     else:
         message = (
             f"<b>{SPORT_TAG} SCAN COMPLETE!</b>\n"
-            f"⚽ Events scanned    : {events_scanned}\n"
-            f"⏱️ Total cycle time: {cycle_time_seconds:.1f} seconds ({total_minutes:.1f} minutes)\n"
-            f"💡 No arb opportunities right now"
+            f"Football Events scanned    : {events_scanned}\n"
+            f"Time Total cycle time: {cycle_time_seconds:.1f} seconds ({total_minutes:.1f} minutes)\n"
+            f"Tip No arb opportunities right now"
         )
 
     return send_message(message, silent=False)
@@ -136,9 +136,9 @@ def send_scan_summary(opportunities, events_scanned, cycle_time_seconds):
 def send_scan_started_message(scan_count):
     """Sends notification that a scan has begun"""
     message = (
-        f"🔄 <b>{SPORT_TAG} — Starting Scan #{scan_count}</b>\n"
-        f"🕐 Time: {datetime.now().strftime('%H:%M:%S')}\n"
-        f"⏳ Fetching fresh odds..."
+        f"Migration <b>{SPORT_TAG} - Starting Scan #{scan_count}</b>\n"
+        f"Time Time: {datetime.now().strftime('%H:%M:%S')}\n"
+        f"WAIT Fetching fresh odds..."
     )
     return send_message(message, silent=False)
 
@@ -146,16 +146,16 @@ def send_scan_started_message(scan_count):
 def send_startup_message():
     """Sends system startup notification"""
     message = (
-        f"🚀 <b>{SPORT_TAG} System Started!</b>\n\n"
-        f"✅ Sportybet Ghana\n"
-        f"✅ Betway Ghana\n"
-        f"✅ Football.com Ghana\n"
-        f"✅ 1xBet Ghana\n"
-        f"✅ 22Bet Ghana\n"
-        f"✅ MSport Ghana\n\n"
-        f"🔍 Scanning every 5 minutes\n"
-        f"📱 You'll be alerted when arb found!\n\n"
-        f"🕐 Started: "
+        f"START <b>{SPORT_TAG} System Started!</b>\n\n"
+        f"OK Sportybet Ghana\n"
+        f"OK Betway Ghana\n"
+        f"OK Football.com Ghana\n"
+        f"OK 1xBet Ghana\n"
+        f"OK 22Bet Ghana\n"
+        f"OK MSport Ghana\n\n"
+        f"Search Scanning every 5 minutes\n"
+        f"PHONE You'll be alerted when arb found!\n\n"
+        f"Time Started: "
         f"{datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}"
     )
     return send_message(message)
@@ -164,7 +164,7 @@ def send_startup_message():
 def test_connection():
     """Tests Telegram connection"""
     return send_message(
-        f"✅ <b>{SPORT_TAG}</b> — Telegram connected!")
+        f"OK <b>{SPORT_TAG}</b> - Telegram connected!")
 
 
 if __name__ == "__main__":
@@ -173,6 +173,6 @@ if __name__ == "__main__":
         sys.stdout.reconfigure(encoding='utf-8')
     print("Testing Football Telegram connection...")
     if test_connection():
-        print("✅ Message sent successfully!")
+        print("OK Message sent successfully!")
     else:
-        print("❌ Failed to send message")
+        print("ERROR Failed to send message")

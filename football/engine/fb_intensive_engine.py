@@ -61,9 +61,11 @@ _EXCLUDED = _load_exclusions()
 # -- PLATFORM REGISTRY -------------------------------------
 PLATFORMS = [
     'sportybet', 'betway', 'footballcom',
-    'onexbet', 'twentytwobet', 'msport',
+    # 'onexbet',  # Temporarily paused
+    'twentytwobet', 'msport',
     # 'bangbet',  # Temporarily disabled
-    'soccabet', 'supabet', 'betwinner',
+    'soccabet', 'supabet',
+    'betwinner',
     'betpawa', 'betano', 'betfox', 'betbooker', 'betika',
     'mybetafrica', 'odibets', 'ilotbet', 'keedbet',
 ]
@@ -72,7 +74,7 @@ PLATFORM_DISPLAY = {
     'sportybet':    'Sportybet',
     'betway':       'Betway',
     'footballcom':  'Football.com',
-    'onexbet':      '1xBet',
+    # 'onexbet':      '1xBet',  # Temporarily paused
     'twentytwobet': '22Bet',
     'msport':       'MSport',
     # 'bangbet':      'Bangbet',  # Temporarily disabled
@@ -95,7 +97,7 @@ SOURCE_MAP = {
     'sportybet':    'sportybet_gh',
     'betway':       'betway_gh',
     'footballcom':  'footballcom_gh',
-    'onexbet':      '1xbet_gh',
+    # 'onexbet':      '1xbet_gh',  # Temporarily paused
     'twentytwobet': 'twentytwobet_gh',
     'msport':       'msport_gh',
     # 'bangbet':      'bangbet_gh',  # Temporarily disabled
@@ -908,7 +910,7 @@ def run_intensive(total_stake=None,
     if sportybet_matches    is None: sportybet_matches    = _load('data/sportybet_odds.json')
     if betway_matches       is None: betway_matches       = _load('data/betway_odds.json')
     if footballcom_matches  is None: footballcom_matches  = _load('data/footballcom_odds.json')
-    if onexbet_matches      is None: onexbet_matches      = _load('data/onexbet_odds.json')
+    if onexbet_matches      is None: onexbet_matches      = []  # 1xBet temporarily paused
     if twentytwobet_matches is None: twentytwobet_matches = _load('data/twentytwobet_odds.json')
     if msport_matches       is None: msport_matches       = _load('data/msport_odds.json')
     if bangbet_matches      is None: bangbet_matches      = []  # Bangbet temporarily disabled
@@ -930,7 +932,7 @@ def run_intensive(total_stake=None,
         'sportybet':    sportybet_matches,
         'betway':       betway_matches,
         'footballcom':  footballcom_matches,
-        'onexbet':      onexbet_matches,
+        # 'onexbet':      onexbet_matches,  # Temporarily paused
         'twentytwobet': twentytwobet_matches,
         'msport':       msport_matches,
         # 'bangbet':      bangbet_matches,  # Temporarily disabled

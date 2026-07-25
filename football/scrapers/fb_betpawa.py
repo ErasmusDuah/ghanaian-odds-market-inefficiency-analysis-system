@@ -1,4 +1,4 @@
-"""
+﻿"""
 BetPawa Ghana football prematch odds scraper.
 
 Uses BetPawa's sportsbook v4 protobuf endpoint with the same market view used by
@@ -399,22 +399,22 @@ def run() -> List[Dict[str, Any]]:
     tz = ZoneInfo(TIMEZONE)
     now_local = datetime.now(tz)
 
-    print("\n" + "🟢 " * 20)
+    print("\n" + "* " * 20)
     print("   BETPAWA GHANA SCRAPER (protobuf bulk)")
     print(f"   {now_local.strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🟢 " * 20 + "\n")
+    print("* " * 20 + "\n")
 
     matches = collect_today_matches()
     count = len(matches)
 
     if count == 0:
-        print("⚠️  No prematch matches found for today.")
+        print("WARNING  No prematch matches found for today.")
     else:
-        print("📋 BETPAWA GHANA")
-        print(f"⚽ Total matches: {count}")
+        print("LIST BETPAWA GHANA")
+        print(f"Total matches: {count}")
         print("=" * 50)
         head = min(10, count)
-        print(f"\n📝 Sample (first {head}):")
+        print(f"\nSample (first {head}):")
         for match in matches[:head]:
             print(f"   {match['home_team']} vs {match['away_team']} | {match['kickoff']} | {match['tournament']}")
         if count > head:
@@ -439,11 +439,11 @@ def run() -> List[Dict[str, Any]]:
                 tf.write(format_match_text_block(match))
 
     elapsed = time.perf_counter() - started
-    print(f"💾 Saved to {json_path}")
-    print(f"📄 Full list: {txt_path}")
+    print(f"Saved to {json_path}")
+    print(f"Full list: {txt_path}")
     if count:
         print(f"   Open the .txt file to see all {count} matches!")
-    print(f"⏱️  Scraping completed in {elapsed:.1f}s")
+    print(f"Scraping completed in {elapsed:.1f}s")
     return matches
 
 

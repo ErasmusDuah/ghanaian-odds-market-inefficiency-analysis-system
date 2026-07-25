@@ -30,7 +30,7 @@ EVENT_LIST_PATH = "/api/event/list"
 EVENT_LIST_QUERY = (
     "lang=en"
     "&relations=odds&relations=league&relations=competitors&relations=sportCategories"
-    "&oddsExists_eq=1&main=1&period=0&sportId_eq=1&limit=50&status_in=0"
+    "&oddsExists_eq=1&main=0&period=0&sportId_eq=1&limit=50&status_in=0"
     "&oddsBooster=0&isFavorite=0&isLive=false"
 )
 
@@ -82,7 +82,7 @@ async def fetch_all_prematch() -> Tuple[List[dict], dict]:
         try:
             first = await fetch_event_list_page(session, 1)
         except Exception as e:
-            print(f"  ⚠️ Error fetching page 1: {e}")
+            print(f"  WARNING Error fetching page 1: {e}")
             return [], {}
             
         items = list(first.get("items") or [])
@@ -94,7 +94,7 @@ async def fetch_all_prematch() -> Tuple[List[dict], dict]:
 
         pages = list(range(2, last_page + 1))
         
-        print(f"  ⚡ Fetching {len(pages)} pages asynchronously...")
+        print(f"  Fetching {len(pages)} pages asynchronously...")
         
         # Concurrency limiter to prevent throttling
         sem = asyncio.Semaphore(15)
@@ -104,7 +104,7 @@ async def fetch_all_prematch() -> Tuple[List[dict], dict]:
                 try:
                     return await fetch_event_list_page(session, page)
                 except Exception as e:
-                    print(f"  ⚠️ Error fetching page {page}: {e}")
+                    print(f"  WARNING Error fetching page {page}: {e}")
                     return None
                     
         tasks = [fetch_with_sem(p) for p in pages]
@@ -126,9 +126,9 @@ def index_by_id(rows: List[dict]) -> Dict[int, dict]:
     return out
 
 
-def pick_1x2(markets: List[dict]) -> Optional[Dict[str, Any]]:
+def pick_1x2(markets: List[dict], market_id: int = 1) -> Optional[Dict[str, Any]]:
     for m in markets:
-        if m.get("vendorMarketId") != 1:
+        if m.get("vendorMarketId") != market_id:
             continue
         if m.get("specifiers"):
             continue
@@ -151,9 +151,9 @@ def pick_1x2(markets: List[dict]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def pick_btts(markets: List[dict]) -> Optional[Dict[str, Any]]:
+def pick_btts(markets: List[dict], market_id: int = 29) -> Optional[Dict[str, Any]]:
     for m in markets:
-        if m.get("vendorMarketId") != 29:
+        if m.get("vendorMarketId") != market_id:
             continue
         if m.get("specifiers"):
             continue
@@ -168,11 +168,11 @@ def pick_btts(markets: List[dict]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def pick_all_ou_lines(markets: List[dict]) -> Dict[str, Any]:
+def pick_all_ou_lines(markets: List[dict], market_id: int = 18) -> Dict[str, Any]:
     """Fetch ALL total lines (whole, .5, .25, .75) returning exact string keys."""
     ou_lines = {}
     for m in markets:
-        if m.get("vendorMarketId") != 18:
+        if m.get("vendorMarketId") != market_id:
             continue
         spec = m.get("specifiers") or ""
         match = re.search(r'total=(\d+(?:\.\d+)?)', spec)
@@ -198,9 +198,9 @@ def pick_all_ou_lines(markets: List[dict]) -> Dict[str, Any]:
     return ou_lines
 
 
-def pick_dc(markets: List[dict]) -> Optional[Dict[str, Any]]:
+def pick_dc(markets: List[dict], market_id: int = 10) -> Optional[Dict[str, Any]]:
     for m in markets:
-        if m.get("vendorMarketId") != 10:
+        if m.get("vendorMarketId") != market_id:
             continue
         if m.get("specifiers"):
             continue
@@ -265,6 +265,15 @@ def scrape_for_calendar_day(
         odds_1x2 = pick_1x2(markets) or {}
         odds_gg = pick_btts(markets) or {}
         odds_dc = pick_dc(markets) or {}
+        odds_fh_1x2 = pick_1x2(markets, 60) or {}
+        odds_fh_dc = pick_dc(markets, 63) or {}
+        odds_fh_ou = pick_all_ou_lines(markets, 68)
+        odds_sh_1x2 = pick_1x2(markets, 83) or {}
+        odds_sh_dc = pick_dc(markets, 85) or {}
+        odds_sh_ou = pick_all_ou_lines(markets, 90)
+        odds_corners_1x2 = pick_1x2(markets, 162) or {}
+        odds_bookings_1x2 = pick_1x2(markets, 136) or {}
+        odds_bookings_ou = pick_all_ou_lines(markets, 139)
 
         # Fetch all O/U lines (standard .5 and asian wholes/.25/.75)
         all_ou = pick_all_ou_lines(markets)
@@ -303,15 +312,15 @@ def scrape_for_calendar_day(
             "odds_1x2": odds_1x2,
             "odds_1x2_one_up": {},
             "odds_1x2_two_up": {},
-            "odds_fh_1x2": {},
-            "odds_sh_1x2": {},
-            "odds_fh_ou": {},
-            "odds_sh_ou": {},
-            "odds_fh_dc": {},
-            "odds_sh_dc": {},
-            "odds_corners_1x2": {},
-            "odds_bookings_1x2": {},
-            "odds_bookings_ou": {},
+            "odds_fh_1x2": odds_fh_1x2,
+            "odds_sh_1x2": odds_sh_1x2,
+            "odds_fh_ou": odds_fh_ou,
+            "odds_sh_ou": odds_sh_ou,
+            "odds_fh_dc": odds_fh_dc,
+            "odds_sh_dc": odds_sh_dc,
+            "odds_corners_1x2": odds_corners_1x2,
+            "odds_bookings_1x2": odds_bookings_1x2,
+            "odds_bookings_ou": odds_bookings_ou,
             "odds_ou": odds_ou,
             "odds_asian_ou": odds_asian_ou,
             "odds_gg": odds_gg,
@@ -327,14 +336,14 @@ def scrape_for_calendar_day(
 
 def display_matches(matches):
     if not matches:
-        print("⚠️ No matches found")
+        print("WARNING No matches found")
         return
-    print(f"\n📋 22BET GHANA (FAST API)")
-    print(f"⚽ Total matches: {len(matches)}")
+    print(f"\nLIST 22BET GHANA (FAST API)")
+    print(f"Total matches: {len(matches)}")
     print("=" * 50)
-    print("\n📝 Sample (first 10):")
+    print("\nSample (first 10):")
     for match in matches[:10]:
-        live_tag = "🔴" if match.get('is_live') else ""
+        live_tag = "LIVE" if match.get('is_live') else ""
         print(f"  {live_tag} {match['home_team']} vs "
               f"{match['away_team']} | {match['kickoff']} | "
               f"{match['tournament']}")
@@ -344,40 +353,40 @@ def display_matches(matches):
 
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = 80 - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = 80 - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 def fmt_box_bottom():
-    return "└" + "─" * 78 + "┘"
+    return "+" + "-" * 78 + "+"
 
 def fmt_box_subheading(sub_title):
     content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
+    return f"| {content:<76} |"
 
 def fmt_box_divider():
-    line = "─" * 76
-    return f"│ {line} │"
+    line = "-" * 76
+    return f"| {line} |"
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 def fmt_nested_ou_inline(ou_dict):
     if not ou_dict:
@@ -414,7 +423,7 @@ def fmt_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -432,7 +441,7 @@ def fmt_asian_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -451,7 +460,7 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     if not rows:
         return fmt_row("", empty_msg)
@@ -459,10 +468,10 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
 
 def format_match_text_block(m):
     # Header
-    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    title = f"Football {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+        title += " (LIVE)"
+    meta = f"League {m['tournament']} | Time {m['kickoff']}"
     
     # Border width
     w = 80
@@ -488,10 +497,10 @@ def format_match_text_block(m):
 
     # Construct the block
     lines = []
-    lines.append("═" * w)
+    lines.append("=" * w)
     lines.append(f"{title}")
     lines.append(f"{meta}")
-    lines.append("═" * w)
+    lines.append("=" * w)
     
     # Main Markets
     lines.append(fmt_box_top("MAIN MARKETS"))
@@ -550,10 +559,10 @@ def run():
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data')
     os.makedirs(output_dir, exist_ok=True)
     start = _time.time()
-    print("\n" + "🟣 " * 20)
+    print("\n" + "* " * 20)
     print("   22BET GHANA SCRAPER (FAST API)")
     print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🟣 " * 20 + "\n")
+    print("* " * 20 + "\n")
 
     now_utc = datetime.now(timezone.utc)
     today = now_utc.date()
@@ -584,12 +593,12 @@ def run():
             for match in matches:
                 f.write(format_match_text_block(match))
 
-        print(f"💾 Saved to {os.path.join(output_dir, 'twentytwobet_odds.json')}")
-        print(f"📄 Full list: {os.path.join(output_dir, 'twentytwobet_matches.txt')}")
+        print(f"Saved to {os.path.join(output_dir, 'twentytwobet_odds.json')}")
+        print(f"Full list: {os.path.join(output_dir, 'twentytwobet_matches.txt')}")
         print(f"   Open the .txt file to see all {len(matches)} matches!")
-        print(f"⏱️  Scraping completed in {_time.time() - start:.1f}s")
+        print(f"Scraping completed in {_time.time() - start:.1f}s")
     else:
-        print("\n⚠️ No matches found")
+        print("\nWARNING No matches found")
 
     return matches
 

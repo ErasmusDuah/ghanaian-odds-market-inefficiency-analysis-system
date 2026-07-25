@@ -120,8 +120,8 @@ def find_market(event: dict[str, Any], name: str, specifier: str | None = None) 
     return None
 
 
-def parse_1x2(event: dict[str, Any]) -> dict[str, float] | None:
-    market = find_market(event, "1x2")
+def parse_1x2(event: dict[str, Any], market_name: str = "1x2") -> dict[str, float] | None:
+    market = find_market(event, market_name)
     if not market:
         return None
 
@@ -228,6 +228,8 @@ def parse_gg(event: dict[str, Any]) -> dict[str, float] | None:
 
 def normalize_event(event: dict[str, Any], tz: timezone) -> dict[str, Any] | None:
     odds_1x2 = parse_1x2(event)
+    odds_1x2_one_up = parse_1x2(event, "1x2 - 1UP") or {}
+    odds_1x2_two_up = parse_1x2(event, "1x2 - 2UP") or {}
     odds_ou, odds_asian_ou = parse_all_ou(event)
     odds_gg = parse_gg(event)
     odds_dc = parse_dc(event)
@@ -249,8 +251,8 @@ def normalize_event(event: dict[str, Any], tz: timezone) -> dict[str, Any] | Non
         "status": "Not start",
         "source": SOURCE,
         'odds_1x2': odds_1x2,
-        'odds_1x2_one_up': {},
-        'odds_1x2_two_up': {},
+        'odds_1x2_one_up': odds_1x2_one_up,
+        'odds_1x2_two_up': odds_1x2_two_up,
         'odds_fh_1x2': {},
         'odds_sh_1x2': {},
         'odds_fh_ou': {},
@@ -334,40 +336,40 @@ def scrape_today(config: ScrapeConfig) -> ScrapeResult:
 
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = 80 - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = 80 - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 def fmt_box_bottom():
-    return "└" + "─" * 78 + "┘"
+    return "+" + "-" * 78 + "+"
 
 def fmt_box_subheading(sub_title):
     content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
+    return f"| {content:<76} |"
 
 def fmt_box_divider():
-    line = "─" * 76
-    return f"│ {line} │"
+    line = "-" * 76
+    return f"| {line} |"
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 def fmt_ou_section(ou_dict):
     if not ou_dict:
@@ -388,7 +390,7 @@ def fmt_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -406,7 +408,7 @@ def fmt_asian_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -425,7 +427,7 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     if not rows:
         return fmt_row("", empty_msg)
@@ -433,10 +435,10 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
 
 def format_match_text_block(m):
     # Header
-    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    title = f"Football {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+        title += " (LIVE)"
+    meta = f"League {m['tournament']} | Time {m['kickoff']}"
     
     # Border width
     w = 80
@@ -462,10 +464,10 @@ def format_match_text_block(m):
 
     # Construct the block
     lines = []
-    lines.append("═" * w)
+    lines.append("=" * w)
     lines.append(f"{title}")
     lines.append(f"{meta}")
-    lines.append("═" * w)
+    lines.append("=" * w)
     
     # Main Markets
     lines.append(fmt_box_top("MAIN MARKETS"))

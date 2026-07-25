@@ -40,9 +40,11 @@ API_BASE = "https://gh.api.odibets.com.gh"
 SITE_URL = "https://odibets.com.gh/gh/"
 TIMEZONE = "Africa/Accra"
 SOURCE = "odibets_gh"
-REQUEST_TIMEOUT = min(12.0, max(5.0, float(os.getenv('ODIBETS_REQUEST_TIMEOUT', '8'))))
+REQUEST_TIMEOUT = min(20.0, max(5.0, float(os.getenv('ODIBETS_REQUEST_TIMEOUT', '12'))))
 MAX_BUNDLE_WORKERS = min(8, max(1, int(os.getenv('ODIBETS_BUNDLE_WORKERS', '6'))))
-BUNDLE_MARKET_IDS = (1, 10, 27, 1043, 1044, 17, 53, 60)
+REQUIRED_BUNDLE_MARKET_IDS = (1,)
+OPTIONAL_BUNDLE_MARKET_IDS = (10, 27, 1043, 1044, 17, 53, 60)
+BUNDLE_MARKET_IDS = REQUIRED_BUNDLE_MARKET_IDS + OPTIONAL_BUNDLE_MARKET_IDS
 RATE_LIMIT_COOLDOWN = max(30, int(os.getenv('ODIBETS_RATE_LIMIT_COOLDOWN', '90')))
 _RATE_LIMITED_UNTIL = 0.0
 _THREAD_LOCAL = threading.local()
@@ -345,8 +347,8 @@ def _bundle_path(market_id: int, tz: ZoneInfo) -> str:
     )
 
 
-def _fetch_market_bundle(market_id: int, tz: ZoneInfo) -> tuple[int, Dict[str, Any]]:
-    return market_id, _get_json(_thread_session(), _bundle_path(market_id, tz), retries=1)
+def _fetch_market_bundle(market_id: int, tz: ZoneInfo, *, retries: int = 1) -> tuple[int, Dict[str, Any]]:
+    return market_id, _get_json(_thread_session(), _bundle_path(market_id, tz), retries=retries)
 
 
 def _fetch_matches() -> List[Dict[str, Any]]:
@@ -360,16 +362,41 @@ def _fetch_matches() -> List[Dict[str, Any]]:
     request_errors = 0
     error_samples: List[str] = []
 
-    worker_count = min(MAX_BUNDLE_WORKERS, len(BUNDLE_MARKET_IDS))
+    def merge_bundle(data: Dict[str, Any]) -> None:
+        for event in _event_list(data.get("E") or []):
+            event_id = event.get("id") or event.get("i")
+            if event_id is not None:
+                try:
+                    events_by_id[int(event_id)] = event
+                except (TypeError, ValueError):
+                    pass
+
+        odds_table = data.get("O") or {}
+        if isinstance(odds_table, dict):
+            for event_id, odds in odds_table.items():
+                if not isinstance(odds, dict):
+                    continue
+                try:
+                    numeric_id = int(event_id)
+                except (TypeError, ValueError):
+                    continue
+                odds_by_id.setdefault(numeric_id, {}).update(odds)
+
+    print("  Fetching Odibets required 1X2 anchor bundle...")
+    for market_id in REQUIRED_BUNDLE_MARKET_IDS:
+        _, data = _fetch_market_bundle(market_id, tz, retries=3)
+        merge_bundle(data)
+
+    worker_count = min(MAX_BUNDLE_WORKERS, len(OPTIONAL_BUNDLE_MARKET_IDS))
     print(
-        f"  Fetching Odibets market bundles: {len(BUNDLE_MARKET_IDS)} market(s) "
+        f"  Fetching Odibets optional market bundles: {len(OPTIONAL_BUNDLE_MARKET_IDS)} market(s) "
         f"with {worker_count} worker(s)..."
     )
 
     with ThreadPoolExecutor(max_workers=worker_count) as executor:
         futures = {
             executor.submit(_fetch_market_bundle, market_id, tz): market_id
-            for market_id in BUNDLE_MARKET_IDS
+            for market_id in OPTIONAL_BUNDLE_MARKET_IDS
         }
         for future in as_completed(futures):
             market_id = futures[future]
@@ -386,24 +413,7 @@ def _fetch_matches() -> List[Dict[str, Any]]:
                     error_samples.append(f"market {market_id}: {exc}")
                 continue
 
-            for event in _event_list(data.get("E") or []):
-                event_id = event.get("id") or event.get("i")
-                if event_id is not None:
-                    try:
-                        events_by_id[int(event_id)] = event
-                    except (TypeError, ValueError):
-                        pass
-
-            odds_table = data.get("O") or {}
-            if isinstance(odds_table, dict):
-                for event_id, odds in odds_table.items():
-                    if not isinstance(odds, dict):
-                        continue
-                    try:
-                        numeric_id = int(event_id)
-                    except (TypeError, ValueError):
-                        continue
-                    odds_by_id.setdefault(numeric_id, {}).update(odds)
+            merge_bundle(data)
 
     if request_errors:
         print(f"  WARNING: Odibets bundle request errors: {request_errors}/{len(BUNDLE_MARKET_IDS)}")
@@ -436,6 +446,13 @@ def _fetch_matches() -> List[Dict[str, Any]]:
         raise RuntimeError(
             "Odibets bundle feed returned odds but none passed today's visibility filters; "
             "skipping this platform for the scan."
+        )
+
+    with_1x2 = sum(1 for match in matches if match.get("odds_1x2"))
+    if matches and with_1x2 == 0:
+        raise RuntimeError(
+            "Odibets required 1X2 anchor bundle produced no usable 1X2 odds; "
+            "skipping this platform instead of saving partial non-1X2 output."
         )
 
     matches.sort(key=lambda item: (item["kickoff"], item["tournament"], item["home_team"], item["away_team"]))

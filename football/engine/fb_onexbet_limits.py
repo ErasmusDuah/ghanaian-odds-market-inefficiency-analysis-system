@@ -1,4 +1,4 @@
-﻿"""1xBet stake-limit probe helpers.
+"""1xBet stake-limit probe helpers.
 
 This module only validates a coupon leg and reads max-stake metadata. It never
 places a bet and never calls the secure MakeBet endpoints.

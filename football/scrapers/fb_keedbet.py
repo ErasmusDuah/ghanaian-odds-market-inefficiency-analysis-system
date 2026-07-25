@@ -39,10 +39,10 @@ TIMEZONE = "Africa/Accra"
 SOURCE = "keedbet_gh"
 SPORT_KEY = "F"
 PREMATCH_STAGE = 1
-REQUEST_TIMEOUT = min(12.0, max(2.0, float(os.getenv("KEEDBET_REQUEST_TIMEOUT", "4"))))
-TOURNAMENT_WORKERS = min(48, max(4, int(os.getenv("KEEDBET_TOURNAMENT_WORKERS", "32"))))
-MARKET_WORKERS = min(16, max(2, int(os.getenv("KEEDBET_MARKET_WORKERS", "8"))))
-MARKET_BATCH_SIZE = min(60, max(5, int(os.getenv("KEEDBET_MARKET_BATCH_SIZE", "35"))))
+REQUEST_TIMEOUT = min(12.0, max(2.0, float(os.getenv("KEEDBET_REQUEST_TIMEOUT", "6"))))
+TOURNAMENT_WORKERS = min(24, max(4, int(os.getenv("KEEDBET_TOURNAMENT_WORKERS", "14"))))
+MARKET_WORKERS = min(12, max(2, int(os.getenv("KEEDBET_MARKET_WORKERS", "6"))))
+MARKET_BATCH_SIZE = min(70, max(5, int(os.getenv("KEEDBET_MARKET_BATCH_SIZE", "50"))))
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DATA_DIR = os.path.join(_ROOT, "data")
@@ -124,8 +124,8 @@ def _stream(target: str, args: List[Any], timeout: Optional[float] = None) -> Li
         while time.time() < deadline:
             try:
                 chunk = ws.recv()
-            except Exception:
-                break
+            except Exception as exc:
+                raise RuntimeError(f"{target} stream interrupted before initial batch: {exc}") from exc
             if isinstance(chunk, bytes):
                 chunk = chunk.decode("utf-8", "replace")
             buffer += chunk
@@ -142,7 +142,7 @@ def _stream(target: str, args: List[Any], timeout: Optional[float] = None) -> Li
                 messages.append(message)
                 if (message.get("item") or {}).get("isInitialBatch") is True:
                     return messages
-        return messages
+        raise TimeoutError(f"{target} did not return a complete initial batch within {timeout:.1f}s")
     finally:
         try:
             ws.close()
@@ -204,11 +204,34 @@ def _parse_markets(rows: List[Tuple[Dict[str, Any], Dict[str, Any]]]) -> Dict[st
         try:
             market_type = int(key.get("marketType"))
             period = int(key.get("period") or 0)
+            result_kind = int(key.get("resultKind") or 1)
         except (TypeError, ValueError):
+            continue
+        # Keedbet returns other result families, such as corners/cards, with the
+        # same marketType IDs. Only resultKind=1 is normal football match odds.
+        if key.get("subPeriod") is not None:
             continue
         if market.get("isRemoved"):
             continue
         items = market.get("marketItems") or []
+
+        if result_kind == 4:
+            if market_type == 2 and period == 0:
+                for item in items:
+                    if item.get("isRemoved"):
+                        continue
+                    for outcome in item.get("outcomes") or []:
+                        otype = (outcome.get("key") or {}).get("type")
+                        if otype == 0:
+                            _set_price(markets["odds_corners_1x2"], "home", outcome)
+                        elif otype == 1:
+                            _set_price(markets["odds_corners_1x2"], "draw", outcome)
+                        elif otype == 3:
+                            _set_price(markets["odds_corners_1x2"], "away", outcome)
+            continue
+
+        if result_kind != 1:
+            continue
         for item in items:
             if item.get("isRemoved"):
                 continue
@@ -229,9 +252,9 @@ def _parse_markets(rows: List[Tuple[Dict[str, Any], Dict[str, Any]]]) -> Dict[st
                 dest = markets["odds_dc" if period == 0 else "odds_fh_dc" if period == 1 else "odds_sh_dc"]
                 for outcome in outcomes:
                     otype = (outcome.get("key") or {}).get("type")
-                    if otype == 10:
+                    if otype == 8:
                         _set_price(dest, "1x", outcome)
-                    elif otype == 8:
+                    elif otype == 10:
                         _set_price(dest, "12", outcome)
                     elif otype == 9:
                         _set_price(dest, "x2", outcome)
@@ -304,11 +327,7 @@ def _fetch_categories() -> Dict[str, Dict[str, Any]]:
 
 
 def _fetch_tournament_events(tournament_id: str) -> List[Tuple[str, Dict[str, Any]]]:
-    try:
-        rows = _stream_rows("GetEventsByTournamentIdAndStage", [tournament_id, PREMATCH_STAGE], timeout=REQUEST_TIMEOUT)
-    except Exception as exc:
-        print(f"  WARNING: Keedbet tournament {tournament_id} skipped: {exc}")
-        return []
+    rows = _stream_rows("GetEventsByTournamentIdAndStage", [tournament_id, PREMATCH_STAGE], timeout=REQUEST_TIMEOUT)
     events: List[Tuple[str, Dict[str, Any]]] = []
     for key, value in rows:
         event_id = str(key.get("id") or key.get("raw") or key)
@@ -320,16 +339,36 @@ def _fetch_tournament_events(tournament_id: str) -> List[Tuple[str, Dict[str, An
 def _fetch_market_batch(event_ids: List[str]) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
     if not event_ids:
         return []
-    try:
-        return _stream_rows("GetMarketsByEventIds", [event_ids, ""], timeout=max(REQUEST_TIMEOUT, 8.0))
-    except Exception as exc:
-        print(f"  WARNING: Keedbet market batch skipped ({len(event_ids)} events): {exc}")
-        return []
+    return _stream_rows("GetMarketsByEventIds", [event_ids, ""], timeout=max(REQUEST_TIMEOUT, 8.0))
 
 
 def _chunked(values: List[str], size: int) -> Iterable[List[str]]:
     for idx in range(0, len(values), size):
         yield values[idx:idx + size]
+
+
+def _retry_tournament_events(tournament_id: str) -> List[Tuple[str, Dict[str, Any]]]:
+    last_error: Optional[Exception] = None
+    for attempt in range(1, 4):
+        try:
+            return _fetch_tournament_events(tournament_id)
+        except Exception as exc:
+            last_error = exc
+            if attempt < 3:
+                time.sleep(0.4 * attempt)
+    raise RuntimeError(f"Keedbet tournament {tournament_id} failed after retries: {last_error}")
+
+
+def _retry_market_batch(event_ids: List[str]) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+    last_error: Optional[Exception] = None
+    for attempt in range(1, 4):
+        try:
+            return _fetch_market_batch(event_ids)
+        except Exception as exc:
+            last_error = exc
+            if attempt < 3:
+                time.sleep(0.5 * attempt)
+    raise RuntimeError(f"Keedbet market batch failed after retries ({len(event_ids)} events): {last_error}")
 
 
 def collect_today_matches() -> List[Dict[str, Any]]:
@@ -338,10 +377,36 @@ def collect_today_matches() -> List[Dict[str, Any]]:
     tournaments = _fetch_tournaments()
 
     raw_events: List[Tuple[str, Dict[str, Any]]] = []
+    failed_tournaments: List[str] = []
     with ThreadPoolExecutor(max_workers=TOURNAMENT_WORKERS) as executor:
-        futures = [executor.submit(_fetch_tournament_events, tid) for tid in tournaments]
+        futures = {executor.submit(_fetch_tournament_events, tid): tid for tid in tournaments}
         for future in as_completed(futures):
-            raw_events.extend(future.result())
+            tournament_id = futures[future]
+            try:
+                raw_events.extend(future.result())
+            except Exception as exc:
+                failed_tournaments.append(tournament_id)
+                print(f"  WARNING: Keedbet tournament {tournament_id} will retry in recovery lane: {exc}")
+
+    recovered_tournaments = 0
+    still_failed_tournaments = 0
+    for tournament_id in failed_tournaments:
+        try:
+            recovered = _retry_tournament_events(tournament_id)
+            raw_events.extend(recovered)
+            recovered_tournaments += 1
+        except Exception as exc:
+            still_failed_tournaments += 1
+            print(f"  WARNING: Keedbet tournament {tournament_id} failed after recovery: {exc}")
+
+    if tournaments and not raw_events:
+        raise RuntimeError("Keedbet event feed returned no usable tournament events")
+    if failed_tournaments and still_failed_tournaments > max(8, int(len(tournaments) * 0.25)):
+        raise RuntimeError(
+            f"Keedbet event feed incomplete: {still_failed_tournaments}/{len(tournaments)} tournaments failed"
+        )
+    if recovered_tournaments:
+        print(f"  Keedbet recovered {recovered_tournaments} tournament feed(s)")
 
     today_events: Dict[str, Dict[str, Any]] = {}
     for event_id, event in raw_events:
@@ -363,10 +428,36 @@ def collect_today_matches() -> List[Dict[str, Any]]:
 
     market_rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
     event_ids = list(today_events.keys())
+    failed_batches: List[List[str]] = []
     with ThreadPoolExecutor(max_workers=MARKET_WORKERS) as executor:
-        futures = [executor.submit(_fetch_market_batch, batch) for batch in _chunked(event_ids, MARKET_BATCH_SIZE)]
+        futures = {executor.submit(_fetch_market_batch, batch): batch for batch in _chunked(event_ids, MARKET_BATCH_SIZE)}
         for future in as_completed(futures):
-            market_rows.extend(future.result())
+            batch = futures[future]
+            try:
+                market_rows.extend(future.result())
+            except Exception as exc:
+                failed_batches.append(batch)
+                print(f"  WARNING: Keedbet market batch will retry in recovery lane ({len(batch)} events): {exc}")
+
+    recovered_batches = 0
+    still_failed_events = 0
+    for batch in failed_batches:
+        try:
+            recovered = _retry_market_batch(batch)
+            market_rows.extend(recovered)
+            recovered_batches += 1
+        except Exception as exc:
+            still_failed_events += len(batch)
+            print(f"  WARNING: Keedbet market batch failed after recovery ({len(batch)} events): {exc}")
+
+    if event_ids and not market_rows:
+        raise RuntimeError("Keedbet market feed returned no usable odds")
+    if event_ids and still_failed_events > max(20, int(len(event_ids) * 0.25)):
+        raise RuntimeError(
+            f"Keedbet market feed incomplete: {still_failed_events}/{len(event_ids)} events failed"
+        )
+    if recovered_batches:
+        print(f"  Keedbet recovered {recovered_batches} market batch(es)")
 
     markets_by_event: Dict[str, List[Tuple[Dict[str, Any], Dict[str, Any]]]] = {}
     for key, value in market_rows:

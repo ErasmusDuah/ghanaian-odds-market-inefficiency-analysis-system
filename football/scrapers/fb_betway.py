@@ -15,11 +15,19 @@ BETWAY_UPCOMING_URL = (
     '&Skip={skip}&Take=100&cultureCode=en-US'
     '&isEsport=false&boostedOnly=false'
     '&marketTypes=%5BWin%2FDraw%2FWin%5D'
+    '&marketTypes=%5BDouble%20Chance%5D'
     '&marketTypes=%5BBoth%20Teams%20To%20Score%5D'
     '&marketTypes=%5BTotal%20Goals%5D'
 )
 
 BETWAY_HOME_URL = 'https://www.betway.com.gh/sport/soccer/'
+
+BETWAY_EVENT_MARKETS_URL = (
+    'https://www.betway.com.gh/sportsapi/br/v1/MarketGroupings/'
+    'MarketGroupNamesAndMarketsForEvent?eventId={event_id}'
+    '&marketGroupId=%20&countryCode=GH&cultureCode=en-US'
+    '&skip=0&take=200&isBuildABetOnly=false&searchQuery='
+)
 
 
 async def get_cookies():
@@ -55,7 +63,25 @@ async def fetch_page(session, skip, headers):
             if response.status == 200:
                 return await response.json()
     except Exception as e:
-        print(f"  ❌ Error: {e}")
+        print(f"  ERROR Error: {e}")
+    return None
+
+
+async def fetch_event_markets(session, event_id, headers):
+    """Fetches Betway More Bets markets for one event."""
+    if not event_id:
+        return None
+    url = BETWAY_EVENT_MARKETS_URL.format(event_id=event_id)
+    url = f"{url}&_t={int(_time.time() * 1000)}"
+    try:
+        async with session.get(
+                url, headers=headers,
+                timeout=aiohttp.ClientTimeout(total=15)
+        ) as response:
+            if response.status == 200:
+                return await response.json()
+    except Exception as e:
+        print(f"  Error fetching event {event_id} markets: {e}")
     return None
 
 
@@ -90,7 +116,7 @@ async def scrape_betway():
 
     async with aiohttp.ClientSession(cookies=cookies) as session:
 
-        print("📅 Fetching today's matches...")
+        print("Fetching today's matches...")
         skip = 0
 
         while True:
@@ -123,7 +149,7 @@ async def scrape_betway():
             all_outcomes.extend(outcomes)
             all_prices.extend(prices)
 
-            print(f"  ✅ Skip {skip}: {len(valid_events)} matches "
+            print(f"  OK Skip {skip}: {len(valid_events)} matches "
                   f"(Total: {len(all_events)})")
 
             if stop or len(valid_events) < len(events):
@@ -131,7 +157,34 @@ async def scrape_betway():
 
             skip += 100
 
-    print(f"\n✅ Total events fetched: {len(all_events)}")
+        if all_events:
+            print("[INFO] Fetching Betway More Bets market details...")
+            detail_tasks = [
+                fetch_event_markets(session, event.get('eventId'), headers)
+                for event in all_events
+            ]
+            details = await asyncio.gather(*detail_tasks)
+            detail_count = 0
+            for event, detail in zip(all_events, details):
+                if not isinstance(detail, dict):
+                    continue
+                event_id = event.get('eventId')
+                markets = detail.get('marketsInGroup') or []
+                outcomes = detail.get('outcomes') or []
+                prices = detail.get('prices') or []
+                for market in markets:
+                    market.setdefault('eventId', event_id)
+                if markets:
+                    detail_count += 1
+                all_markets.extend(markets)
+                all_outcomes.extend(outcomes)
+                all_prices.extend(prices)
+            print(
+                f"  [INFO] More Bets details fetched: "
+                f"{detail_count}/{len(all_events)} events"
+            )
+
+    print(f"\nTotal events fetched: {len(all_events)}")
 
     raw_data = {
         'events': all_events,
@@ -185,6 +238,192 @@ def _outcome_is_bettable(outcome):
     return True
 
 
+def _outcome_text(outcome):
+    return ' '.join(str(outcome.get(key) or '') for key in ('name', 'displayName', 'description')).lower()
+
+
+def _dc_key(outcome, home_team='', away_team=''):
+    outcome_id = str(outcome.get('outcomeId') or '')
+    if outcome_id.endswith('9'):
+        return '1x'
+    if outcome_id.endswith('10'):
+        return '12'
+    if outcome_id.endswith('11'):
+        return 'x2'
+
+    text = _outcome_text(outcome)
+    compact = text.replace(' ', '').replace('/', '').replace('-', '')
+    home_norm = _team_norm(home_team)
+    away_norm = _team_norm(away_team)
+    text_norm = _team_norm(text)
+
+    if home_norm and away_norm:
+        has_home = home_norm in text_norm
+        has_away = away_norm in text_norm
+        has_draw = 'draw' in text_norm
+        if has_home and has_draw and not has_away:
+            return '1x'
+        if has_home and has_away and not has_draw:
+            return '12'
+        if has_away and has_draw and not has_home:
+            return 'x2'
+
+    if '1x' in compact or 'homedraw' in compact or 'homeordraw' in compact or 'drawhome' in compact:
+        return '1x'
+    if '12' in compact or 'homeaway' in compact or 'homeoraway' in compact or 'awayhome' in compact:
+        return '12'
+    if 'x2' in compact or 'drawaway' in compact or 'draworaway' in compact or 'awaydraw' in compact:
+        return 'x2'
+    return None
+
+
+def _odd_price(price_map, outcome):
+    try:
+        return float(price_map.get(outcome.get('outcomeId'), 0) or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _market_text(market):
+    return ' '.join(str(market.get(key) or '') for key in ('name', 'displayName', 'marketTypeCName')).lower()
+
+
+def _line_from_market(market):
+    import re
+    text = ' '.join(str(market.get(key) or '') for key in ('marketId', 'displayName', 'name'))
+    match = re.search(r'total=(\d+(?:\.\d+)?)', text, re.I)
+    if not match:
+        match = re.search(r'\((\d+(?:\.\d+)?)\)', text)
+    if not match:
+        return None
+    try:
+        return str(float(match.group(1)))
+    except ValueError:
+        return None
+
+
+def _put_price_3way(dest, outcomes, price_map, home_team='', away_team=''):
+    by_key = {}
+    home_norm = _team_norm(home_team)
+    away_norm = _team_norm(away_team)
+    for outcome in outcomes:
+        labels = [str(outcome.get(key) or '').strip().lower() for key in ('name', 'displayName', 'description')]
+        labels = [label for label in labels if label]
+        compact_labels = [_team_norm(label) for label in labels]
+        price = _odd_price(price_map, outcome)
+        if price <= 1.01:
+            continue
+        if any(label in {'x', 'draw'} for label in labels):
+            by_key['draw'] = price
+        elif home_norm and any(label == home_norm for label in compact_labels):
+            by_key['home'] = price
+        elif away_norm and any(label == away_norm for label in compact_labels):
+            by_key['away'] = price
+
+    if all(by_key.get(key, 0) > 1.01 for key in ('home', 'draw', 'away')):
+        dest.update({'home': by_key['home'], 'draw': by_key['draw'], 'away': by_key['away']})
+
+
+def _team_norm(value):
+    import re
+    return re.sub(r'[^a-z0-9]+', '', str(value or '').lower())
+
+
+def _market_label(market, key):
+    return str(market.get(key) or '').strip().lower()
+
+
+def _is_exact_full_time_1x2(market):
+    name = _market_label(market, 'name')
+    display = _market_label(market, 'displayName')
+    cname = _market_label(market, 'marketTypeCName')
+    text = _market_text(market)
+    if '&' in text or 'half' in text or 'total' in text or 'both teams' in text:
+        return False
+    return name in {'[win/draw/win]', '1x2'} or display == '1x2' or cname == 'win-draw-win'
+
+
+def _is_exact_period_1x2(market, period):
+    expected = '1st half - 1x2' if period == 1 else '2nd half - 1x2'
+    name = _market_label(market, 'name')
+    display = _market_label(market, 'displayName')
+    cname = _market_label(market, 'marketTypeCName')
+    text = _market_text(market)
+    if '&' in text or 'total' in text or 'both teams' in text:
+        return False
+    return display == expected or cname == expected or name == ('[1st half] - [win/draw/win]' if period == 1 else '[2nd half] - [win/draw/win]')
+
+
+def _is_exact_full_time_dc(market):
+    name = _market_label(market, 'name')
+    display = _market_label(market, 'displayName')
+    cname = _market_label(market, 'marketTypeCName')
+    text = _market_text(market)
+    if '&' in text or 'half' in text:
+        return False
+    return name == '[double chance]' or display == 'double chance' or cname == 'double-chance'
+
+
+def _is_exact_period_dc(market, period):
+    expected = '1st half - double chance' if period == 1 else '2nd half - double chance'
+    text = _market_text(market)
+    if '&' in text:
+        return False
+    return _market_label(market, 'displayName') == expected or _market_label(market, 'marketTypeCName') == expected
+
+
+def _put_price_dc(dest, outcomes, price_map, home_team='', away_team=''):
+    by_key = {}
+    for outcome in outcomes:
+        key = _dc_key(outcome, home_team, away_team)
+        if key is None:
+            continue
+        price = _odd_price(price_map, outcome)
+        if price > 1.01:
+            by_key[key] = price
+    if all(by_key.get(key, 0) > 1.01 for key in ('1x', '12', 'x2')):
+        dest.update({'1x': by_key['1x'], '12': by_key['12'], 'x2': by_key['x2']})
+
+
+def _put_price_ou(dest, market, outcomes, price_map):
+    line = _line_from_market(market)
+    if not line:
+        return
+    row = {}
+    for outcome in outcomes:
+        name = _outcome_text(outcome)
+        price = _odd_price(price_map, outcome)
+        if price <= 1.01:
+            continue
+        if 'over' in name:
+            row['over'] = price
+        elif 'under' in name:
+            row['under'] = price
+    if row.get('over', 0) > 1.01 and row.get('under', 0) > 1.01:
+        dest[line] = {'over': row['over'], 'under': row['under']}
+
+
+def _is_full_time_total_market(market):
+    name = str(market.get('name') or '').strip().lower()
+    display = str(market.get('displayName') or '').strip().lower()
+    market_id = str(market.get('marketId') or '').lower()
+    return (
+        '[total goals]' in name
+        or (name == 'total' and display.startswith('total ('))
+        or ('18total=' in market_id and display.startswith('total ('))
+    )
+
+
+def _is_exact_btts(market):
+    name = _market_label(market, 'name')
+    display = _market_label(market, 'displayName')
+    cname = _market_label(market, 'marketTypeCName')
+    text = _market_text(market)
+    if '&' in text or 'half' in text:
+        return False
+    return name == '[both teams to score]' or display == 'both teams to score' or cname == 'both-teams-to-score'
+
+
 def parse_betway_data(raw_data, today, tomorrow):
 
     events = raw_data.get('events', [])
@@ -208,9 +447,15 @@ def parse_betway_data(raw_data, today, tomorrow):
             market_map[event_id].append(market)
 
     outcomes_by_market = {}
+    seen_outcomes_by_market = {}
     for outcome in outcomes:
         market_id = outcome.get('marketId')
         if market_id:
+            outcome_key = outcome.get('outcomeId') or (outcome.get('name'), outcome.get('displayName'), outcome.get('index'))
+            seen = seen_outcomes_by_market.setdefault(market_id, set())
+            if outcome_key in seen:
+                continue
+            seen.add(outcome_key)
             if market_id not in outcomes_by_market:
                 outcomes_by_market[market_id] = []
             outcomes_by_market[market_id].append(outcome)
@@ -281,6 +526,7 @@ def parse_betway_data(raw_data, today, tomorrow):
         for market in event_markets:
             market_name = market.get('name', '').lower()
             market_id = market.get('marketId', '')
+            market_text = _market_text(market)
 
             # Skip markets that Betway marks hidden, inactive, or suspended.
             if not _market_is_bettable(market):
@@ -301,38 +547,44 @@ def parse_betway_data(raw_data, today, tomorrow):
             if not market_outcomes:
                 continue
 
+
+            if '1x2 (1up)' in market_text:
+                _put_price_3way(match['odds_1x2_one_up'], market_outcomes, price_map, home_team, away_team)
+
+            if '1x2 (2up)' in market_text:
+                _put_price_3way(match['odds_1x2_two_up'], market_outcomes, price_map, home_team, away_team)
+
+            if _is_exact_period_1x2(market, 1):
+                _put_price_3way(match['odds_fh_1x2'], market_outcomes, price_map, home_team, away_team)
+
+            if _is_exact_period_1x2(market, 2):
+                _put_price_3way(match['odds_sh_1x2'], market_outcomes, price_map, home_team, away_team)
+
+            if _is_exact_period_dc(market, 1):
+                _put_price_dc(match['odds_fh_dc'], market_outcomes, price_map, home_team, away_team)
+
+            if _is_exact_period_dc(market, 2):
+                _put_price_dc(match['odds_sh_dc'], market_outcomes, price_map, home_team, away_team)
+
+            if '1st half - total' in market_text and ' total (' in market_text:
+                _put_price_ou(match['odds_fh_ou'], market, market_outcomes, price_map)
+
+            if '2nd half - total' in market_text and ' total (' in market_text:
+                _put_price_ou(match['odds_sh_ou'], market, market_outcomes, price_map)
+
             # 1X2
-            if '[win/draw/win]' in market_name or \
-                    market_name == '1x2':
+            if _is_exact_full_time_1x2(market):
+                _put_price_3way(match['odds_1x2'], market_outcomes, price_map, home_team, away_team)
 
-                sorted_out = sorted(
-                    market_outcomes,
-                    key=lambda x: x.get('index', 999)
-                )
 
-                if len(sorted_out) >= 3:
-                    home_price = price_map.get(
-                        sorted_out[0].get('outcomeId'), 0)
-                    draw_price = price_map.get(
-                        sorted_out[1].get('outcomeId'), 0)
-                    away_price = price_map.get(
-                        sorted_out[2].get('outcomeId'), 0)
-
-                    if home_price > 1 and \
-                            draw_price > 1 and \
-                            away_price > 1:
-                        match['odds_1x2'] = {
-                            'home': home_price,
-                            'draw': draw_price,
-                            'away': away_price
-                        }
+            # Double Chance
+            if _is_exact_full_time_dc(market):
+                _put_price_dc(match['odds_dc'], market_outcomes, price_map, home_team, away_team)
 
             # Over/Under dynamically. Betway sends hidden squashed lines on
             # the parent market; only keep outcomes whose original child market
             # is visible on the event page.
-            if '[total goals]' in market_name or \
-                    'total=' in market_id.lower() or \
-                    'total' in market_name:
+            if _is_full_time_total_market(market):
                 import re
                 allowed_original_ids = set()
                 if _flag_true(market.get('isSquashedParent')):
@@ -374,6 +626,15 @@ def parse_betway_data(raw_data, today, tomorrow):
                             else:
                                 target_dict[line_str]['under'] = price
                 
+                # Detail endpoint full-time Total lines are already unsquashed.
+                if not _flag_true(market.get('isSquashedParent')):
+                    _put_price_ou(
+                        match['odds_ou'] if (_line_from_market(market) and float(_line_from_market(market)) % 1.0 == 0.5) else match['odds_asian_ou'],
+                        market,
+                        market_outcomes,
+                        price_map,
+                    )
+
                 # Cleanup incomplete lines
                 complete_ou = {}
                 for l_str, vals in match['odds_ou'].items():
@@ -388,7 +649,7 @@ def parse_betway_data(raw_data, today, tomorrow):
                 match['odds_asian_ou'] = complete_asian
 
             # BTTS
-            if '[both teams to score]' in market_name:
+            if _is_exact_btts(market):
                 yes_out = next(
                     (o for o in market_outcomes
                      if 'yes' in o.get('name', '').lower()), None)
@@ -442,40 +703,40 @@ def display_matches(matches):
 
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = 80 - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = 80 - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 def fmt_box_bottom():
-    return "└" + "─" * 78 + "┘"
+    return "+" + "-" * 78 + "+"
 
 def fmt_box_subheading(sub_title):
     content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
+    return f"| {content:<76} |"
 
 def fmt_box_divider():
-    line = "─" * 76
-    return f"│ {line} │"
+    line = "-" * 76
+    return f"| {line} |"
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 def fmt_ou_section(ou_dict):
     if not ou_dict:
@@ -496,7 +757,7 @@ def fmt_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -514,7 +775,7 @@ def fmt_asian_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -533,7 +794,7 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     if not rows:
         return fmt_row("", empty_msg)
@@ -541,10 +802,10 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
 
 def format_match_text_block(m):
     # Header
-    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    title = f"Football {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+        title += " (LIVE)"
+    meta = f"League {m['tournament']} | Time {m['kickoff']}"
     
     # Border width
     w = 80
@@ -570,10 +831,10 @@ def format_match_text_block(m):
 
     # Construct the block
     lines = []
-    lines.append("═" * w)
+    lines.append("=" * w)
     lines.append(f"{title}")
     lines.append(f"{meta}")
-    lines.append("═" * w)
+    lines.append("=" * w)
     
     # Main Markets
     lines.append(fmt_box_top("MAIN MARKETS"))
@@ -655,9 +916,9 @@ def run():
         print(f"Saved to {os.path.join(output_dir, 'betway_odds.json')}")
         print(f"Full list saved to {os.path.join(output_dir, 'betway_matches.txt')}")
         print(f"   Open the .txt file to see all {len(matches)} matches!")
-        print(f"⏱️  Scraping completed in {_time.time() - start:.1f}s")
+        print(f"Scraping completed in {_time.time() - start:.1f}s")
     else:
-        print("⚠️ No matches found")
+        print("WARNING No matches found")
 
     return matches
 

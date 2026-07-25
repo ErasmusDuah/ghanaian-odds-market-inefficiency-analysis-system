@@ -85,9 +85,9 @@ def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update 
         if has_changes:
             subprocess.run(["git", "commit", "-m", message], cwd=cwd, check=True, capture_output=True)
             subprocess.run(["git", "push"], cwd=cwd, check=True, capture_output=True)
-            msg = f"  ✅ [Git Sync] Synced {', '.join(filepaths)} to GitHub."
+            msg = f"  OK [Git Sync] Synced {', '.join(filepaths)} to GitHub."
         else:
-            msg = f"  ✅ [Git Sync] Files are already up to date on GitHub (no new changes)."
+            msg = f"  OK [Git Sync] Files are already up to date on GitHub (no new changes)."
         
         if not quiet:
             print(msg)
@@ -95,12 +95,12 @@ def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update 
     except subprocess.CalledProcessError as e:
         stderr_msg = e.stderr.decode('utf-8', errors='ignore') if e.stderr else str(e)
         if "ignored by one of your .gitignore files" not in stderr_msg:
-            msg = f"  ⚠️ [Git Sync] Error syncing to GitHub: {stderr_msg}"
+            msg = f"  WARNING [Git Sync] Error syncing to GitHub: {stderr_msg}"
             if not quiet:
                 print(msg)
             return msg
     except Exception as e:
-        msg = f"  ⚠️ [Git Sync] Error syncing to GitHub: {e}"
+        msg = f"  WARNING [Git Sync] Error syncing to GitHub: {e}"
         if not quiet:
             print(msg)
         return msg
@@ -108,7 +108,7 @@ def push_to_github(filepaths="data/arbitrage_tracker.csv", message="Auto-update 
 def save_arbitrage_opportunities(opportunities, total_stake, quiet=False):
     """
     Saves a list of arbitrage opportunities to the CSV tracker and syncs with GitHub.
-    Always logs a row — if no arbs found, writes a row of 0s for ML continuity.
+    Always logs a row - if no arbs found, writes a row of 0s for ML continuity.
     """
     ensure_tracker()
     
@@ -169,9 +169,9 @@ def save_arbitrage_opportunities(opportunities, total_stake, quiet=False):
         writer.writerows(rows)
     
     if not opportunities:
-        msg = f"💾 [Arb Tracker] 0 opportunities found — logged 0s row to data/arbitrage_tracker.csv"
+        msg = f"Saved [Arb Tracker] 0 opportunities found - logged 0s row to data/arbitrage_tracker.csv"
     else:
-        msg = f"💾 [Arb Tracker] Appended {len(rows)} opportunities to data/arbitrage_tracker.csv"
+        msg = f"Saved [Arb Tracker] Appended {len(rows)} opportunities to data/arbitrage_tracker.csv"
     
     if not quiet:
         print(f"\n  {msg}")

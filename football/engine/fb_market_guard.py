@@ -46,6 +46,8 @@ NESTED_OU_MARKETS = {
     "odds_bookings_ou",
 }
 
+REQUIRE_1X2_ANCHOR_PLATFORMS = {"betway", "sportybet"}
+
 REQUIRED_KEYS = {
     **{key: ("home", "draw", "away") for key in THREE_WAY_MARKETS},
     **{key: ("yes", "no") for key in TWO_WAY_MARKETS},
@@ -216,6 +218,45 @@ def _clean_nested_market(market: Any) -> tuple[dict[str, dict[str, float]], int,
     return cleaned, dropped, len(cleaned)
 
 
+def _dc_market_is_consistent(dc: dict[str, float], x2: dict[str, float]) -> tuple[bool, str | None]:
+    pairs = {
+        "1x": ("home", "draw"),
+        "12": ("home", "away"),
+        "x2": ("draw", "away"),
+    }
+    for dc_key, (left, right) in pairs.items():
+        dc_odds = dc.get(dc_key)
+        left_odds = x2.get(left)
+        right_odds = x2.get(right)
+        if dc_odds is None or left_odds is None or right_odds is None:
+            continue
+        # A double-chance outcome covers two single outcomes, so its decimal odds
+        # must not exceed either corresponding single-outcome price on the same book.
+        if dc_odds > min(left_odds, right_odds) + 1e-9:
+            return False, f"{dc_key}_exceeds_single_odds"
+    return True, None
+
+
+def _drop_inconsistent_dc_markets(clean: dict[str, Any], report: GuardReport | None = None) -> None:
+    anchors = {
+        "odds_dc": "odds_1x2",
+        "odds_fh_dc": "odds_fh_1x2",
+        "odds_sh_dc": "odds_sh_1x2",
+    }
+    for dc_key, anchor_key in anchors.items():
+        dc = clean.get(dc_key) or {}
+        anchor = clean.get(anchor_key) or {}
+        if not dc or not anchor:
+            continue
+        ok, reason = _dc_market_is_consistent(dc, anchor)
+        if ok:
+            continue
+        clean[dc_key] = {}
+        if report:
+            report.dropped_markets += 1
+            report.add(f"{dc_key}:{reason}")
+
+
 def _has_any_market(match: dict[str, Any]) -> bool:
     for key in THREE_WAY_MARKETS | TWO_WAY_MARKETS | DC_MARKETS | NESTED_OU_MARKETS:
         if match.get(key):
@@ -272,7 +313,11 @@ def is_pseudo_or_virtual_match(match: dict[str, Any]) -> bool:
         return True
     return False
 
-def sanitize_match(match: dict[str, Any], report: GuardReport | None = None) -> dict[str, Any] | None:
+def sanitize_match(
+    match: dict[str, Any],
+    report: GuardReport | None = None,
+    platform: str | None = None,
+) -> dict[str, Any] | None:
     clean = deepcopy(match)
 
     if _object_marked_unavailable(clean):
@@ -311,10 +356,19 @@ def sanitize_match(match: dict[str, Any], report: GuardReport | None = None) -> 
             report.add(f"{key}:no_complete_lines")
         clean[key] = cleaned_nested
 
+    _drop_inconsistent_dc_markets(clean, report)
+
     if not _has_any_market(clean):
         if report:
             report.dropped_matches += 1
             report.add("match_no_valid_markets")
+        return None
+
+    platform_key = (platform or "").lower()
+    if platform_key in REQUIRE_1X2_ANCHOR_PLATFORMS and not clean.get("odds_1x2"):
+        if report:
+            report.dropped_matches += 1
+            report.add("match_missing_1x2_anchor")
         return None
 
     return clean
@@ -328,7 +382,7 @@ def sanitize_platform_matches(platform: str, matches: list[dict[str, Any]] | Non
             report.dropped_matches += 1
             report.add("match_not_dict")
             continue
-        clean = sanitize_match(match, report)
+        clean = sanitize_match(match, report, platform)
         if clean is not None:
             cleaned.append(clean)
     report.output_matches = len(cleaned)

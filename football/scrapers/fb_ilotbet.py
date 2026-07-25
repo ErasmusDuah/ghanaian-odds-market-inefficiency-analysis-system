@@ -331,7 +331,11 @@ def _parse_markets(raw_markets: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
         is_first_half = "1st half" in combined or "first half" in combined
         is_second_half = "2nd half" in combined or "second half" in combined
 
-        if market_id == "1" or alias == "1x2":
+        if market_id == "1601" and "1up" in combined:
+            _put_3way(markets["odds_1x2_one_up"], market)
+        elif market_id == "1601" and "2up" in combined:
+            _put_3way(markets["odds_1x2_two_up"], market)
+        elif market_id == "1" or alias == "1x2":
             if is_first_half:
                 _put_3way(markets["odds_fh_1x2"], market)
             elif is_second_half:
@@ -445,7 +449,10 @@ def collect_today_matches() -> List[Dict[str, Any]]:
         }
         if _is_pseudo(match):
             continue
-        match.update(_parse_markets(raw.get("markets") or []))
+        parsed_markets = _parse_markets(raw.get("markets") or [])
+        if not any(parsed_markets.get(key) for key in _EMPTY_MARKETS):
+            continue
+        match.update(parsed_markets)
         output.append(match)
     output.sort(key=lambda item: (item.get("start_time") or "", item.get("league") or "", item.get("home_team") or ""))
     return output
@@ -491,5 +498,4 @@ def run() -> List[Dict[str, Any]]:
 
 if __name__ == "__main__":
     run()
-
 

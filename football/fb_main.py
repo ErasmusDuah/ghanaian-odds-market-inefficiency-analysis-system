@@ -69,7 +69,7 @@ def clear_old_data():
 
 
 def _safe_fetch(fetch_fn, platform_name):
-    """Runs a scraper safely — a crash in one platform won't abort the whole scan."""
+    """Runs a scraper safely - a crash in one platform won't abort the whole scan."""
     try:
         return fetch_fn() or []
     except Exception as e:
@@ -83,10 +83,10 @@ def run_scan():
     global scan_count, next_run_time
     scan_count += 1
 
-    # Lock in the next run time NOW — before any scraping starts
+    # Lock in the next run time NOW - before any scraping starts
     next_run_time = time.time() + 5 * 60
 
-    # Read stake directly from the .env file on disk — bypasses OS env cache entirely
+    # Read stake directly from the .env file on disk - bypasses OS env cache entirely
     # so changes to STARTING_CAPITAL take effect on the very next scan, no restart needed
     _env = dotenv_values(ENV_PATH)
     TOTAL_STAKE = int(_env.get('STARTING_CAPITAL', 500))
@@ -110,7 +110,7 @@ def run_scan():
         clear_old_data()
         print("CLEARED old odds data\n")
 
-        # Fetch fresh odds — each platform is isolated so one crash can't kill the scan
+        # Fetch fresh odds - each platform is isolated so one crash can't kill the scan
         sportybet_matches    = _safe_fetch(fetch_sportybet,    'Sportybet')
         betway_matches       = _safe_fetch(fetch_betway,       'Betway')
         footballcom_matches  = _safe_fetch(fetch_footballcom,  'Football.com')
@@ -140,7 +140,7 @@ def run_scan():
         import traceback
         traceback.print_exc()
 
-    # ── Telegram alerts ALWAYS fire, even if a scraper above crashed ──────────
+    # -- Telegram alerts ALWAYS fire, even if a scraper above crashed ----------
     cycle_time_seconds = time.time() - cycle_start_time
     send_scan_summary(opportunities, events_scanned, cycle_time_seconds)
 
@@ -161,7 +161,7 @@ def run_scan():
             json.dump(opportunities, f, indent=2)
         print(f"\nSAVED {len(opportunities)} opportunities to {filename}")
 
-        # Save to Arbitrage Tracker and sync to GitHub (always — logs 0s when no arbs found)
+        # Save to Arbitrage Tracker and sync to GitHub (always - logs 0s when no arbs found)
         save_arbitrage_opportunities(opportunities, TOTAL_STAKE)
     except Exception as e:
         print(f"ERROR saving opportunities: {e}")
@@ -183,7 +183,7 @@ def prevent_sleep():
             print(f"[System] Warning: Could not disable sleep: {e}")
 
 def main():
-    global next_run_time, scan_count  # ← fix: declare globals so Python doesn't
+    global next_run_time, scan_count  # <- fix: declare globals so Python doesn't
                                       #         treat them as unassigned locals
 
     prevent_sleep()

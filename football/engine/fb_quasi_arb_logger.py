@@ -329,8 +329,9 @@ def _append_rows(new_df: pd.DataFrame) -> None:
             combined_df = pd.concat([existing_df, new_df_aligned], ignore_index=True)
             combined_df = combined_df[cols_to_use]
         except Exception as e:
-            print(f"  [Quasi ML] WARNING: Failed to dynamically append to Excel columns: {e}. Falling back to default.")
-            combined_df = new_df
+            print(f"  [Quasi ML] ERROR: Could not read existing {os.path.basename(QUASI_ML_FILE)}: {e}")
+            print(f"  [Quasi ML] Aborting write to protect existing data. New rows will be retried next scan.")
+            raise
     else:
         combined_df = new_df
 

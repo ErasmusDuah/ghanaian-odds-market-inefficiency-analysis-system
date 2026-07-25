@@ -9,46 +9,46 @@ BOX_WIDTH = 80
 
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = BOX_WIDTH - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = BOX_WIDTH - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 
 def fmt_box_bottom():
-    return "└" + "─" * (BOX_WIDTH - 2) + "┘"
+    return "+" + "-" * (BOX_WIDTH - 2) + "+"
 
 
 def fmt_box_subheading(sub_title):
     content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
+    return f"| {content:<76} |"
 
 
 def fmt_box_divider():
-    return f"│ {'─' * 76} │"
+    return f"| {'-' * 76} |"
 
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 
 def _sorted_line_keys(ou_dict):
@@ -70,7 +70,7 @@ def fmt_ou_section(ou_dict):
         over = ou.get("over")
         under = ou.get("under")
         if over is not None and under is not None:
-            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} │ Under: {under:<8}"))
+            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} | Under: {under:<8}"))
     return "\n".join(rows) if rows else fmt_row("", "(No Over/Under lines available)")
 
 
@@ -81,7 +81,7 @@ def fmt_asian_ou_section(ou_dict):
         over = ou.get("over")
         under = ou.get("under")
         if over is not None and under is not None:
-            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} │ Under: {under:<8}"))
+            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} | Under: {under:<8}"))
     return "\n".join(rows) if rows else fmt_row("", "(No Asian Over/Under lines available)")
 
 
@@ -92,21 +92,21 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
         over = ou.get("over")
         under = ou.get("under")
         if over is not None and under is not None:
-            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} │ Under: {under:<8}"))
+            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} | Under: {under:<8}"))
     return "\n".join(rows) if rows else fmt_row("", empty_msg)
 
 
 def format_match_text_block(m):
-    title = f"⚽ {m.get('home_team', '')} vs {m.get('away_team', '')}"
+    title = f"Football {m.get('home_team', '')} vs {m.get('away_team', '')}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m.get('tournament', '')} │ 🕐 {m.get('kickoff', '')}"
+        title += " (LIVE)"
+    meta = f"League {m.get('tournament', '')} | Time {m.get('kickoff', '')}"
 
     lines = [
-        "═" * BOX_WIDTH,
+        "=" * BOX_WIDTH,
         title,
         meta,
-        "═" * BOX_WIDTH,
+        "=" * BOX_WIDTH,
         fmt_box_top("MAIN MARKETS"),
         fmt_row("1X2 (Result)", fmt_3way(m.get("odds_1x2"))),
         fmt_row("Double Chance", fmt_dc(m.get("odds_dc"))),

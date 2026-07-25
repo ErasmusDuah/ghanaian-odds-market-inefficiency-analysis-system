@@ -1,6 +1,6 @@
 """
 football/engine/fb_stake_tracker_helper.py
-──────────────────────────────────────────
+------------------------------------------
 Helper functions for manual stake logging via checkboxes in opportunity lists.
 """
 
@@ -79,7 +79,7 @@ def load_staked_history():
             data = json.load(f)
             return set(data)
     except Exception as e:
-        print(f"  ⚠️ [Stake Logger] Error loading staked history: {e}")
+        print(f"  WARNING [Stake Logger] Error loading staked history: {e}")
         return set()
 
 
@@ -90,7 +90,7 @@ def save_staked_history(history):
         with open(STAKED_HISTORY_FILE, 'w', encoding='utf-8') as f:
             json.dump(list(history), f, indent=2)
     except Exception as e:
-        print(f"  ⚠️ [Stake Logger] Error saving staked history: {e}")
+        print(f"  WARNING [Stake Logger] Error saving staked history: {e}")
 
 
 def load_active_opportunities():
@@ -101,7 +101,7 @@ def load_active_opportunities():
         with open(ACTIVE_OPPS_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        print(f"  ⚠️ [Stake Logger] Error loading active opportunities: {e}")
+        print(f"  WARNING [Stake Logger] Error loading active opportunities: {e}")
         return {}
 
 
@@ -112,7 +112,7 @@ def save_active_opportunities(opps_dict):
         with open(ACTIVE_OPPS_FILE, 'w', encoding='utf-8') as f:
             json.dump(opps_dict, f, indent=2)
     except Exception as e:
-        print(f"  ⚠️ [Stake Logger] Error saving active opportunities: {e}")
+        print(f"  WARNING [Stake Logger] Error saving active opportunities: {e}")
 
 
 def ensure_stake_tracker():
@@ -130,7 +130,7 @@ def ensure_stake_tracker():
     # Check if we should migrate from existing CSV
     old_csv_path = LEGACY_STAKE_TRACKER_FILE.replace('.xlsx', '.csv')
     if os.path.exists(old_csv_path):
-        print("  🔄 [Migration] Migrating data/stake_tracker.csv to data/balanced_unbalanced_stake_tracker.xlsx...")
+        print("  Migration [Migration] Migrating data/stake_tracker.csv to data/balanced_unbalanced_stake_tracker.xlsx...")
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Stakes"
@@ -141,7 +141,7 @@ def ensure_stake_tracker():
                 for row in reader:
                     ws.append(row)
             wb.save(BAL_UNBAL_STAKE_TRACKER_FILE)
-            print("  ✅ [Migration] Migration completed successfully.")
+            print("  OK [Migration] Migration completed successfully.")
             # Rename old CSV file to keep a backup
             try:
                 os.rename(old_csv_path, old_csv_path + ".bak")
@@ -149,7 +149,7 @@ def ensure_stake_tracker():
                 pass
             return
         except Exception as e:
-            print(f"  ⚠️ [Migration] Error migrating CSV to XLSX: {e}")
+            print(f"  WARNING [Migration] Error migrating CSV to XLSX: {e}")
             
     # Default: create fresh empty workbook
     wb = openpyxl.Workbook()
@@ -397,7 +397,7 @@ def check_and_log_ticked_bets():
                 with open(filepath, 'r', encoding='utf-8') as f:
                     content = f.read()
             except Exception as e:
-                print(f"  ⚠️ [Stake Logger] Error reading {filepath}: {e}")
+                print(f"  WARNING [Stake Logger] Error reading {filepath}: {e}")
                 continue
                 
             # Matches [s] or [S] stake marker and extracts the 8-char hex ID
@@ -413,8 +413,8 @@ def check_and_log_ticked_bets():
                 if opp_id in staked_history:
                     # Update label in file if it wasn't modified to visual status yet
                     modified_content = re.sub(
-                        rf"(?:🚨\s+)?\[[sS]\]\s+STAKE\s+THIS\s+OPP\s+\(ID:\s*{opp_id}\)",
-                        f"✅ [s] STAKED (ID: {opp_id})",
+                        rf"(?:ALERT\s+)?\[[sS]\]\s+STAKE\s+THIS\s+OPP\s+\(ID:\s*{opp_id}\)",
+                        f"OK [s] STAKED (ID: {opp_id})",
                         modified_content
                     )
                     continue
@@ -432,25 +432,25 @@ def check_and_log_ticked_bets():
                             logged_files.add("football/data/balanced_unbalanced_stake_tracker.xlsx")
                         staked_history.add(opp_id)
                         logged_any = True
-                        print(f"🎉 [Stake Logger] Logged staked bet: {opp.get('match')} | {opp.get('market')} | ID: {opp_id}")
+                        print(f"Done [Stake Logger] Logged staked bet: {opp.get('match')} | {opp.get('market')} | ID: {opp_id}")
                         modified_content = re.sub(
-                            rf"(?:🚨\s+)?\[[sS]\]\s+STAKE\s+THIS\s+OPP\s+\(ID:\s*{opp_id}\)",
-                            f"✅ [s] STAKED (ID: {opp_id})",
+                            rf"(?:ALERT\s+)?\[[sS]\]\s+STAKE\s+THIS\s+OPP\s+\(ID:\s*{opp_id}\)",
+                            f"OK [s] STAKED (ID: {opp_id})",
                             modified_content
                         )
                     except PermissionError:
-                        print(f"⚠️ [Stake Logger] ERROR: Cannot write to the stake tracker because it is locked (likely open in Excel). Close Excel so Python can save it. Bet {opp_id} remains unchecked as STAKED in state.")
+                        print(f"WARNING [Stake Logger] ERROR: Cannot write to the stake tracker because it is locked (likely open in Excel). Close Excel so Python can save it. Bet {opp_id} remains unchecked as STAKED in state.")
                     except Exception as ex:
-                        print(f"❌ [Stake Logger] Failed to log bet {opp_id}: {ex}")
+                        print(f"ERROR [Stake Logger] Failed to log bet {opp_id}: {ex}")
                 else:
-                    print(f"⚠️ [Stake Logger] Warning: Opportunity ID {opp_id} not found in active opportunities.")
+                    print(f"WARNING [Stake Logger] Warning: Opportunity ID {opp_id} not found in active opportunities.")
                     
             if modified_content != content:
                 try:
                     with open(filepath, 'w', encoding='utf-8') as f:
                         f.write(modified_content)
                 except Exception as e:
-                    print(f"  ⚠️ [Stake Logger] Error writing back to {filepath}: {e}")
+                    print(f"  WARNING [Stake Logger] Error writing back to {filepath}: {e}")
                     
         if logged_any:
             save_staked_history(staked_history)
@@ -465,4 +465,4 @@ def check_and_log_ticked_bets():
                 quiet=True
             )
         except Exception as git_err:
-            print(f"  ⚠️ [Git Sync] Error syncing stake tracker files: {git_err}")
+            print(f"  WARNING [Git Sync] Error syncing stake tracker files: {git_err}")

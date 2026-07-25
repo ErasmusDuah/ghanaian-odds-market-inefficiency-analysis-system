@@ -1,4 +1,4 @@
-﻿"""
+"""
 Betano Ghana football prematch odds scraper.
 
 Uses Betano's own sportsbook JSON endpoints. Events come from the website's
@@ -160,7 +160,7 @@ def _map_1x2(match: Dict[str, Any], market: Dict[str, Any], key: str) -> None:
         name = str(sel.get("name") or sel.get("fullName") or "").strip().lower()
         if name == "1" or name == home:
             mapped["home"] = price
-        elif name == "x" or name == "draw":
+        elif name in {"x", "draw", "tie"}:
             mapped["draw"] = price
         elif name == "2" or name == away:
             mapped["away"] = price
@@ -236,6 +236,10 @@ def _apply_market(match: Dict[str, Any], market: Dict[str, Any]) -> None:
         _put_ou(match["odds_sh_ou"], selections)
     elif mtype == "TCOU":
         _put_ou(match["odds_bookings_ou"], selections)
+    elif mtype == "TWMC":
+        _map_1x2(match, market, "odds_corners_1x2")
+    elif mtype == "NTYC":
+        _map_1x2(match, market, "odds_bookings_1x2")
 
 
 def _convert_event(event: Dict[str, Any], tz: ZoneInfo, target_date) -> Optional[Dict[str, Any]]:
@@ -360,26 +364,26 @@ def run() -> List[Dict[str, Any]]:
     tz = ZoneInfo(TIMEZONE)
     now_local = datetime.now(tz)
 
-    print("\n" + "🟧 " * 20)
+    print("\n" + "* " * 20)
     print("   BETANO GHANA SCRAPER (today API + all-tab details)")
     print(f"   {now_local.strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🟧 " * 20 + "\n")
+    print("* " * 20 + "\n")
 
     try:
         matches = collect_today_matches()
     except Exception as exc:
-        print(f"❌ Betano fetch failed: {exc}")
+        print(f"ERROR Betano fetch failed: {exc}")
         matches = []
     count = len(matches)
 
     if count == 0:
-        print("⚠️  No prematch matches found for today.")
+        print("WARNING  No prematch matches found for today.")
     else:
-        print("📋 BETANO GHANA")
-        print(f"⚽ Total matches: {count}")
+        print("LIST BETANO GHANA")
+        print(f"Total matches: {count}")
         print("=" * 50)
         head = min(10, count)
-        print(f"\n📝 Sample (first {head}):")
+        print(f"\nSample (first {head}):")
         for match in matches[:head]:
             print(f"   {match['home_team']} vs {match['away_team']} | {match['kickoff']} | {match['tournament']}")
         if count > head:
@@ -404,11 +408,11 @@ def run() -> List[Dict[str, Any]]:
                 tf.write(format_match_text_block(match))
 
     elapsed = time.perf_counter() - started
-    print(f"💾 Saved to {json_path}")
-    print(f"📄 Full list: {txt_path}")
+    print(f"Saved to {json_path}")
+    print(f"Full list: {txt_path}")
     if count:
         print(f"   Open the .txt file to see all {count} matches!")
-    print(f"⏱️  Scraping completed in {elapsed:.1f}s")
+    print(f"Scraping completed in {elapsed:.1f}s")
     return matches
 
 

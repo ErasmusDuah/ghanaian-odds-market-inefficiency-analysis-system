@@ -1,5 +1,5 @@
 """
-EXPERIMENTAL ENGINE RUNNER — Standalone live scraper + arb detector.
+EXPERIMENTAL ENGINE RUNNER - Standalone live scraper + arb detector.
 
 Calls all active scrapers IN PARALLEL (simultaneously), then runs the
 experimental engine across all 3 categories: Balanced, Unbalanced, Quasi-Arb.
@@ -29,7 +29,7 @@ if sys.stdout.encoding != 'utf-8':
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# ── ACTIVE platforms (6) ───────────────────────────────────────────────────────
+# -- ACTIVE platforms (6) -------------------------------------------------------
 from scrapers.fb_sportybet    import run as fetch_sportybet
 from scrapers.fb_betway       import run as fetch_betway
 from scrapers.fb_footballcom  import run as fetch_footballcom
@@ -41,7 +41,7 @@ from engine.fb_experimental_engine import run_experimental, display_all
 
 ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 
-# ── SCRAPER REGISTRY ───────────────────────────────────────────────────────────
+# -- SCRAPER REGISTRY -----------------------------------------------------------
 ACTIVE_SCRAPERS = [
     ('Sportybet',    fetch_sportybet),
     ('Betway',       fetch_betway),
@@ -57,7 +57,7 @@ import threading
 
 # Lock so only one scraper prints its output block at a time
 _print_lock = threading.Lock()
-# Thread-local storage — each thread gets its own .buf
+# Thread-local storage - each thread gets its own .buf
 _thread_local = threading.local()
 
 
@@ -113,9 +113,9 @@ def _safe_fetch(name, fetch_fn):
         if captured.strip():
             print(captured, end="")
         if error:
-            print(f"  ❌ {name} failed after {elapsed:.1f}s: {error}")
+            print(f"  ERROR {name} failed after {elapsed:.1f}s: {error}")
         else:
-            print(f"  ✅ {name}: {len(result)} matches ({elapsed:.1f}s)")
+            print(f"  OK {name}: {len(result)} matches ({elapsed:.1f}s)")
         print()  # blank separator between scraper blocks
 
     return name, result, elapsed, error
@@ -156,36 +156,36 @@ def has_internet():
 
 def main():
     if not has_internet():
-        print("\n❌ [System] No active internet connection detected! Stopping engine...")
+        print("\nERROR [System] No active internet connection detected! Stopping engine...")
         sys.exit(1)
         
     try:
         _env        = dotenv_values(ENV_PATH)
         total_stake = int(_env.get('STARTING_CAPITAL', 500))
 
-        print("\n" + "🧪 " * 20)
-        print("   GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM — EXPERIMENTAL ENGINE")
+        print("\n" + "* " * 20)
+        print("   GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM - EXPERIMENTAL ENGINE")
         print(f"   {datetime.now().strftime('%A, %d %B %Y %H:%M:%S')}")
         print(f"   Stake: GHS {total_stake}")
-        print(f"   Platforms: {len(ACTIVE_SCRAPERS)} active — running in parallel")
-        print("🧪 " * 20)
+        print(f"   Platforms: {len(ACTIVE_SCRAPERS)} active - running in parallel")
+        print("* " * 20)
 
-        # ── PARALLEL SCRAPE ────────────────────────────────────────────────────
-        print(f"\n🔄 Fetching live odds from all {len(ACTIVE_SCRAPERS)} platforms simultaneously...\n")
+        # -- PARALLEL SCRAPE ----------------------------------------------------
+        print(f"\nMigration Fetching live odds from all {len(ACTIVE_SCRAPERS)} platforms simultaneously...\n")
         scrape_start = time.time()
 
         fetched = fetch_all_parallel(ACTIVE_SCRAPERS)
 
         scrape_time = time.time() - scrape_start
         total_fetched = sum(len(v) for v in fetched.values())
-        print(f"\n⏱️  Scraping done in {scrape_time:.1f}s  |  Total matches: {total_fetched}")
+        print(f"\nScraping done in {scrape_time:.1f}s  |  Total matches: {total_fetched}")
 
         if total_fetched == 0:
-            print("\n❌ No data fetched from any platform.")
+            print("\nERROR No data fetched from any platform.")
             return
 
-        # ── EXPERIMENTAL ENGINE ────────────────────────────────────────────────
-        print(f"\n🔍 Running experimental arb detection across {len(ACTIVE_SCRAPERS)} platforms...\n")
+        # -- EXPERIMENTAL ENGINE ------------------------------------------------
+        print(f"\nSearch Running experimental arb detection across {len(ACTIVE_SCRAPERS)} platforms...\n")
 
         balanced, unbalanced, quasi, num_groups = run_experimental(
             total_stake          = total_stake,
@@ -211,10 +211,10 @@ def main():
         try:
             save_arbitrage_opportunities(opportunities, total_stake)
         except Exception as e:
-            print(f"  ❌ ERROR saving experimental opportunities to CSV: {e}")
+            print(f"  ERROR ERROR saving experimental opportunities to CSV: {e}")
 
     except Exception as e:
-        print(f"  ❌ ERROR inside experimental scan: {e}")
+        print(f"  ERROR ERROR inside experimental scan: {e}")
         import traceback
         traceback.print_exc()
 
@@ -225,7 +225,7 @@ def main():
             message="Auto-update experimental arbitrage results"
         )
     except Exception as e:
-        print(f"  ❌ ERROR syncing experimental results to GitHub: {e}")
+        print(f"  ERROR ERROR syncing experimental results to GitHub: {e}")
 
 
 if __name__ == "__main__":

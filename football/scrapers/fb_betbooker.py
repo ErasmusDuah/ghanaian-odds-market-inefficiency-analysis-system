@@ -1,4 +1,4 @@
-﻿"""Betbooker Ghana football prematch odds scraper."""
+"""Betbooker Ghana football prematch odds scraper."""
 from __future__ import annotations
 
 import base64

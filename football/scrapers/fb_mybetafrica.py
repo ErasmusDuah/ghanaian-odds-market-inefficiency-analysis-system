@@ -193,9 +193,9 @@ def _iter_odds(
             yield row, {**odd, "value": price}
 
 
-def _parse_1x2_market(detail: Dict[str, Any], market_id: int) -> Dict[str, float]:
+def _parse_1x2_market(detail: Dict[str, Any], market_id: int, main_only: bool = True) -> Dict[str, float]:
     values: Dict[str, float] = {}
-    for group_name, market in _iter_markets(detail, main_only=True):
+    for group_name, market in _iter_markets(detail, main_only=main_only):
         if int(market.get("id") or 0) != market_id:
             continue
         for _, odd in _iter_odds(market):
@@ -216,10 +216,10 @@ def _parse_1x2(detail: Dict[str, Any]) -> Dict[str, float]:
     return _parse_1x2_market(detail, 174)
 
 
-def _parse_dc_market(detail: Dict[str, Any], market_id: int) -> Dict[str, float]:
+def _parse_dc_market(detail: Dict[str, Any], market_id: int, main_only: bool = True) -> Dict[str, float]:
     values: Dict[str, float] = {}
     home, away = _teams_from_event(detail.get("event") or {})
-    for group_name, market in _iter_markets(detail, main_only=True):
+    for group_name, market in _iter_markets(detail, main_only=main_only):
         if int(market.get("id") or 0) != market_id:
             continue
         for _, odd in _iter_odds(market):
@@ -251,9 +251,9 @@ def _parse_gg(detail: Dict[str, Any]) -> Dict[str, float]:
     return values if {"yes", "no"} <= values.keys() else values
 
 
-def _parse_ou_market(detail: Dict[str, Any], market_id: int) -> Dict[str, Dict[str, float]]:
+def _parse_ou_market(detail: Dict[str, Any], market_id: int, main_only: bool = True) -> Dict[str, Dict[str, float]]:
     values: Dict[str, Dict[str, float]] = {}
-    for group_name, market in _iter_markets(detail, main_only=True):
+    for group_name, market in _iter_markets(detail, main_only=main_only):
         if int(market.get("id") or 0) != market_id:
             continue
         for row, odd in _iter_odds(market, visible_lines_only=True):
@@ -380,10 +380,13 @@ def _match_from_detail(detail: Dict[str, Any], now: datetime, today) -> Optional
     match["odds_ou"] = _parse_ou(detail)
     match["odds_fh_1x2"] = _parse_1x2_market(detail, 118)
     match["odds_sh_1x2"] = _parse_1x2_market(detail, 39)
-    match["odds_fh_dc"] = _parse_dc_market(detail, 86)
-    match["odds_sh_dc"] = _parse_dc_market(detail, 108)
-    match["odds_fh_ou"] = _parse_ou_market(detail, 78)
-    match["odds_sh_ou"] = _parse_ou_market(detail, 41)
+    match["odds_fh_dc"] = _parse_dc_market(detail, 86, main_only=False)
+    match["odds_sh_dc"] = _parse_dc_market(detail, 108, main_only=False)
+    match["odds_fh_ou"] = _parse_ou_market(detail, 78, main_only=False)
+    match["odds_sh_ou"] = _parse_ou_market(detail, 41, main_only=False)
+    match["odds_corners_1x2"] = _parse_1x2_market(detail, 395, main_only=False)
+    match["odds_bookings_1x2"] = _parse_1x2_market(detail, 444, main_only=False)
+    match["odds_bookings_ou"] = _parse_ou_market(detail, 446, main_only=False)
     return match
 
 

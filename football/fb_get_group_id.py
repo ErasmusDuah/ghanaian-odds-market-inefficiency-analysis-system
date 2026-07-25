@@ -13,7 +13,7 @@ def get_group_ids():
     
     bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
     if not bot_token:
-        print("❌ Error: TELEGRAM_BOT_TOKEN not found in .env file.")
+        print("ERROR Error: TELEGRAM_BOT_TOKEN not found in .env file.")
         return
 
     url = f"https://api.telegram.org/bot{bot_token}/getUpdates"
@@ -24,13 +24,13 @@ def get_group_ids():
         data = response.json()
         
         if not data.get('ok'):
-            print(f"❌ Telegram API Error: {data.get('description')}")
+            print(f"ERROR Telegram API Error: {data.get('description')}")
             return
             
         updates = data.get('result', [])
         if not updates:
-            print("\n⚠️ No recent messages found.")
-            print("👉 Try this: Go to your Telegram group, make sure your bot is added, and type 'hello bot' in the group. Then run this script again.")
+            print("\nWARNING No recent messages found.")
+            print("-> Try this: Go to your Telegram group, make sure your bot is added, and type 'hello bot' in the group. Then run this script again.")
             return
             
         found_groups = {}
@@ -44,19 +44,19 @@ def get_group_ids():
                 found_groups[chat_id] = title
                 
         if found_groups:
-            print("\n✅ Found the following groups:")
+            print("\nOK Found the following groups:")
             print("-" * 40)
             for cid, title in found_groups.items():
                 print(f"Group Name : {title}")
                 print(f"Chat ID    : {cid}")
             print("-" * 40)
-            print("\n👉 Copy the negative number above and paste it into your .env file as TELEGRAM_CHAT_ID.")
+            print("\n-> Copy the negative number above and paste it into your .env file as TELEGRAM_CHAT_ID.")
         else:
-            print("\n⚠️ No group messages found.")
-            print("👉 Try this: Go to your Telegram group, type 'hello bot' in the chat, and run this script again.")
+            print("\nWARNING No group messages found.")
+            print("-> Try this: Go to your Telegram group, type 'hello bot' in the chat, and run this script again.")
             
     except Exception as e:
-        print(f"❌ Error connecting to Telegram: {e}")
+        print(f"ERROR Error connecting to Telegram: {e}")
 
 if __name__ == "__main__":
     get_group_ids()

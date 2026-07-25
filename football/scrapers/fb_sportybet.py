@@ -12,7 +12,7 @@ from urllib.parse import quote
 TODAY_URL = (
     'https://www.sportybet.com/api/gh/factsCenter/'
     'pcUpcomingEvents?sportId=sr%3Asport%3A1'
-    '&marketId=1%2C18%2C10%2C29%2C11%2C26%2C36%2C14%2C60100'
+    '&marketId=1%2C18%2C10%2C29%2C11%2C26%2C36%2C14%2C60100%2C60200'
     '&pageSize=100&pageNum={page}'
     '&todayGames=true&timeline=0.9'
 )
@@ -20,7 +20,7 @@ TODAY_URL = (
 TOMORROW_URL = (
     'https://www.sportybet.com/api/gh/factsCenter/'
     'pcUpcomingEvents?sportId=sr%3Asport%3A1'
-    '&marketId=1%2C18%2C10%2C29%2C11%2C26%2C36%2C14%2C60100'
+    '&marketId=1%2C18%2C10%2C29%2C11%2C26%2C36%2C14%2C60100%2C60200'
     '&pageSize=100&pageNum={page}'
     '&todayGames=false&timeline=1'
 )
@@ -279,6 +279,92 @@ def is_outcome_active(outcome):
     return odds > 1.01
 
 
+def _odd_float(outcome):
+    try:
+        return float(outcome.get('odds', 0) or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _put_3way(dest, outcomes):
+    sorted_out = sorted(outcomes, key=lambda x: x.get('id', '') or x.get('desc', ''))
+    by_desc = {}
+    for outcome in outcomes:
+        desc = str(outcome.get('desc', '')).lower()
+        odds = _odd_float(outcome)
+        if odds <= 1.01:
+            continue
+        if 'home' in desc:
+            by_desc['home'] = odds
+        elif 'draw' in desc:
+            by_desc['draw'] = odds
+        elif 'away' in desc:
+            by_desc['away'] = odds
+    if len(by_desc) < 3 and len(sorted_out) >= 3:
+        h, d, a = (_odd_float(sorted_out[0]), _odd_float(sorted_out[1]), _odd_float(sorted_out[2]))
+        if h > 1.01 and d > 1.01 and a > 1.01:
+            by_desc = {'home': h, 'draw': d, 'away': a}
+    if all(by_desc.get(key, 0) > 1.01 for key in ('home', 'draw', 'away')):
+        dest.update({'home': by_desc['home'], 'draw': by_desc['draw'], 'away': by_desc['away']})
+
+
+def _put_dc(dest, outcomes):
+    by_desc = {}
+    for outcome in outcomes:
+        desc = str(outcome.get('desc', '')).lower()
+        compact = desc.replace(' ', '').replace('/', '').replace('-', '')
+        odds = _odd_float(outcome)
+        if odds <= 1.01:
+            continue
+        if 'homeordraw' in compact or 'homedraw' in compact or '1x' in compact:
+            by_desc['1x'] = odds
+        elif 'homeoraway' in compact or 'homeaway' in compact or '12' in compact:
+            by_desc['12'] = odds
+        elif 'draworaway' in compact or 'drawaway' in compact or 'x2' in compact:
+            by_desc['x2'] = odds
+    if all(by_desc.get(key, 0) > 1.01 for key in ('1x', '12', 'x2')):
+        dest.update({'1x': by_desc['1x'], '12': by_desc['12'], 'x2': by_desc['x2']})
+
+
+def _put_gg(dest, outcomes):
+    by_desc = {}
+    for outcome in outcomes:
+        desc = str(outcome.get('desc', '')).lower()
+        odds = _odd_float(outcome)
+        if odds <= 1.01:
+            continue
+        if 'yes' in desc:
+            by_desc['yes'] = odds
+        elif 'no' in desc:
+            by_desc['no'] = odds
+    if all(by_desc.get(key, 0) > 1.01 for key in ('yes', 'no')):
+        dest.update({'yes': by_desc['yes'], 'no': by_desc['no']})
+
+
+def _put_ou(dest, outcomes):
+    import re
+    line = None
+    for outcome in outcomes:
+        m = re.search(r'(\d+(?:\.\d+)?)', str(outcome.get('desc', '')))
+        if m:
+            line = str(float(m.group(1)))
+            break
+    if line is None:
+        return
+    row = {}
+    for outcome in outcomes:
+        desc = str(outcome.get('desc', '')).lower()
+        odds = _odd_float(outcome)
+        if odds <= 1.01:
+            continue
+        if 'over' in desc:
+            row['over'] = odds
+        elif 'under' in desc:
+            row['under'] = odds
+    if all(row.get(key, 0) > 1.01 for key in ('over', 'under')):
+        dest[line] = {'over': row['over'], 'under': row['under']}
+
+
 def parse_response(data):
     matches = []
     if not isinstance(data, dict):
@@ -371,6 +457,37 @@ def parse_event(event, tournament_name='', now=None):
         outcomes = market.get('outcomes', [])
         active_outcomes = [o for o in outcomes if is_outcome_active(o)]
 
+
+        three_way_market_map = {
+            '60200': 'odds_1x2_one_up',
+            '60100': 'odds_1x2_two_up',
+            '60': 'odds_fh_1x2',
+            '83': 'odds_sh_1x2',
+            '162': 'odds_corners_1x2',
+            '136': 'odds_bookings_1x2',
+        }
+        dc_market_map = {
+            '63': 'odds_fh_dc',
+            '85': 'odds_sh_dc',
+        }
+        ou_market_map = {
+            '68': 'odds_fh_ou',
+            '90': 'odds_sh_ou',
+            '139': 'odds_bookings_ou',
+        }
+
+        if market_id in three_way_market_map and len(active_outcomes) >= 3:
+            _put_3way(match[three_way_market_map[market_id]], active_outcomes)
+
+        if market_id in dc_market_map and len(active_outcomes) >= 3:
+            _put_dc(match[dc_market_map[market_id]], active_outcomes)
+
+        if market_id in ou_market_map and len(active_outcomes) >= 2:
+            _put_ou(match[ou_market_map[market_id]], active_outcomes)
+
+        if market_id == '60000' and len(active_outcomes) >= 2:
+            _put_gg(match['odds_gg_2plus'], active_outcomes)
+
         if market_id == '1' and len(active_outcomes) >= 3:
             h = float(active_outcomes[0].get('odds', 0) or 0)
             d = float(active_outcomes[1].get('odds', 0) or 0)
@@ -452,40 +569,40 @@ def display_matches(matches):
 
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = 80 - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = 80 - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 def fmt_box_bottom():
-    return "└" + "─" * 78 + "┘"
+    return "+" + "-" * 78 + "+"
 
 def fmt_box_subheading(sub_title):
     content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
+    return f"| {content:<76} |"
 
 def fmt_box_divider():
-    line = "─" * 76
-    return f"│ {line} │"
+    line = "-" * 76
+    return f"| {line} |"
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 def fmt_ou_section(ou_dict):
     if not ou_dict:
@@ -506,7 +623,7 @@ def fmt_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -524,7 +641,7 @@ def fmt_asian_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -543,7 +660,7 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     if not rows:
         return fmt_row("", empty_msg)
@@ -551,10 +668,10 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
 
 def format_match_text_block(m):
     # Header
-    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    title = f"Football {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+        title += " (LIVE)"
+    meta = f"League {m['tournament']} | Time {m['kickoff']}"
     
     # Border width
     w = 80
@@ -580,10 +697,10 @@ def format_match_text_block(m):
 
     # Construct the block
     lines = []
-    lines.append("═" * w)
+    lines.append("=" * w)
     lines.append(f"{title}")
     lines.append(f"{meta}")
-    lines.append("═" * w)
+    lines.append("=" * w)
     
     # Main Markets
     lines.append(fmt_box_top("MAIN MARKETS"))
@@ -672,7 +789,7 @@ def run():
         print(f"   Open the .txt file to see all {len(matches)} matches!")
         print(f"   Scraping completed in {_time.time() - start:.1f}s")
     else:
-        print("\n⚠️ No matches found")
+        print("\nWARNING No matches found")
     return matches
 
 

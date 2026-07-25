@@ -222,7 +222,7 @@ def validate_odds(odds_dict, market_type):
     - All odds must be > 1.01 (genuine odds)
     - Arb sum must be > 0.85 (real market overround)
     - Arb sum must be < 1.5 (not absurdly unbalanced)
-    - For 1X2: draw odds must be between home and away Â± 3x
+    - For 1X2: draw odds must be between home and away +/- 3x
     """
     if not odds_dict:
         return False
@@ -619,7 +619,7 @@ def scan_all(sportybet_matches,
     if cycle_start_time:
         total_seconds = time.time() - cycle_start_time
         total_minutes = total_seconds / 60
-        print(f"â±ï¸ Total cycle time: {total_seconds:.1f} seconds ({total_minutes:.1f} minutes)")
+        print(f"Time Total cycle time: {total_seconds:.1f} seconds ({total_minutes:.1f} minutes)")
 
     print(f"Book: Arb opportunities : {len(opportunities)}")
 
@@ -689,11 +689,10 @@ def run():
     if opportunities:
         with open('engine/opportunities.json', 'w') as f:
             json.dump(opportunities, f, indent=2)
-        print(f"\nðŸ’¾ Saved to engine/opportunities.json")
+        print(f"\nSaved to engine/opportunities.json")
 
     return opportunities
 
 
 if __name__ == "__main__":
     run()
-

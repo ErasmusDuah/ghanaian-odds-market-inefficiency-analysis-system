@@ -1,7 +1,7 @@
 """
 Scrape today's not-started Soccabet Ghana football odds.
 
-ULTRAFAST — Direct WebSocket connection to Soccabet's real-time feed.
+ULTRAFAST - Direct WebSocket connection to Soccabet's real-time feed.
 No browser, no Playwright, no DOM parsing. Pure data.
 
 Outputs:
@@ -46,7 +46,7 @@ MIN_GOOD_MATCHES = int(os.getenv("SOCCABET_MIN_GOOD_MATCHES", "50"))
 MAX_WS_ATTEMPTS = int(os.getenv("SOCCABET_WS_ATTEMPTS", "3"))
 GOOD_SNAPSHOT = "soccabet_last_good.json"
 
-# Soccabet marketTypeId → our internal market name
+# Soccabet marketTypeId -> our internal market name
 # Discovered via WebSocket frame inspection:
 #   5521 = 1X2 (3-way)
 #   5054 = Over/Under
@@ -59,7 +59,7 @@ MARKET_TYPE_GG  = 5030
 
 
 def banner(now: datetime) -> str:
-    line = "⚽ " * 20
+    line = "Football " * 20
     return (
         f"{line}\n"
         "   SOCCABET GHANA SCRAPER\n"
@@ -77,7 +77,7 @@ async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict
         (matches_by_id, markets_by_match_id, market_types_by_id, tournaments_by_id, categories_by_id)
     """
     matches: dict[int, dict] = {}
-    markets: dict[int, list[dict]] = {}  # matchId → list of market dicts
+    markets: dict[int, list[dict]] = {}  # matchId -> list of market dicts
     market_types: dict[int, dict] = {}
     tournaments: dict[int, dict] = {}
     categories: dict[int, dict] = {}
@@ -228,6 +228,100 @@ def _is_fulltime_gg_market(mtype: int, market_type: dict | None) -> bool:
 
 
 
+
+def _market_name_contains(market_type: dict | None, *needles: str) -> bool:
+    name = _market_type_name(market_type)
+    return all(needle.lower() in name for needle in needles)
+
+
+def _market_name_exact(market_type: dict | None, *names: str) -> bool:
+    name = _market_type_name(market_type)
+    return name in {candidate.lower() for candidate in names}
+
+
+def _parse_3way_selections(selections: list[dict]) -> dict[str, Any]:
+    parsed: dict[str, Any] = {}
+    for sel in selections:
+        outcome = str(sel.get("outcome", "")).strip()
+        odds = _decimal_odds(sel)
+        if odds <= 1.0:
+            continue
+        if outcome == "1":
+            parsed["home"] = odds
+        elif outcome.upper() == "X":
+            parsed["draw"] = odds
+        elif outcome == "2":
+            parsed["away"] = odds
+    return parsed if {"home", "draw", "away"} <= parsed.keys() else {}
+
+
+def _parse_dc_selections(selections: list[dict]) -> dict[str, Any]:
+    parsed: dict[str, Any] = {}
+    for sel in selections:
+        outcome = str(sel.get("outcome", "")).upper().strip()
+        odds = _decimal_odds(sel)
+        if odds <= 1.0:
+            continue
+        if outcome == "1X":
+            parsed["1x"] = odds
+        elif outcome == "12":
+            parsed["12"] = odds
+        elif outcome == "X2":
+            parsed["x2"] = odds
+    return parsed if {"1x", "12", "x2"} <= parsed.keys() else {}
+
+
+def _line_from_market(mkt: dict, selections: list[dict]) -> str:
+    line = str(mkt.get("special", "")).strip()
+    if line:
+        return line
+    for sel in selections:
+        desc = str(sel.get("description") or sel.get("name") or sel.get("outcome") or "")
+        if "over" in desc.lower() or "under" in desc.lower():
+            found = re.search(r"(\d+(?:\.\d+)?)", desc)
+            if found:
+                return found.group(1)
+    return ""
+
+
+def _put_ou_from_selections(target: dict[str, dict[str, Any]], mkt: dict, selections: list[dict], *, standard_only: bool = False) -> None:
+    line = _line_from_market(mkt, selections)
+    if not line:
+        return
+    try:
+        line_f = float(line)
+        line_str = str(line_f)
+    except ValueError:
+        return
+    if standard_only and line_str not in OU_LINES:
+        return
+    row: dict[str, Any] = {}
+    for sel in selections:
+        outcome = str(sel.get("outcome", "")).strip().lower()
+        odds = _decimal_odds(sel)
+        if odds <= 1.0:
+            continue
+        if outcome in {"1", "over", "o"}:
+            row["over"] = odds
+        elif outcome in {"2", "under", "u"}:
+            row["under"] = odds
+    if {"over", "under"} <= row.keys():
+        target[line_str] = row
+
+
+def _parse_yes_no_selections(selections: list[dict]) -> dict[str, Any]:
+    parsed: dict[str, Any] = {}
+    for sel in selections:
+        outcome = str(sel.get("outcome", "")).strip().lower()
+        odds = _decimal_odds(sel)
+        if odds <= 1.0:
+            continue
+        if outcome in {"1", "yes"}:
+            parsed["yes"] = odds
+        elif outcome in {"2", "no"}:
+            parsed["no"] = odds
+    return parsed if {"yes", "no"} <= parsed.keys() else {}
+
 def _flag_text(value: Any) -> str:
     return str(value).strip().lower()
 
@@ -356,7 +450,19 @@ def parse_matches(
         odds_dc = {}
         odds_ou: dict[str, dict[str, Any]] = {}
         odds_asian_ou: dict[str, dict[str, Any]] = {}
-        odds_gg = None
+        odds_gg = {}
+        odds_gg_2plus = {}
+        odds_1x2_one_up = {}
+        odds_1x2_two_up = {}
+        odds_fh_1x2 = {}
+        odds_fh_dc = {}
+        odds_fh_ou: dict[str, dict[str, Any]] = {}
+        odds_sh_1x2 = {}
+        odds_sh_dc = {}
+        odds_sh_ou: dict[str, dict[str, Any]] = {}
+        odds_corners_1x2 = {}
+        odds_bookings_1x2 = {}
+        odds_bookings_ou: dict[str, dict[str, Any]] = {}
 
         for mkt in match_markets:
             if _unavailable(mkt):
@@ -368,7 +474,28 @@ def parse_matches(
                 continue
             special = mkt.get("special", "")
 
-            if _is_fulltime_1x2_market(mtype, market_type):
+            if _market_name_exact(market_type, "1st half - 1x2", "1st half - 1x2 "):
+                odds_fh_1x2 = _parse_3way_selections(selections) or odds_fh_1x2
+            elif _market_name_exact(market_type, "2nd half - 1x2", "2nd half - 1x2 "):
+                odds_sh_1x2 = _parse_3way_selections(selections) or odds_sh_1x2
+            elif _market_name_exact(market_type, "1st half - double chance", "1st half - double chance "):
+                odds_fh_dc = _parse_dc_selections(selections) or odds_fh_dc
+            elif _market_name_exact(market_type, "2nd half - double chance", "2nd half - double chance "):
+                odds_sh_dc = _parse_dc_selections(selections) or odds_sh_dc
+            elif _market_name_exact(market_type, "1st half - under/over", "1st half - total", "1st half - under/over asian"):
+                _put_ou_from_selections(odds_fh_ou, mkt, selections)
+            elif _market_name_exact(market_type, "2nd half - under/over", "2nd half - total", "2nd half - under/over asian"):
+                _put_ou_from_selections(odds_sh_ou, mkt, selections)
+            elif _market_name_exact(market_type, "corner 1x2"):
+                odds_corners_1x2 = _parse_3way_selections(selections) or odds_corners_1x2
+            elif _market_name_exact(market_type, "booking 1x2"):
+                odds_bookings_1x2 = _parse_3way_selections(selections) or odds_bookings_1x2
+            elif _market_name_exact(market_type, "total bookings"):
+                _put_ou_from_selections(odds_bookings_ou, mkt, selections)
+            elif _market_name_contains(market_type, "both teams", "score 2", "yes/no"):
+                odds_gg_2plus = _parse_yes_no_selections(selections) or odds_gg_2plus
+
+            elif _is_fulltime_1x2_market(mtype, market_type):
                 # 1X2: selections have outcome "1" (home), "X" (draw), "2" (away)
                 parsed = {}
                 for sel in selections:
@@ -473,6 +600,18 @@ def parse_matches(
             "odds_ou": odds_ou,
             "odds_asian_ou": odds_asian_ou,
             "odds_gg": odds_gg,
+            "odds_gg_2plus": odds_gg_2plus,
+            "odds_1x2_one_up": odds_1x2_one_up,
+            "odds_1x2_two_up": odds_1x2_two_up,
+            "odds_fh_1x2": odds_fh_1x2,
+            "odds_fh_dc": odds_fh_dc,
+            "odds_fh_ou": odds_fh_ou,
+            "odds_sh_1x2": odds_sh_1x2,
+            "odds_sh_dc": odds_sh_dc,
+            "odds_sh_ou": odds_sh_ou,
+            "odds_corners_1x2": odds_corners_1x2,
+            "odds_bookings_1x2": odds_bookings_1x2,
+            "odds_bookings_ou": odds_bookings_ou,
         })
 
     results.sort(key=lambda x: (x["kickoff"], x["tournament"], x["home_team"]))
@@ -574,7 +713,7 @@ def print_summary(matches: list[dict], json_path: Path, txt_path: Path,
 
 
 async def _async_scrape() -> list[dict]:
-    """Core async scraper — connects to WS, fetches, parses, saves."""
+    """Core async scraper - connects to WS, fetches, parses, saves."""
     started = time.perf_counter()
     now = datetime.now()
     today_str = now.strftime("%Y-%m-%d")
@@ -622,7 +761,7 @@ async def _async_scrape() -> list[dict]:
 
 
 def run() -> list[dict]:
-    """Entry point for the intensive/experimental engine — returns match list."""
+    """Entry point for the intensive/experimental engine - returns match list."""
     return asyncio.run(_async_scrape())
 
 

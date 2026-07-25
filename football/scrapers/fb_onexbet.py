@@ -1,4 +1,4 @@
-"""
+﻿"""
 1xBet Ghana football prematch odds (ASYNC curl_cffi VERSION).
 
 Fetches all leagues globally and processes odds for all matches occurring today.
@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 
 from curl_cffi.requests import AsyncSession
 
-# Domain fallback list — tried in order until one succeeds
+# Domain fallback list - tried in order until one succeeds
 # 1xbet.com.gh often has TCP-level blocks; 1xbet.com & 1xbet.ng work via curl_cffi
 DOMAIN_FALLBACKS = [
     "https://1xbet.com.gh",
@@ -31,7 +31,7 @@ DOMAIN_FALLBACKS = [
 DEFAULT_SITE = DOMAIN_FALLBACKS[0]
 TIMEZONE = "Africa/Accra"
 IMPERSONATE = "chrome120"   # curl_cffi TLS fingerprint to impersonate
-FETCH_SUBGAMES = os.getenv("ONEXBET_FETCH_SUBGAMES", "0").strip().lower() in {"1", "true", "yes", "on"}
+FETCH_SUBGAMES = os.getenv("ONEXBET_FETCH_SUBGAMES", "1").strip().lower() in {"1", "true", "yes", "on"}
 _DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 EVENT_CACHE_PATH = os.path.join(_DATA_DIR, "onexbet_event_cache.json")
 MIN_EVENT_CACHE_STUBS = int(os.getenv("ONEXBET_MIN_EVENT_CACHE_STUBS", "100"))
@@ -89,7 +89,7 @@ async def async_linefeed_get(
         q_parts.append(f"_={cache_buster}")
     q = "&".join(q_parts)
 
-    url = f"{origin}/service-api/LineFeed/{method}?{q}"
+    url = f"{origin}/service-api/LineFeed/{method}={q}"
     headers = {
         "Referer": referer,
         "Origin": origin,
@@ -335,7 +335,7 @@ def _is_noise_match(home_team: str, away_team: str, league: str = "") -> bool:
     if lower_home in generic_sides or lower_away in generic_sides:
         return True
 
-    ordinal_team_pattern = re.compile(r'^\d+(st|nd|rd|th)?\s+teams?$')
+    ordinal_team_pattern = re.compile(r'^\d+(st|nd|rd|th)=\s+teams=$')
     if ordinal_team_pattern.match(lower_home) or ordinal_team_pattern.match(lower_away):
         return True
 
@@ -390,7 +390,7 @@ def _save_event_cache(target: date, stubs: List[Tuple[int, dict, str]]) -> None:
         with open(EVENT_CACHE_PATH, "w", encoding="utf-8") as f:
             json.dump({"date": target.isoformat(), "events": events}, f, ensure_ascii=False, indent=2)
     except OSError as e:
-        print(f"  ⚠️ Could not save 1xBet event cache: {e}")
+        print(f"  WARNING Could not save 1xBet event cache: {e}")
 
 
 def collect_from_fast_bulk(
@@ -457,7 +457,7 @@ async def _probe_working_domain(tf_ms: int) -> Tuple[str, str, List[dict]]:
                 try:
                     await probe_session.get(referer, headers={"Referer": domain}, timeout=REQUEST_TIMEOUT)
                 except Exception as ce:
-                    print(f"  ⚠️ Pre-fetch failed for {domain}: {ce}")
+                    print(f"  WARNING Pre-fetch failed for {domain}: {ce}")
                 champs = await fetch_champs_async(probe_session, domain, tf_ms, referer)
                 if champs:
                     print(f"  \u2705 Using domain: {domain} ({len(champs)} leagues)")
@@ -481,7 +481,7 @@ async def collect_today_games_async(
 ) -> List[dict]:
     cached_stubs = _load_event_cache(target)
     if cached_stubs:
-        print(f"  ⚡ Using cached 1xBet event list ({len(cached_stubs)} matches) - refreshing odds directly...")
+        print(f"  Fast Using cached 1xBet event list ({len(cached_stubs)} matches) - refreshing odds directly...")
         site = site or DEFAULT_SITE
         referer = referer or f"{site}/en/line/football"
         champs = []
@@ -491,7 +491,7 @@ async def collect_today_games_async(
         site, referer, champs = await _probe_working_domain(tf_ms)
 
     async with AsyncSession(impersonate=IMPERSONATE, max_clients=SESSION_MAX_CLIENTS) as session:
-        # 1. Champs already fetched during probe — skip redundant GetChampsZip
+        # 1. Champs already fetched during probe - skip redundant GetChampsZip
         if not cached_stubs and not champs:
             return []
 
@@ -499,9 +499,9 @@ async def collect_today_games_async(
         try:
             landing_url = f"{site}/en/line/football"
             await session.get(landing_url, headers={"Referer": site}, timeout=REQUEST_TIMEOUT)
-            print("  🍪 Session cookies initialized successfully.")
+            print("  Cookies Session cookies initialized successfully.")
         except Exception as e:
-            print(f"  ⚠️ Failed to initialize session cookies: {e}")
+            print(f"  WARNING Failed to initialize session cookies: {e}")
 
         if cached_stubs:
             stubs = cached_stubs
@@ -533,7 +533,7 @@ async def collect_today_games_async(
                         out_local.append((int(gid), g, league_name))
                     return out_local
 
-            print(f"  ⚡ Fetching games for {len(champs)} leagues...")
+            print(f"  Fetching games for {len(champs)} leagues...")
             champ_tasks = [get_champ_games(ch.get("LI")) for ch in champs if ch.get("LI")]
             champ_results = await asyncio.gather(*champ_tasks)
 
@@ -763,7 +763,7 @@ async def collect_today_games_async(
             }
 
         detail_label = "details, halves & deep subgames" if FETCH_SUBGAMES else "details & half-time markets"
-        print(f"  ⚡ Fetching {detail_label} for {len(stubs)} matches...")
+        print(f"  Fetching {detail_label} for {len(stubs)} matches...")
         tasks = [process_stub(stub) for stub in stubs]
         results = await asyncio.gather(*tasks)
         matches = [r for r in results if r is not None]
@@ -1005,40 +1005,40 @@ def _convert_to_standard_format(raw_matches: List[dict], tz: ZoneInfo) -> List[d
 
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = 80 - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = 80 - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 def fmt_box_bottom():
-    return "└" + "─" * 78 + "┘"
+    return "+" + "-" * 78 + "+"
 
 def fmt_box_subheading(sub_title):
     content = f"[{sub_title}]"
-    return f"│ {content:<76} │"
+    return f"| {content:<76} |"
 
 def fmt_box_divider():
-    line = "─" * 76
-    return f"│ {line} │"
+    line = "-" * 76
+    return f"| {line} |"
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 def fmt_nested_ou_inline(ou_dict):
     if not ou_dict:
@@ -1075,7 +1075,7 @@ def fmt_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -1093,7 +1093,7 @@ def fmt_asian_ou_section(ou_dict):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     return "\n".join(rows)
 
@@ -1112,7 +1112,7 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
         under = ou.get("under")
         if over is not None and under is not None:
             line_label = f"Line {line}"
-            line_val = f"Over: {over:<8} │ Under: {under:<8}"
+            line_val = f"Over: {over:<8} | Under: {under:<8}"
             rows.append(fmt_row(line_label, line_val))
     if not rows:
         return fmt_row("", empty_msg)
@@ -1120,10 +1120,10 @@ def fmt_ou_section_all(ou_dict, empty_msg="(No Over/Under lines available)"):
 
 def format_match_text_block(m):
     # Header
-    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    title = f"Football {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+        title += " (LIVE)"
+    meta = f"League {m['tournament']} | Time {m['kickoff']}"
     
     # Border width
     w = 80
@@ -1149,10 +1149,10 @@ def format_match_text_block(m):
 
     # Construct the block
     lines = []
-    lines.append("═" * w)
+    lines.append("=" * w)
     lines.append(f"{title}")
     lines.append(f"{meta}")
-    lines.append("═" * w)
+    lines.append("=" * w)
     
     # Main Markets
     lines.append(fmt_box_top("MAIN MARKETS"))
@@ -1223,10 +1223,10 @@ def run() -> List[dict]:
     now_local = now_utc.astimezone(tz)
     today = now_local.date()
 
-    print("\n" + "🔵 " * 20)
+    print("\n" + "* " * 20)
     print("   1XBET GHANA SCRAPER (ASYNC AIOHTTP)")
     print(f"   {now_local.strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🔵 " * 20 + "\n")
+    print("* " * 20 + "\n")
 
     raw_matches = asyncio.run(collect_today_games_async(
         site=DEFAULT_SITE,
@@ -1243,13 +1243,13 @@ def run() -> List[dict]:
     n = len(matches)
 
     if n == 0:
-        print(f"⚠️  No prematch matches found for today.")
+        print(f"WARNING  No prematch matches found for today.")
     else:
-        print(f"\n📋 1XBET GHANA")
-        print(f"⚽ Total matches: {n}")
+        print(f"\nLIST 1XBET GHANA")
+        print(f"Total matches: {n}")
         print("=" * 50)
         head = min(10, n)
-        print(f"\n📝 Sample (first {head}):")
+        print(f"\nSample (first {head}):")
         for m in matches[:head]:
             print(f"   {m['home_team']} vs {m['away_team']} | {m['kickoff']} | {m['tournament']}")
         if n > head:
@@ -1281,11 +1281,11 @@ def run() -> List[dict]:
     failed_gamezip = _REQUEST_FAILURE_COUNTS.get("GetGameZip", 0)
     if failed_gamezip:
         print(f"  WARNING: {failed_gamezip} GetGameZip detail request(s) failed after retries; skipped unavailable detail-only markets.")
-    print(f"💾 Saved to {json_path}")
-    print(f"📄 Full list: {txt_path}")
+    print(f"Saved to {json_path}")
+    print(f"Full list: {txt_path}")
     if n > 0:
         print(f"   Open the .txt file to see all {n} matches!")
-    print(f"⏱️  Scraping completed in {elapsed:.1f}s")
+    print(f"Scraping completed in {elapsed:.1f}s")
 
     return matches
 

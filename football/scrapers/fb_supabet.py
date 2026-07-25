@@ -383,40 +383,40 @@ async def scrape_today_async(target: date, tz: ZoneInfo, now_utc: datetime) -> L
     return matches
 
 
-# ── FORMATTING HELPERS ─────────────────────────────────────────────────────────
+# -- FORMATTING HELPERS ---------------------------------------------------------
 
 def fmt_row(label, val):
-    prefix = f"│ {label:<16} "
+    prefix = f"| {label:<16} "
     val_width = 80 - len(prefix) - 2
-    return f"{prefix}{val:<{val_width}} │"
+    return f"{prefix}{val:<{val_width}} |"
 
 
 def fmt_box_top(title):
-    prefix = f"┌── {title} "
+    prefix = f"+-- {title} "
     dash_count = 80 - len(prefix) - 1
-    return prefix + "─" * dash_count + "┐"
+    return prefix + "-" * dash_count + "+"
 
 
 def fmt_box_bottom():
-    return "└" + "─" * 78 + "┘"
+    return "+" + "-" * 78 + "+"
 
 
 def fmt_3way(o):
     if not o or o.get("home") is None or o.get("draw") is None or o.get("away") is None:
         return "N/A"
-    return f"Home: {o['home']:<7} │ Draw: {o['draw']:<7} │ Away: {o['away']}"
+    return f"Home: {o['home']:<7} | Draw: {o['draw']:<7} | Away: {o['away']}"
 
 
 def fmt_dc(o):
     if not o or o.get("1x") is None or o.get("12") is None or o.get("x2") is None:
         return "N/A"
-    return f"1X: {o['1x']:<8} │ 12: {o['12']:<8} │ X2: {o['x2']}"
+    return f"1X: {o['1x']:<8} | 12: {o['12']:<8} | X2: {o['x2']}"
 
 
 def fmt_gg(o):
     if not o or o.get("yes") is None or o.get("no") is None:
         return "N/A"
-    return f"GG (Yes): {o['yes']:<6} │ NG (No): {o['no']}"
+    return f"GG (Yes): {o['yes']:<6} | NG (No): {o['no']}"
 
 
 def fmt_ou_section(ou_dict):
@@ -437,7 +437,7 @@ def fmt_ou_section(ou_dict):
         over = ou.get("over")
         under = ou.get("under")
         if over is not None and under is not None:
-            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} │ Under: {under:<8}"))
+            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} | Under: {under:<8}"))
     if not rows:
         return fmt_row("", "(No Over/Under lines available)")
     return "\n".join(rows)
@@ -456,24 +456,24 @@ def fmt_asian_ou_section(ou_dict):
         over = ou.get("over")
         under = ou.get("under")
         if over is not None and under is not None:
-            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} │ Under: {under:<8}"))
+            rows.append(fmt_row(f"Line {line}", f"Over: {over:<8} | Under: {under:<8}"))
     if not rows:
         return fmt_row("", "(No Asian Over/Under lines available)")
     return "\n".join(rows)
 
 
 def format_match_text_block(m):
-    title = f"⚽ {m['home_team']} vs {m['away_team']}"
+    title = f"Football {m['home_team']} vs {m['away_team']}"
     if m.get("is_live"):
-        title += " (🔴 LIVE)"
-    meta = f"🏆 {m['tournament']} │ 🕐 {m['kickoff']}"
+        title += " (LIVE)"
+    meta = f"League {m['tournament']} | Time {m['kickoff']}"
     w = 80
 
     lines = [
-        "═" * w,
+        "=" * w,
         title,
         meta,
-        "═" * w,
+        "=" * w,
         fmt_box_top("MAIN MARKETS"),
         fmt_row("1X2 (Result)", fmt_3way(m.get("odds_1x2"))),
         fmt_row("Double Chance", fmt_dc(m.get("odds_dc"))),
@@ -508,11 +508,11 @@ def run() -> List[dict]:
     now_local = now_utc.astimezone(tz)
     today = now_local.date()
 
-    print("\n" + "🟡 " * 20)
+    print("\n" + "* " * 20)
     print("   SUPABET GHANA SCRAPER (ASYNC API)")
     print(f"   {now_local.strftime('%A, %d %B %Y %H:%M:%S')}")
-    print("🟡 " * 20 + "\n")
-    print("  ⚡ Fetching today's football fixtures via adv.bet API...")
+    print("* " * 20 + "\n")
+    print("  Fetching today's football fixtures via adv.bet API...")
 
     matches = asyncio.run(scrape_today_async(today, tz, now_utc))
     n = len(matches)
@@ -536,16 +536,16 @@ def run() -> List[dict]:
                 tf.write(format_match_text_block(m))
 
     if n == 0:
-        print(f"⚠️  No prematch matches found for {today} ({TIMEZONE}).")
+        print(f"WARNING  No prematch matches found for {today} ({TIMEZONE}).")
     else:
-        print(f"\n📋 SUPABET GHANA")
-        print(f"⚽ Total matches: {n}")
+        print(f"\nLIST SUPABET GHANA")
+        print(f"Total matches: {n}")
         print(f"With 1X2 odds: {sum(1 for m in matches if m.get('odds_1x2'))}")
         print(f"With O/U odds:   {sum(1 for m in matches if m.get('odds_ou'))}")
         print(f"With GG odds:    {sum(1 for m in matches if m.get('odds_gg'))}")
         print("=" * 50)
         head = min(10, n)
-        print(f"\n📝 Sample (first {head}):")
+        print(f"\nSample (first {head}):")
         for m in matches[:head]:
             print(f"   {m['home_team']} vs {m['away_team']} | {m['kickoff']} | {m['tournament']}")
         if n > head:
@@ -553,11 +553,11 @@ def run() -> List[dict]:
 
     elapsed = time.perf_counter() - started
     print("=" * 50)
-    print(f"💾 Saved to {json_path}")
-    print(f"📄 Full list: {txt_path}")
+    print(f"Saved to {json_path}")
+    print(f"Full list: {txt_path}")
     if n > 0:
         print(f"   Open the .txt file to see all {n} matches!")
-    print(f"⏱️  Scraping completed in {elapsed:.1f}s")
+    print(f"Scraping completed in {elapsed:.1f}s")
     return matches
 
 

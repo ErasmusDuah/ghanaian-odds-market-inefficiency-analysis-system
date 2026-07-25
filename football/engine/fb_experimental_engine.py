@@ -494,7 +494,7 @@ def _format_result(market_type, line_str, arb_sum, profit_pct,
 # -- FULL SCAN ------------------------------------------------------------------
 
 def scan_group(pair, total_stake):
-    """Run all 3 markets Ã— 3 categories for one matched event group."""
+    """Run all 3 markets x 3 categories for one matched event group."""
     results = {'balanced': [], 'unbalanced': [], 'quasi': []}
 
     # Helper: build a flat odds pair for a given market from the full match pair

@@ -17,7 +17,6 @@ import sys
 import os
 import time
 import io
-
 import ctypes
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed, wait
@@ -35,7 +34,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scrapers.fb_sportybet    import run as fetch_sportybet
 from scrapers.fb_betway       import run as fetch_betway
 from scrapers.fb_footballcom  import run as fetch_footballcom
-from scrapers.fb_onexbet      import run as fetch_onexbet
+# from scrapers.fb_onexbet      import run as fetch_onexbet  # Temporarily paused
 from scrapers.fb_twentytwobet import run as fetch_twentytwobet
 from scrapers.fb_msport       import run as fetch_msport
 # Bangbet temporarily disabled; uncomment this import and ACTIVE_SCRAPERS entry to restore.
@@ -171,7 +170,7 @@ ACTIVE_SCRAPERS = [
     ('Sportybet',    fetch_sportybet),
     ('Betway',       fetch_betway),
     ('Football.com', fetch_footballcom),
-    ('1xBet',        fetch_onexbet),
+    # ('1xBet',        fetch_onexbet),  # Temporarily paused
     ('22Bet',        fetch_twentytwobet),
     ('MSport',       fetch_msport),
     # ('Bangbet',      fetch_bangbet),  # Temporarily disabled
@@ -194,7 +193,7 @@ PLATFORM_TXT_FILES = {
     'Sportybet': 'sportybet_matches.txt',
     'Betway': 'betway_matches.txt',
     'Football.com': 'footballcom_matches.txt',
-    '1xBet': 'onexbet_matches.txt',
+    # '1xBet': 'onexbet_matches.txt',  # Temporarily paused
     '22Bet': 'twentytwobet_matches.txt',
     'MSport': 'msport_matches.txt',
     # 'Bangbet': 'bangbet_matches.txt',  # Temporarily disabled
@@ -222,7 +221,7 @@ PLATFORM_JSON_FILES = {
     'Sportybet': 'sportybet_odds.json',
     'Betway': 'betway_odds.json',
     'Football.com': 'footballcom_odds.json',
-    '1xBet': 'onexbet_odds.json',
+    # '1xBet': 'onexbet_odds.json',  # Temporarily paused
     '22Bet': 'twentytwobet_odds.json',
     'MSport': 'msport_odds.json',
     # 'Bangbet': 'bangbet_odds.json',  # Temporarily disabled
@@ -348,20 +347,33 @@ class _ThreadLocalWriter:
 sys.stdout = _ThreadLocalWriter(sys.stdout)
 
 
-def _safe_fetch(name, fetch_fn):
+def _safe_fetch(name, fetch_fn, attempts=1, retry_delay=0.0):
     _thread_local.buf = io.StringIO()
     start  = time.time()
     error  = None
     result = []
     try:
-        _clear_platform_outputs(name)
-        result = fetch_fn() or []
+        attempts = max(1, int(attempts))
+        for attempt in range(1, attempts + 1):
+            error = None
+            result = []
+            _clear_platform_outputs(name)
+            try:
+                result = fetch_fn() or []
+            except Exception as exc:
+                error = exc
+                import traceback as _tb
+                _thread_local.buf.write(_tb.format_exc())
+            if result:
+                break
+            if attempt < attempts:
+                reason = f"failed: {error}" if error else "returned 0 fresh matches"
+                print(f"  WARNING: {name} {reason}; retrying attempt {attempt + 1}/{attempts}...")
+                if retry_delay > 0:
+                    time.sleep(float(retry_delay) * attempt)
         elapsed = time.time() - start
-    except Exception as e:
-        elapsed = time.time() - start
-        error   = e
-        import traceback as _tb
-        _thread_local.buf.write(_tb.format_exc())
+        if not result and error is None:
+            error = None
     finally:
         captured = _thread_local.buf.getvalue()
         _thread_local.buf = None
@@ -383,37 +395,79 @@ def fetch_all_parallel(scrapers):
     failures = {}
     max_workers = int(os.getenv('MAX_PARALLEL_SCRAPERS', '8'))
     max_workers = max(1, min(len(scrapers), max_workers))
-    deadline = int(os.getenv('SCRAPER_GLOBAL_TIMEOUT', '90'))
+    # Busy football days can make 1x/Betwinner-style detail scrapers run past
+    # 90s while still producing valid fresh results. Treat the first timeout as
+    # a soft warning, then wait a configurable grace period before excluding.
+    deadline = int(os.getenv('SCRAPER_GLOBAL_TIMEOUT', '180'))
+    grace = int(os.getenv('SCRAPER_TIMEOUT_GRACE', '120'))
     executor = ThreadPoolExecutor(max_workers=max_workers)
     futures = {executor.submit(_safe_fetch, name, fn): name for name, fn in scrapers}
     done, pending = wait(futures, timeout=deadline)
+
+    if pending and grace > 0:
+        pending_names = ', '.join(futures[f] for f in pending)
+        print(f"  WARNING: Waiting up to {grace}s more for slow scraper(s): {pending_names}")
+        extra_done, pending = wait(pending, timeout=grace)
+        done = done | extra_done
 
     for future in done:
         name, data, elapsed, error = future.result()
         results[name] = data
         if error:
             failures[name] = error
-            try:
-                _write_empty_platform_outputs(name, f"Scraper failed: {error}")
-            except Exception as write_err:
-                print(f"  WARNING: Could not write empty output files for {name}: {write_err}")
-        elif not data:
-            try:
-                _write_empty_platform_outputs(name, "Scraper returned 0 fresh matches")
-            except Exception as write_err:
-                print(f"  WARNING: Could not write empty output files for {name}: {write_err}")
+
     for future in pending:
         name = futures[future]
-        failures[name] = TimeoutError(f"Exceeded SCRAPER_GLOBAL_TIMEOUT={deadline}s")
+        total_timeout = deadline + max(grace, 0)
+        failures[name] = TimeoutError(f"Exceeded scraper timeout budget={total_timeout}s")
         results[name] = []
         future.cancel()
         try:
-            _write_empty_platform_outputs(name, f"Scraper timed out after {deadline}s")
+            _write_empty_platform_outputs(name, f"Scraper timed out after {total_timeout}s")
         except Exception as write_err:
             print(f"  WARNING: Could not write empty output files for {name}: {write_err}")
-        print(f"  WARNING: {name} exceeded {deadline}s and was excluded from this scan.")
+        print(f"  WARNING: {name} exceeded {total_timeout}s and was excluded from this scan.")
 
     executor.shutdown(wait=False, cancel_futures=True)
+
+    retry_candidates = [
+        (name, fn)
+        for name, fn in scrapers
+        if name in results and not results.get(name) and not isinstance(failures.get(name), TimeoutError)
+    ]
+    if retry_candidates:
+        recovery_workers = int(os.getenv('SCRAPER_RECOVERY_WORKERS', '2'))
+        recovery_workers = max(1, min(len(retry_candidates), recovery_workers))
+        recovery_attempts = max(1, int(os.getenv('SCRAPER_RECOVERY_ATTEMPTS', '2')))
+        recovery_delay = float(os.getenv('SCRAPER_RECOVERY_DELAY', '3'))
+        settle_delay = float(os.getenv('SCRAPER_RECOVERY_SETTLE_DELAY', '2'))
+        names = ', '.join(name for name, _ in retry_candidates)
+        print(f"  WARNING: Fresh-data recovery pass for zero/failed scraper(s): {names}")
+        if settle_delay > 0:
+            time.sleep(settle_delay)
+        with ThreadPoolExecutor(max_workers=recovery_workers) as recovery_executor:
+            recovery_futures = {
+                recovery_executor.submit(_safe_fetch, name, fn, recovery_attempts, recovery_delay): name
+                for name, fn in retry_candidates
+            }
+            for future in as_completed(recovery_futures):
+                name, data, elapsed, error = future.result()
+                results[name] = data
+                if data:
+                    failures.pop(name, None)
+                    print(f"  RECOVERED {name}: {len(data)} fresh matches")
+                elif error:
+                    failures[name] = error
+
+    for name, data in list(results.items()):
+        if data:
+            continue
+        reason = f"Scraper failed: {failures[name]}" if name in failures else "Scraper returned 0 fresh matches"
+        try:
+            _write_empty_platform_outputs(name, reason)
+        except Exception as write_err:
+            print(f"  WARNING: Could not write empty output files for {name}: {write_err}")
+
     return results, failures
 
 
@@ -498,7 +552,7 @@ def run_scan():
             sportybet_matches    = fetched.get('Sportybet',    []),
             betway_matches       = fetched.get('Betway',       []),
             footballcom_matches  = fetched.get('Football.com', []),
-            onexbet_matches      = fetched.get('1xBet',        []),
+            onexbet_matches      = [],  # 1xBet temporarily paused
             twentytwobet_matches = fetched.get('22Bet',        []),
             msport_matches       = fetched.get('MSport',       []),
             bangbet_matches      = [],  # Bangbet temporarily disabled

@@ -1,11 +1,11 @@
 """
-Ghanaian Odds Market Inefficiency Analysis System — Bet Tracker
+Ghanaian Odds Market Inefficiency Analysis System - Bet Tracker
 Simple ledger to document every arb stake and track your profit.
 
 Usage:
-    python tracker.py          → view your profit summary
-    python tracker.py log      → add a new bet entry
-    python tracker.py result   → mark a bet as Won or Lost
+    python tracker.py          -> view your profit summary
+    python tracker.py log      -> add a new bet entry
+    python tracker.py result   -> mark a bet as Won or Lost
 """
 
 import csv
@@ -77,7 +77,7 @@ def ask(label, default=None):
     return val if val else (default or "")
 
 
-# ─── LOG ───────────────────────────────────────────────────────────────────────
+# --- LOG -----------------------------------------------------------------------
 
 def log_bet():
     print(f"\n{SEP}")
@@ -139,14 +139,14 @@ def log_bet():
     rows = recalc_balances(rows)
     write_all(rows)
 
-    print(f"\n  ✅ Bet #{row['ID']} logged!")
+    print(f"\n  OK Bet #{row['ID']} logged!")
     print(f"     {match} | {market}")
     print(f"     Total Staked : GHS {total}")
     print(f"     Expected Win : GHS {exp_ghs} ({exp_pct}%)")
-    print(f"\n  💡 Open data/stake_tracker.csv in Excel to see your stake tracker.\n")
+    print(f"\n  Tip Open data/stake_tracker.csv in Excel to see your stake tracker.\n")
 
 
-# ─── RESULT ────────────────────────────────────────────────────────────────────
+# --- RESULT --------------------------------------------------------------------
 
 def update_result():
     rows = read_all()
@@ -196,12 +196,12 @@ def update_result():
     rows = recalc_balances(rows)
     write_all(rows)
 
-    print(f"\n  ✅ Bet #{bet_id} marked as {'WON 🎉' if result == 'won' else 'LOST 😔'}")
+    print(f"\n  OK Bet #{bet_id} marked as {'WON Done' if result == 'won' else 'LOST Lost'}")
     print(f"     Profit/Loss: GHS {pl:+.2f}")
     print()
 
 
-# ─── SUMMARY ───────────────────────────────────────────────────────────────────
+# --- SUMMARY -------------------------------------------------------------------
 
 def show_summary():
     rows = read_all()
@@ -219,7 +219,7 @@ def show_summary():
     current_bal   = STARTING_CAPITAL + net_profit
 
     print(f"\n{SEP}")
-    print("  GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM — PROFIT SUMMARY")
+    print("  GHANAIAN ODDS MARKET INEFFICIENCY ANALYSIS SYSTEM - PROFIT SUMMARY")
     print(SEP)
     print(f"  Starting Capital : GHS {STARTING_CAPITAL:.2f}")
     print(f"  Current Balance  : GHS {current_bal:.2f}")
@@ -244,10 +244,10 @@ def show_summary():
         pl_str = f"GHS {float(r['Actual Profit/Loss (GHS)']):+.2f}" if r['Actual Profit/Loss (GHS)'] else f"({r['Expected Profit (GHS)']} exp)"
         print(f"  {r['ID']:<4} {r['Date']:<12} {r['Match'][:27]:<28} {r['Market'][:15]:<16} {r['Status']:<9} {pl_str:>12}")
 
-    print(f"\n  📂 Full stake tracker: data/stake_tracker.csv  (open in Excel)\n")
+    print(f"\n  File Full stake tracker: data/stake_tracker.csv  (open in Excel)\n")
 
 
-# ─── MAIN ──────────────────────────────────────────────────────────────────────
+# --- MAIN ----------------------------------------------------------------------
 
 if __name__ == "__main__":
     ensure_ledger()

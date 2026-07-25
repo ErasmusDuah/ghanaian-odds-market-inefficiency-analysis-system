@@ -1,5 +1,5 @@
 """
-engine/verifier.py — Frontend market availability verifier.
+engine/verifier.py - Frontend market availability verifier.
 
 Uses Playwright headless Chromium to confirm that odds shown in
 the intensive engine's results are actually bettable on the
@@ -10,7 +10,7 @@ Other platforms can be added by implementing their _verify_* function.
 
 Safe-default policy:
   - If the page fails to load, times out, or selector is not found
-    → opportunity is KEPT (we never silently drop without confirmation)
+    -> opportunity is KEPT (we never silently drop without confirmation)
   - Only drop when we EXPLICITLY confirm the market is locked
 
 Usage (called from run_intensive.py):
@@ -21,7 +21,7 @@ Usage (called from run_intensive.py):
 import re
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
-# ── CONFIG ─────────────────────────────────────────────────────────────────────
+# -- CONFIG ---------------------------------------------------------------------
 HEADLESS         = True
 PAGE_TIMEOUT_MS  = 15_000   # 15s max per page load
 WAIT_AFTER_MS    = 2_500    # let dynamic content render
@@ -39,7 +39,7 @@ LOCKED_CLASSES = re.compile(
 )
 
 
-# ── SPORTYBET VERIFIER ─────────────────────────────────────────────────────────
+# -- SPORTYBET VERIFIER ---------------------------------------------------------
 
 def _navigate_sportybet(page, event_id, home_team, away_team):
     """
@@ -74,7 +74,7 @@ def _navigate_sportybet(page, event_id, home_team, away_team):
             if not search_term:
                 search_term = "Lokomotiv"
             
-            print(f"  🔍 Sportybet Search: searching for '{search_term}'...")
+            print(f"  Search Sportybet Search: searching for '{search_term}'...")
             
             search_input = page.locator("input.m-input-wap, input[placeholder*='Teams/Players']").first
             if search_input.is_visible():
@@ -97,17 +97,17 @@ def _navigate_sportybet(page, event_id, home_team, away_team):
                     # Verify page body text contains either cleaned team name word to confirm detail page loaded
                     body_text = page.locator("body").inner_text().lower()
                     if (clean_home_word and clean_home_word in body_text) or (clean_away_word and clean_away_word in body_text):
-                        print(f"  ✅ Genuinely loaded match page: '{home_team} vs {away_team}'")
+                        print(f"  OK Genuinely loaded match page: '{home_team} vs {away_team}'")
                         return True
                     else:
-                        print("  ⚠️ Navigation clicked, but team names not found in body text.")
+                        print("  WARNING Navigation clicked, but team names not found in body text.")
                 else:
-                    print("  ⚠️ Search returned no clickable match cards.")
+                    print("  WARNING Search returned no clickable match cards.")
     except Exception as e:
-        print(f"  ⚠️ Search navigation failed: {e}. Trying fallback URL...")
+        print(f"  WARNING Search navigation failed: {e}. Trying fallback URL...")
 
     # Fallback to direct URL navigation
-    print("  🔗 Falling back to direct URL navigation...")
+    print("  Link Falling back to direct URL navigation...")
     eid_clean = event_id.replace('sr:match:', '').replace('sr:event:', '').strip()
     for eid in [event_id, eid_clean]:
         if not eid:
@@ -182,7 +182,7 @@ def _check_ou_locked_sportybet(page, line, over_odds, under_odds):
     return True  # Safe Default: Active / Bettable
 
 
-# ── MAIN VERIFY FUNCTION ───────────────────────────────────────────────────────
+# -- MAIN VERIFY FUNCTION -------------------------------------------------------
 
 def verify_opportunities(opportunities, fetched_matches):
     """
@@ -191,13 +191,13 @@ def verify_opportunities(opportunities, fetched_matches):
 
     Args:
         opportunities   : list of opportunity dicts from run_intensive
-        fetched_matches : dict mapping display name → list of raw match dicts
+        fetched_matches : dict mapping display name -> list of raw match dicts
                           e.g. {'Sportybet': [...], 'Betway': [...], ...}
 
     Returns:
         (verified_opportunities, n_dropped)
     """
-    # Build event_id lookup: (home_lower[:12], away_lower[:12]) → event_id
+    # Build event_id lookup: (home_lower[:12], away_lower[:12]) -> event_id
     sb_matches   = fetched_matches.get('Sportybet', [])
     event_id_map = {}
     for m in sb_matches:
@@ -219,13 +219,13 @@ def verify_opportunities(opportunities, fetched_matches):
     if not to_check:
         return opportunities, 0
 
-    print(f"\n🔍 Verifying {len(to_check)} Sportybet O/U "
+    print(f"\nSearch Verifying {len(to_check)} Sportybet O/U "
           f"opportunity(s) via headless browser...")
 
     verified  = []
     n_dropped = 0
     # Cache per (event_id, line) so we don't re-navigate for duplicate categories
-    cache = {}   # (event_id, line) → bool (True = bettable)
+    cache = {}   # (event_id, line) -> bool (True = bettable)
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=HEADLESS)
@@ -296,27 +296,27 @@ def verify_opportunities(opportunities, fetched_matches):
                                 page, line, over_odds, under_odds
                             )
                     else:
-                        print(f"  ⚠️  Could not load match page for "
-                              f"{opp['match']} — keeping opportunity")
+                        print(f"  WARNING  Could not load match page for "
+                              f"{opp['match']} - keeping opportunity")
 
                     cache[cache_key] = is_ok
 
                 if is_ok:
                     verified.append(opp)
-                    status = '✅ Verified'
+                    status = 'OK Verified'
                     if event_id:
                         print(f"  {status}: {opp['match']} | {market} | "
                               f"{opp.get('category','')}")
                 else:
                     n_dropped += 1
-                    print(f"  ❌ Dropped (market locked on Sportybet): "
+                    print(f"  ERROR Dropped (market locked on Sportybet): "
                           f"{opp['match']} | {market} | {opp.get('category','')}")
 
         finally:
             browser.close()
 
     total_verified = no_check + verified
-    print(f"\n  📊 Verification summary: "
+    print(f"\n  Stats Verification summary: "
           f"{len(to_check)} checked | "
           f"{len(verified)} passed | "
           f"{n_dropped} dropped")
