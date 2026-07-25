@@ -10,7 +10,7 @@ This project is not intended to be presented as a gambling product or betting re
 
 ## Motivation
 
-My long-term academic interest is in mathematics, especially probability, financial mathematics and data science. I built this project to explore how mathematical ideas used in financial markets can also appear in other pricing environments.
+My research interest is in applied mathematics, particularly probability & statistics, data science, financial mathematics and machine learning. I built this project to explore how probability and optimization methods used in financial markets can also appear in other pricing environments.
 
 The Ghanaian odds market provides a useful real-world case study because odds change over time, different platforms may disagree and the same event can be quoted in different ways. This creates an environment where I can study market-like behaviour using live data.
 
