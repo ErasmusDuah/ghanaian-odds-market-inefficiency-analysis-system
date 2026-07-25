@@ -114,7 +114,7 @@ Then change:
 STARTING_CAPITAL=1000
 ```
 
-The intensive runner uses `STARTING_CAPITAL` as the main stake setting. `STAKE_AMOUNT` is still accepted only as a legacy fallback for older local config files.
+Set `STARTING_CAPITAL` to any stake amount you want the intensive runner to use for its calculations.
 
 If the stake value is missing, zero or not a number, the system stops with a clear message.
 
