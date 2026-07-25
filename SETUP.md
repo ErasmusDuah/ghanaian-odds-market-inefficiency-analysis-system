@@ -139,7 +139,9 @@ Generated outputs are kept out of Git because they are rebuilt during normal use
 
 ## Private Local Files
 
-These generated/private files should stay local and should not be committed:`r`n`r`n- `football/data/`
+These generated/private files should stay local and should not be committed:
+
+- `football/data/`
 - generated odds JSON files
 - generated match TXT files
 - local tracker files

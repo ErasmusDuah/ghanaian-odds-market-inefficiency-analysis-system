@@ -170,10 +170,10 @@ football/
 |-- fb_run_intensive.py          # Active system runner
 |-- scrapers/                    # Platform-specific data collection
 |-- engine/                      # Quantitative analysis and classification logic
-`|-- data/                        # Generated local outputs
+`-- data/                        # Generated local outputs
 ```
 
-The system is organized around three main layers.
+The system is organized around four main layers.
 
 ### 1. Data Collection
 
@@ -240,49 +240,6 @@ The balanced and unbalanced logs can be used to study:
 The quasi-arbitrage log is used for a different purpose. Since quasi-arbitrage depends on uncertain outcomes, it is designed to support future data science and machine learning analysis.
 
 These logs allow the project to move beyond real-time detection into historical analysis. They make it possible to study patterns in pricing disagreement, market behaviour and opportunity formation over time.
-
----
-
-## Validation Examples
-
-The repository includes selected validation examples showing how the system detects and records market inefficiency structures from real Ghanaian football odds data.
-
-Each validation example is intended to show the evidence chain:
-
-```text
-Live Ghanaian odds snapshot -> system detection -> opportunity classification -> logged output -> final outcome review
-```
-
-Validation materials may include:
-
-- bookmaker odds screenshots
-- system output screenshots
-- logged data rows
-- final match result screenshots
-- selected screen recordings
-
-Sensitive information such as account details, phone numbers, balances, transaction IDs, private tokens and platform login details is removed before any material is included in the repository.
-
----
-
-## Machine Learning Extension
-
-The project includes a data logging workflow for quasi-arbitrage research.
-
-The purpose of this dataset is to support future supervised learning experiments. After opportunities are logged and final match outcomes are known, the data can be used to study whether certain features are associated with profitable quasi-arbitrage outcomes.
-
-Possible features include:
-
-- market type
-- odds structure
-- implied probability spread
-- league or country
-- time before kickoff
-- platform combination
-- profit side
-- final match result
-
-The future machine learning goal is to build a decision-support model that estimates which quasi-arbitrage opportunities are more likely to produce the profitable side.
 
 ---
 
@@ -366,11 +323,15 @@ The project should not be interpreted as betting advice, financial advice or a g
 ## Technologies Used
 
 - Python
-- Pandas
+- requests
+- curl_cffi
+- Playwright
+- pandas
 - NumPy
-- OpenPyXL
+- openpyxl
+- python-dotenv
+- wasmtime
 - Excel / CSV logging
-- Web scraping and data parsing tools
 - GitHub for documentation and version control
 
 ---
@@ -379,13 +340,8 @@ The project should not be interpreted as betting advice, financial advice or a g
 
 Planned improvements include:
 
-- Expanding historical data analysis
-- Improving fixture matching and validation logic
-- Adding more visual summaries of logged opportunities
-- Building supervised learning models for quasi-arbitrage outcomes
-- Improving documentation for reproducibility
-- Adding more validation examples and screen recordings
-- Developing a dashboard for market behaviour analysis
+- Building machine learning models for predicting quasi-arbitrage outcomes, predicting how long an arbitrage opportunity stays available and predicting how arbitrage profit may rise or drop.
+- Developing a dashboard for market behaviour analysis.
 
 ---
 
@@ -399,6 +355,6 @@ BSc Mathematics, Kwame Nkrumah University of Science and Technology
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the Research and Educational Use License. See the `LICENSE` file for details.
 
 Copyright (c) 2026 Duah Erasmus Gyamfi.
