@@ -1,5 +1,5 @@
 """
-Scrape today's not-started Soccabet Ghana football odds.
+Scrape upcoming not-started Soccabet Ghana football odds.
 
 ULTRAFAST - Direct WebSocket connection to Soccabet's real-time feed.
 No browser, no Playwright, no DOM parsing. Pure data.
@@ -44,6 +44,9 @@ SPORT_ID_SOCCER = "77"
 OU_LINES = ("0.5", "1.5", "2.5", "3.5", "4.5", "5.5")
 MIN_GOOD_MATCHES = int(os.getenv("SOCCABET_MIN_GOOD_MATCHES", "50"))
 MAX_WS_ATTEMPTS = int(os.getenv("SOCCABET_WS_ATTEMPTS", "3"))
+DEEP_MARKETS_ENABLED = os.getenv("SOCCABET_DEEP_MARKETS", "1").strip().lower() not in {"0", "false", "no", "off"}
+DEEP_MARKET_CHUNK_SIZE = max(1, int(os.getenv("SOCCABET_DEEP_MARKET_CHUNK_SIZE", "3")))
+DEEP_MARKET_TIMEOUT = float(os.getenv("SOCCABET_DEEP_MARKET_TIMEOUT", "45"))
 GOOD_SNAPSHOT = "soccabet_last_good.json"
 
 # Soccabet marketTypeId -> our internal market name
@@ -70,7 +73,7 @@ def banner(now: datetime) -> str:
 
 async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict, dict, dict, dict, dict]:
     """
-    Connect to Soccabet WebSocket, subscribe for today's football,
+    Connect to Soccabet WebSocket and subscribe for football events,
     collect all match and market messages until the stream goes idle.
     
     Returns:
@@ -98,7 +101,7 @@ async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict
             timeout=aiohttp.ClientWSTimeout(**{"ws_close": 5.0}),
             heartbeat=20.0,
         ) as ws:
-            # Subscribe for today's football with all markets
+            # Subscribe for football with all markets. Soccabet returns an upcoming event window.
             subscribe_msg = json.dumps({
                 "subscribe": {
                     "object": "sport",
@@ -179,6 +182,144 @@ async def ws_fetch_all(today_str: str, timeout_secs: float = 12.0) -> tuple[dict
                     break
 
     return matches, markets, market_types, tournaments, categories
+
+
+def _decode_ws_text(data_str: str) -> dict | None:
+    if not data_str.startswith("{"):
+        try:
+            data_str = LZString.decompressFromUTF16(data_str)
+        except Exception:
+            return None
+    try:
+        return json.loads(data_str)
+    except json.JSONDecodeError:
+        return None
+
+
+def _merge_feed_objects(
+    payload: dict,
+    matches: dict[int, dict],
+    markets: dict[int, list[dict]],
+    market_types: dict[int, dict],
+    tournaments: dict[int, dict],
+    categories: dict[int, dict],
+) -> None:
+    for item in payload.get("messages", []):
+        obj_type = item.get("object")
+        if obj_type == "match":
+            match_id = item.get("id")
+            if match_id is not None:
+                matches.setdefault(match_id, {}).update(item)
+        elif obj_type == "market_type":
+            market_type_id = item.get("id")
+            if market_type_id is not None:
+                market_types[int(market_type_id)] = item
+        elif obj_type == "tournament":
+            tournament_id = item.get("id")
+            if tournament_id is not None:
+                tournaments[int(tournament_id)] = item
+        elif obj_type == "category":
+            category_id = item.get("id")
+            if category_id is not None:
+                categories[int(category_id)] = item
+        elif obj_type == "market":
+            match_id = item.get("matchId")
+            if match_id is not None:
+                markets.setdefault(match_id, []).append(item)
+
+
+def _dedupe_markets(markets: dict[int, list[dict]]) -> None:
+    for match_id, items in list(markets.items()):
+        by_id: dict[Any, dict] = {}
+        fallback: list[dict] = []
+        for item in items:
+            market_id = item.get("id")
+            if market_id is None:
+                fallback.append(item)
+            else:
+                by_id[market_id] = item
+        markets[match_id] = list(by_id.values()) + fallback
+
+
+def _future_prematch_match_ids(raw_matches: dict[int, dict], now: datetime) -> list[int]:
+    ids: list[int] = []
+    for match_id, match_data in raw_matches.items():
+        if match_data.get("isLive") or match_data.get("isSuspended"):
+            continue
+        start_ts = match_data.get("startTs")
+        if not start_ts:
+            continue
+        try:
+            kickoff_dt = datetime.fromtimestamp(start_ts / 1000)
+        except (TypeError, ValueError, OSError):
+            continue
+        if kickoff_dt > now:
+            ids.append(int(match_id))
+    return ids
+
+
+async def ws_enrich_match_markets(
+    match_ids: list[int],
+    matches: dict[int, dict],
+    markets: dict[int, list[dict]],
+    market_types: dict[int, dict],
+    tournaments: dict[int, dict],
+    categories: dict[int, dict],
+    timeout_secs: float = DEEP_MARKET_TIMEOUT,
+) -> int:
+    """Subscribe to match-level feeds, which expose deeper Soccabet markets."""
+    if not match_ids:
+        return 0
+
+    headers = {
+        "Origin": "https://www.soccabet.com",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0 Safari/537.36"
+        ),
+    }
+    chunks = [match_ids[i:i + DEEP_MARKET_CHUNK_SIZE] for i in range(0, len(match_ids), DEEP_MARKET_CHUNK_SIZE)]
+    market_updates = 0
+
+    async with aiohttp.ClientSession() as session:
+        async with session.ws_connect(
+            WS_URL,
+            headers=headers,
+            timeout=aiohttp.ClientWSTimeout(**{"ws_close": 5.0}),
+            heartbeat=20.0,
+        ) as ws:
+            for chunk in chunks:
+                subscribe_msg = json.dumps({
+                    "subscribe": {
+                        "object": "match",
+                        "ids": ",".join(str(match_id) for match_id in chunk),
+                        "marketfilter": "all",
+                    }
+                })
+                await ws.send_str(subscribe_msg)
+                await asyncio.sleep(0.02)
+
+            idle_deadline = time.time() + timeout_secs
+            while time.time() < idle_deadline:
+                try:
+                    msg = await asyncio.wait_for(ws.receive(), timeout=3.0)
+                except (asyncio.TimeoutError, TimeoutError):
+                    break
+
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    payload = _decode_ws_text(msg.data)
+                    if not payload:
+                        continue
+                    for item in payload.get("messages", []):
+                        if item.get("object") == "market":
+                            market_updates += 1
+                    _merge_feed_objects(payload, matches, markets, market_types, tournaments, categories)
+                elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+                    break
+
+    _dedupe_markets(markets)
+    return market_updates
 
 
 def _market_type_name(market_type: dict | None) -> str:
@@ -394,7 +535,7 @@ def _resolve_tournament_name(match_data: dict, tournaments: dict[int, dict] | No
 def parse_matches(
     raw_matches: dict[int, dict],
     raw_markets: dict[int, list[dict]],
-    today_str: str,
+    scan_date: str,
     market_types: dict[int, dict] | None = None,
     tournaments: dict[int, dict] | None = None,
     categories: dict[int, dict] | None = None,
@@ -419,9 +560,8 @@ def parse_matches(
             continue
         kickoff_dt = datetime.fromtimestamp(start_ts / 1000)
         
-        # Only today's matches
-        if kickoff_dt.strftime("%Y-%m-%d") != today_str:
-            continue
+        # Only future prematch events from the Soccabet feed. Do not restrict to
+        # today's date; the feed includes a broader upcoming football window.
         # Only future matches
         if kickoff_dt <= now:
             continue
@@ -644,7 +784,7 @@ def _snapshot_path(output_dir: Path) -> Path:
     return output_dir / GOOD_SNAPSHOT
 
 
-def _load_last_good(output_dir: Path, today_str: str) -> list[dict[str, Any]]:
+def _load_last_good(output_dir: Path, now: datetime) -> list[dict[str, Any]]:
     candidates = [_snapshot_path(output_dir), output_dir / "soccabet_odds.json"]
     for path in candidates:
         try:
@@ -653,9 +793,16 @@ def _load_last_good(output_dir: Path, today_str: str) -> list[dict[str, Any]]:
             continue
         if not isinstance(data, list) or len(data) < MIN_GOOD_MATCHES:
             continue
-        same_day = [m for m in data if str(m.get("kickoff", "")).startswith(today_str)]
-        if len(same_day) >= MIN_GOOD_MATCHES:
-            return same_day
+        future = []
+        for match in data:
+            try:
+                kickoff = datetime.strptime(str(match.get("kickoff", "")), "%Y-%m-%d %H:%M")
+            except ValueError:
+                continue
+            if kickoff > now:
+                future.append(match)
+        if len(future) >= MIN_GOOD_MATCHES:
+            return future
     return []
 
 
@@ -722,7 +869,7 @@ async def _async_scrape() -> list[dict]:
     print(f"  [Soccabet] Connecting to WebSocket feed...")
 
     output_dir = Path(__file__).resolve().parent.parent / "data"
-    baseline = _load_last_good(output_dir, today_str)
+    baseline = _load_last_good(output_dir, now)
     if baseline:
         print(f"  [Soccabet] Last-good snapshot available ({len(baseline)} matches)")
 
@@ -736,7 +883,18 @@ async def _async_scrape() -> list[dict]:
         n_raw_markets = sum(len(v) for v in raw_markets.values())
 
         print(f"  [Soccabet] Attempt {attempt}: received {len(raw_matches)} match objects, {n_raw_markets} market updates")
-        print(f"  [Soccabet] Parsing and filtering today's prematch football...")
+        if DEEP_MARKETS_ENABLED:
+            deep_ids = _future_prematch_match_ids(raw_matches, now)
+            try:
+                print(f"  [Soccabet] Enriching {len(deep_ids)} upcoming match(es) with match-level markets...")
+                deep_updates = await ws_enrich_match_markets(
+                    deep_ids, raw_matches, raw_markets, market_types, tournaments, categories
+                )
+                n_raw_markets = sum(len(v) for v in raw_markets.values())
+                print(f"  [Soccabet] Deep-market enrichment received {deep_updates} market update(s); {n_raw_markets} unique market(s) available")
+            except Exception as exc:
+                print(f"  [Soccabet] WARNING: deep-market enrichment failed: {exc}. Continuing with primary markets.")
+        print(f"  [Soccabet] Parsing and filtering upcoming prematch football...")
 
         matches = parse_matches(raw_matches, raw_markets, today_str, market_types, tournaments, categories)
         if len(matches) > len(best_matches):
