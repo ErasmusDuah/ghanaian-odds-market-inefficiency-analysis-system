@@ -1,10 +1,10 @@
-# Ghanaian Odds Market Inefficiency Analysis System
+#	Application of Probability and Arbitrage in Sports Betting Market
 
 Presentation Slide: https://drive.google.com/file/d/1OgTkK1_6re9-qAyL1X1i2TAEvqyLT4w_/view?usp=drivesdk
 
 Video Explanation and walkthrough:
 
-Ghanaian Odds Market Inefficiency Analysis System is an educational quantitative modelling project that studies pricing differences in a real-world dynamic market.
+Application of Probability and Arbitrage in Sports Betting Market is an educational quantitative modelling project that studies pricing differences in a real-world dynamic market.
 
 The project uses the Ghanaian football odds market as a practical data environment. In this setting, bookmaker odds are treated as observable market quotes. Each quoted odd carries an implied probability for a future event. When different platforms quote different odds for the same event, the system studies those differences using probability, optimization, automation and structured data analysis.
 
