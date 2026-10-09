@@ -2,7 +2,7 @@
 
 Presentation Slide: https://drive.google.com/file/d/1OgTkK1_6re9-qAyL1X1i2TAEvqyLT4w_/view?usp=drivesdk
 
-Video Explanation and walkthrough:
+Video Explanation and walkthrough: https://youtube.com/playlist?list=PLV3Rv7U4hcCk&si=obRkzQRT7KQuYWCO
 
 Application of Probability and Arbitrage in Sports Betting Market is an educational quantitative modelling project that studies pricing differences in a real-world dynamic market.
 
